@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Box,
   Container,
@@ -19,6 +19,10 @@ import {
   useMediaQuery,
   Avatar,
   Chip,
+  Fade,
+  Grow,
+  Slide,
+  Zoom,
 } from '@mui/material'
 import {
   Menu as MenuIcon,
@@ -37,6 +41,9 @@ import {
   AttachMoney,
   People,
   Inventory,
+  Code,
+  Rocket,
+  Star,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 
