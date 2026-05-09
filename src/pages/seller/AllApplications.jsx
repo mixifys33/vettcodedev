@@ -80,8 +80,13 @@ const AllApplications = () => {
         setApplications(response.data.applications || [])
       }
     } catch (error) {
-      toast.error('Failed to fetch applications')
-      console.error(error)
+      if (error.response?.status === 404) {
+        // No applications found - this is okay
+        setApplications([])
+      } else {
+        toast.error('Failed to fetch applications')
+        console.error(error)
+      }
     } finally {
       setLoading(false)
     }

@@ -71,8 +71,13 @@ const SellerOrders = () => {
         setOrders(response.data.orders || [])
       }
     } catch (error) {
-      toast.error('Failed to fetch orders')
-      console.error(error)
+      if (error.response?.status === 404) {
+        // No orders found - this is okay
+        setOrders([])
+      } else {
+        toast.error('Failed to fetch orders')
+        console.error(error)
+      }
     } finally {
       setLoading(false)
     }

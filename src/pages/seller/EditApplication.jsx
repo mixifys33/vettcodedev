@@ -187,9 +187,27 @@ const EditApplication = () => {
     try {
       setSaving(true)
 
-      // Prepare form data
+      // Prepare form data - avoid circular references
       const formData = {
-        ...data,
+        appName: data.appName,
+        shortDescription: data.shortDescription,
+        detailedDescription: data.detailedDescription,
+        appCategory: data.appCategory,
+        tags: data.tags,
+        price: data.isFree ? 0 : data.price,
+        currency: data.currency,
+        isFree: data.isFree,
+        licenseType: data.licenseType,
+        githubRepo: data.githubRepo,
+        liveDemo: data.liveDemo,
+        documentationUrl: data.documentationUrl,
+        videoDemo: data.videoDemo,
+        commercialUse: data.commercialUse,
+        resaleRights: data.resaleRights,
+        supportLevel: data.supportLevel,
+        updateFrequency: data.updateFrequency,
+        warranty: data.warranty,
+        installationSupport: data.installationSupport,
         technologyStack: selectedTech,
         supportedPlatforms: selectedPlatforms,
         dependencies,

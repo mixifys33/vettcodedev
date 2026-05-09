@@ -64,33 +64,43 @@ const SellerDashboard = () => {
       setLoading(true)
       const sellerId = user?.id || user?._id
 
-      // Fetch stats
-      const [statsRes, ordersRes, appsRes] = await Promise.all([
-        api.get(`/sellers/stats/${sellerId}`),
-        api.get(`/orders?sellerId=${sellerId}&limit=5`),
-        api.get(`/applications/seller/${sellerId}?limit=10`),
+      // Fetch orders and applications
+      const [ordersRes, appsRes] = await Promise.all([
+        api.get(`/orders?sellerId=${sellerId}&limit=5`).catch(() => ({ data: { success: false, orders: [] } })),
+        api.get(`/applications/seller/${sellerId}?limit=10`).catch(() => ({ data: { success: false, applications: [] } })),
       ])
 
-      if (statsRes.data.success) {
-        setStats(statsRes.data.stats)
+      // Calculate stats from fetched data
+      const orders = ordersRes.data.orders || []
+      const apps = appsRes.data.applications || []
+
+      const calculatedStats = {
+        totalApplications: apps.length,
+        totalOrders: orders.length,
+        totalRevenue: orders
+          .filter((o) => o.status === 'delivered')
+          .reduce((sum, o) => sum + (o.total || 0), 0),
+        pendingOrders: orders.filter((o) => o.status === 'pending').length,
       }
 
-      if (ordersRes.data.success) {
-        setRecentOrders(ordersRes.data.orders || [])
-      }
+      setStats(calculatedStats)
+      setRecentOrders(orders)
+      setTopApplications(apps.slice(0, 10))
 
-      if (appsRes.data.success) {
-        const apps = appsRes.data.applications || []
-        setTopApplications(apps.slice(0, 10))
-
-        // Check for incomplete setups
-        const incomplete = apps.filter(
-          (app) => !app.deliverySettings || Object.keys(app.deliverySettings).length === 0
-        )
-        setIncompleteSetup(incomplete)
-      }
+      // Check for incomplete setups
+      const incomplete = apps.filter(
+        (app) => !app.deliverySettings || Object.keys(app.deliverySettings).length === 0
+      )
+      setIncompleteSetup(incomplete)
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error)
+      // Set default stats on error
+      setStats({
+        totalApplications: 0,
+        totalOrders: 0,
+        totalRevenue: 0,
+        pendingOrders: 0,
+      })
     } finally {
       setLoading(false)
     }
