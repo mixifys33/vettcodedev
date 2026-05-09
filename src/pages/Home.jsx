@@ -47,50 +47,15 @@ import {
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 
-// Animated code snippets for background
-const codeSnippets = [
-  'const sellApp = () => { return revenue; }',
-  'function uploadProduct() { ... }',
-  'export default Marketplace;',
-  'import { success } from "vettcode";',
-  'class Seller extends Platform { }',
-  'async function getPayment() { }',
-  'const analytics = await fetch();',
-  'return <Dashboard />;',
-  'npm install @vettcode/sdk',
-  'git push origin main',
-  'const profit = sales * 0.95;',
-  'await deploy("production");',
-]
-
-// Keyframe animations
-const float = keyframes`
-  0%, 100% { transform: translateY(0px) translateX(0px); }
-  25% { transform: translateY(-20px) translateX(10px); }
-  50% { transform: translateY(-40px) translateX(-10px); }
-  75% { transform: translateY(-20px) translateX(10px); }
+// Subtle professional animations
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 `
 
-const codeScroll = keyframes`
-  0% { transform: translateY(-100%); opacity: 0; }
-  10% { opacity: 0.6; }
-  90% { opacity: 0.6; }
-  100% { transform: translateY(100vh); opacity: 0; }
-`
-
-const pulse = keyframes`
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.05); }
-`
-
-const shimmer = keyframes`
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-`
-
-const rotate = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+const subtleFloat = keyframes`
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 `
 
 const Home = () => {
@@ -372,72 +337,26 @@ const Home = () => {
         </Box>
       </Drawer>
 
-      {/* Hero Section - Redesigned with Code Animations */}
+      {/* Hero Section - Professional Dark Theme */}
       <Box
         sx={{
           position: 'relative',
-          background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #6366f1 100%)',
+          background: 'linear-gradient(135deg, #0a1628 0%, #1e293b 50%, #0f172a 100%)',
           color: 'white',
           py: { xs: 10, md: 15 },
           overflow: 'hidden',
         }}
       >
-        {/* Animated Code Background */}
+        {/* Subtle Grid Pattern */}
         <Box
           sx={{
             position: 'absolute',
             inset: 0,
-            opacity: 0.15,
-            overflow: 'hidden',
-            pointerEvents: 'none',
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)',
+            backgroundSize: '40px 40px',
+            opacity: 0.3,
           }}
-        >
-          {codeSnippets.map((code, index) => (
-            <Box
-              key={index}
-              sx={{
-                position: 'absolute',
-                left: `${(index * 15) % 100}%`,
-                animation: `${codeScroll} ${12 + index * 2}s linear infinite`,
-                animationDelay: `${index * 1.5}s`,
-                fontFamily: 'monospace',
-                fontSize: { xs: '0.75rem', md: '0.9rem' },
-                whiteSpace: 'nowrap',
-                color: 'white',
-                fontWeight: 600,
-              }}
-            >
-              {code}
-            </Box>
-          ))}
-        </Box>
-
-        {/* Floating Geometric Shapes */}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            overflow: 'hidden',
-            pointerEvents: 'none',
-          }}
-        >
-          {[...Array(6)].map((_, i) => (
-            <Box
-              key={i}
-              sx={{
-                position: 'absolute',
-                width: { xs: 60, md: 100 },
-                height: { xs: 60, md: 100 },
-                borderRadius: i % 2 === 0 ? '50%' : '20%',
-                background: `rgba(255, 255, 255, ${0.05 + i * 0.02})`,
-                top: `${10 + i * 15}%`,
-                left: `${5 + i * 15}%`,
-                animation: `${float} ${6 + i}s ease-in-out infinite`,
-                animationDelay: `${i * 0.5}s`,
-              }}
-            />
-          ))}
-        </Box>
+        />
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={6} alignItems="center">
@@ -463,14 +382,10 @@ const Home = () => {
                       mb: 3,
                       fontSize: { xs: '2.5rem', md: '4rem' },
                       lineHeight: 1.1,
-                      background: 'linear-gradient(135deg, #ffffff 0%, #fcd34d 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
                     }}
                   >
                     Turn Your Code Into{' '}
-                    <Box component="span" sx={{ display: 'block', color: '#fcd34d' }}>
+                    <Box component="span" sx={{ display: 'block', color: '#14b8a6' }}>
                       Revenue
                     </Box>
                   </Typography>
@@ -545,14 +460,7 @@ const Home = () => {
                     ].map((item, index) => (
                       <Grid item xs={12} sm={4} key={index}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Box
-                            sx={{
-                              color: '#fcd34d',
-                              display: 'flex',
-                              animation: `${pulse} 2s ease-in-out infinite`,
-                              animationDelay: `${index * 0.3}s`,
-                            }}
-                          >
+                          <Box sx={{ color: '#14b8a6', display: 'flex' }}>
                             {item.icon}
                           </Box>
                           <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -576,15 +484,15 @@ const Home = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  {/* Glassmorphism Card */}
+                  {/* Professional Dashboard Preview */}
                   <Box
                     sx={{
                       width: '100%',
                       height: '100%',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      borderRadius: 6,
-                      backdropFilter: 'blur(20px)',
-                      border: '2px solid rgba(255, 255, 255, 0.2)',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: 4,
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -595,18 +503,6 @@ const Home = () => {
                       overflow: 'hidden',
                     }}
                   >
-                    {/* Shimmer Effect */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        background:
-                          'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-                        backgroundSize: '200% 100%',
-                        animation: `${shimmer} 3s infinite`,
-                      }}
-                    />
-
                     {/* Icon Grid */}
                     <Grid container spacing={3} sx={{ position: 'relative', zIndex: 1 }}>
                       {[
@@ -616,30 +512,21 @@ const Home = () => {
                         { icon: <TrendingUp sx={{ fontSize: 50 }} />, label: 'Grow' },
                       ].map((item, index) => (
                         <Grid item xs={6} key={index}>
-                          <Box
-                            sx={{
-                              textAlign: 'center',
-                              animation: `${float} ${4 + index}s ease-in-out infinite`,
-                              animationDelay: `${index * 0.2}s`,
-                            }}
-                          >
+                          <Box sx={{ textAlign: 'center' }}>
                             <Box
                               sx={{
                                 display: 'inline-flex',
                                 p: 3,
-                                borderRadius: 4,
-                                bgcolor: 'rgba(252, 211, 77, 0.2)',
-                                color: '#fcd34d',
+                                borderRadius: 3,
+                                bgcolor: 'rgba(20, 184, 166, 0.15)',
+                                color: '#14b8a6',
                                 mb: 2,
-                                border: '2px solid rgba(252, 211, 77, 0.3)',
+                                border: '1px solid rgba(20, 184, 166, 0.2)',
                               }}
                             >
                               {item.icon}
                             </Box>
-                            <Typography
-                              variant="h6"
-                              sx={{ fontWeight: 700, color: 'white' }}
-                            >
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>
                               {item.label}
                             </Typography>
                           </Box>
@@ -702,8 +589,6 @@ const Home = () => {
                         background: 'linear-gradient(135deg, #14b8a6 0%, #6366f1 100%)',
                         color: 'white',
                         mb: 2,
-                        animation: `${pulse} 3s ease-in-out infinite`,
-                        animationDelay: `${index * 0.3}s`,
                       }}
                     >
                       {stat.icon}
@@ -900,41 +785,17 @@ const Home = () => {
               <Box
                 sx={{
                   height: 500,
-                  background: 'linear-gradient(135deg, #14b8a6 0%, #6366f1 100%)',
+                  background: 'linear-gradient(135deg, #0a1628 0%, #1e293b 100%)',
                   borderRadius: 6,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   position: 'relative',
                   overflow: 'hidden',
+                  border: '1px solid rgba(20, 184, 166, 0.2)',
                 }}
               >
-                {/* Animated Background Pattern */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    opacity: 0.1,
-                  }}
-                >
-                  {[...Array(20)].map((_, i) => (
-                    <Box
-                      key={i}
-                      sx={{
-                        position: 'absolute',
-                        width: 2,
-                        height: 2,
-                        bgcolor: 'white',
-                        borderRadius: '50%',
-                        top: `${Math.random() * 100}%`,
-                        left: `${Math.random() * 100}%`,
-                        animation: `${pulse} ${2 + Math.random() * 3}s ease-in-out infinite`,
-                        animationDelay: `${Math.random() * 2}s`,
-                      }}
-                    />
-                  ))}
-                </Box>
-                <TrendingUp sx={{ fontSize: 180, color: 'white', opacity: 0.3 }} />
+                <TrendingUp sx={{ fontSize: 180, color: '#14b8a6', opacity: 0.2 }} />
               </Box>
             </Zoom>
           </Grid>
@@ -1101,39 +962,13 @@ const Home = () => {
       {/* CTA Section */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #6366f1 100%)',
+          background: 'linear-gradient(135deg, #0a1628 0%, #1e293b 100%)',
           color: 'white',
           py: 12,
           position: 'relative',
           overflow: 'hidden',
         }}
       >
-        {/* Animated Background */}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            opacity: 0.1,
-          }}
-        >
-          {[...Array(30)].map((_, i) => (
-            <Box
-              key={i}
-              sx={{
-                position: 'absolute',
-                width: 3,
-                height: 3,
-                bgcolor: 'white',
-                borderRadius: '50%',
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animation: `${pulse} ${2 + Math.random() * 4}s ease-in-out infinite`,
-                animationDelay: `${Math.random() * 3}s`,
-              }}
-            />
-          ))}
-        </Box>
-
         <Container maxWidth="md" sx={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <Fade in timeout={1000}>
             <Box>
@@ -1147,7 +982,7 @@ const Home = () => {
               >
                 Ready to Start Selling?
               </Typography>
-              <Typography variant="h5" sx={{ mb: 5, opacity: 0.95, fontWeight: 500 }}>
+              <Typography variant="h5" sx={{ mb: 5, opacity: 0.9, fontWeight: 500 }}>
                 Join VETTCODE today and reach thousands of potential buyers worldwide
               </Typography>
               <Button
@@ -1156,19 +991,19 @@ const Home = () => {
                 onClick={handleGetStarted}
                 endIcon={<ArrowForward />}
                 sx={{
-                  bgcolor: '#fcd34d',
-                  color: '#0f766e',
+                  bgcolor: '#14b8a6',
+                  color: 'white',
                   px: 6,
                   py: 2.5,
                   fontSize: '1.3rem',
                   fontWeight: 900,
                   borderRadius: 3,
                   textTransform: 'none',
-                  boxShadow: '0 12px 40px rgba(252, 211, 77, 0.4)',
+                  boxShadow: '0 8px 24px rgba(20, 184, 166, 0.3)',
                   '&:hover': {
-                    bgcolor: '#f59e0b',
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 16px 50px rgba(252, 211, 77, 0.5)',
+                    bgcolor: '#0f766e',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 12px 32px rgba(20, 184, 166, 0.4)',
                   },
                   transition: 'all 0.3s ease',
                 }}
