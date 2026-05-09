@@ -1,0 +1,63 @@
+import axios from 'axios'
+import toast from 'react-hot-toast'
+
+const API_BASE = import.meta.env.VITE_API_URL || 'https://easyshop-d00e.onrender.com/api'
+
+// Create axios instance
+const api = axios.create({
+  baseURL: API_BASE,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('sellerToken')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // Server responded with error
+      const { status, data } = error.response
+      
+      if (status === 401) {
+        // Unauthorized - clear storage and redirect to login
+        localStorage.clear()
+        window.location.href = '/login'
+        toast.error('Session expired. Please login again.')
+      } else if (status === 403) {
+        toast.error('Access denied')
+      } else if (status === 404) {
+        toast.error('Resource not found')
+      } else if (status >= 500) {
+        toast.error('Server error. Please try again later.')
+      } else {
+        toast.error(data?.error || data?.message || 'An error occurred')
+      }
+    } else if (error.request) {
+      // Request made but no response
+      toast.error('Network error. Please check your connection.')
+    } else {
+      // Something else happened
+      toast.error('An unexpected error occurred')
+    }
+    
+    return Promise.reject(error)
+  }
+)
+
+export default api
+export { API_BASE }
