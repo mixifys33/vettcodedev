@@ -2,6 +2,9 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Box } from '@mui/material'
 
+// Home
+import Home from './pages/Home'
+
 // Auth
 import SellerLogin from './pages/auth/SellerLogin'
 import SellerSignup from './pages/auth/SellerSignup'
@@ -45,6 +48,9 @@ function App() {
   return (
     <Box sx={{ minHeight: '100vh' }}>
       <Routes>
+        {/* Home Page */}
+        <Route path="/" element={<Home />} />
+        
         {/* Public Routes */}
         <Route path="/login" element={<SellerLogin />} />
         <Route path="/signup" element={<SellerSignup />} />
@@ -103,8 +109,7 @@ function App() {
         />
 
         {/* Default Redirects */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Box>
   )
