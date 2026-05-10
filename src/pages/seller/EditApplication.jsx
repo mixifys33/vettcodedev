@@ -414,8 +414,20 @@ const EditApplication = () => {
         technologyStack: selectedTech,
         supportedPlatforms: selectedPlatforms,
         dependencies,
-        screenshots: screenshots.map((s) => s.preview),
-        appIcon: appIcon?.preview,
+        screenshots: screenshots.map((s) => ({
+          url: s.preview,
+          fileId: s.fileId || null,
+          thumbnailUrl: s.thumbnailUrl || s.preview,
+          fileName: s.fileName || null,
+          uploaded: s.uploaded || s.existing || false
+        })),
+        appIcon: appIcon ? {
+          url: appIcon.preview,
+          fileId: appIcon.fileId || null,
+          thumbnailUrl: appIcon.thumbnailUrl || appIcon.preview,
+          fileName: appIcon.fileName || null,
+          uploaded: appIcon.uploaded || appIcon.existing || false
+        } : null,
         sourceCodeFile: appFile || null,
       }
 

@@ -353,8 +353,20 @@ const CreateApplication = () => {
         technologyStack: Array.isArray(selectedTech) ? selectedTech : [],
         supportedPlatforms: Array.isArray(selectedPlatforms) ? selectedPlatforms : [],
         dependencies: Array.isArray(dependencies) ? dependencies.filter(d => typeof d === 'string') : [],
-        screenshots: Array.isArray(screenshots) ? screenshots.map((s) => s.preview).filter(Boolean) : [],
-        appIcon: appIcon?.preview || null,
+        screenshots: Array.isArray(screenshots) ? screenshots.map((s) => ({
+          url: s.preview,
+          fileId: s.fileId || null,
+          thumbnailUrl: s.thumbnailUrl || s.preview,
+          fileName: s.fileName || null,
+          uploaded: s.uploaded || false
+        })).filter(s => s.url) : [],
+        appIcon: appIcon ? {
+          url: appIcon.preview,
+          fileId: appIcon.fileId || null,
+          thumbnailUrl: appIcon.thumbnailUrl || appIcon.preview,
+          fileName: appIcon.fileName || null,
+          uploaded: appIcon.uploaded || false
+        } : null,
         sourceCodeFile: appFile || null,
       }
 
