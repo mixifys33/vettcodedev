@@ -181,7 +181,7 @@ const AllApplications = () => {
 
   const isIncomplete = (app) => {
     // Check if application is missing the source code file
-    return !app.sourceCodeFile || !app.sourceCodeFile.url
+    return !app?.sourceCodeFile || !app?.sourceCodeFile?.url
   }
 
   const getApplicationStatus = (app) => {
