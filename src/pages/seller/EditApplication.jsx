@@ -296,8 +296,42 @@ const EditApplication = () => {
 
   const addDependency = () => {
     if (newDependency.trim()) {
-      setDependencies((prev) => [...prev, newDependency.trim()])
-      setNewDependency('')
+      // Parse multiple dependencies from pasted text
+      const lines = newDependency.split('\n').map(line => line.trim()).filter(Boolean)
+      
+      const parsedDeps = []
+      
+      lines.forEach(line => {
+        // Remove common prefixes and clean up
+        let cleaned = line
+          .replace(/^[-*•]\s*/, '') // Remove bullet points
+          .replace(/^\d+\.\s*/, '') // Remove numbered lists
+          .replace(/^[•·]\s*/, '') // Remove other bullets
+          .trim()
+        
+        // Split by common separators if multiple deps in one line
+        const parts = cleaned.split(/[,;]/).map(p => p.trim()).filter(Boolean)
+        
+        parts.forEach(part => {
+          // Clean up common patterns
+          let dep = part
+            .replace(/^["']|["']$/g, '') // Remove quotes
+            .replace(/\s+/g, ' ') // Normalize spaces
+            .trim()
+          
+          if (dep && !dependencies.includes(dep) && !parsedDeps.includes(dep)) {
+            parsedDeps.push(dep)
+          }
+        })
+      })
+      
+      if (parsedDeps.length > 0) {
+        setDependencies((prev) => [...prev, ...parsedDeps])
+        setNewDependency('')
+        toast.success(`Added ${parsedDeps.length} ${parsedDeps.length === 1 ? 'dependency' : 'dependencies'}`)
+      } else {
+        toast.error('No valid dependencies found')
+      }
     }
   }
 
@@ -559,15 +593,27 @@ const EditApplication = () => {
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Dependencies
               </Typography>
+              <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'rgba(255,255,255,0.5)' }}>
+                Add one or paste multiple dependencies (one per line, comma, or semicolon separated)
+              </Typography>
               <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                 <TextField
                   fullWidth
-                  placeholder="Add dependency (e.g., Node.js >= 14)"
+                  multiline
+                  rows={3}
+                  placeholder="Examples:&#10;Node.js >= 14&#10;MongoDB >= 4.0&#10;Redis, PostgreSQL&#10;Docker (optional)"
                   value={newDependency}
                   onChange={(e) => setNewDependency(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addDependency())}
                 />
-                <Button variant="outlined" onClick={addDependency} startIcon={<Add />}>
+                <Button 
+                  variant="outlined" 
+                  onClick={addDependency} 
+                  startIcon={<Add />}
+                  sx={{ 
+                    minWidth: '100px',
+                    height: 'fit-content',
+                  }}
+                >
                   Add
                 </Button>
               </Box>
