@@ -88,20 +88,66 @@ const SellerDrafts = () => {
 
     try {
       setActionLoading(true)
-      const response = await api.patch(`/applications/${selectedDraft._id}`, {
+      
+      // Fetch the full draft data first
+      const draftResponse = await api.get(`/applications/${selectedDraft._id}`)
+      
+      if (!draftResponse.data.success) {
+        toast.error('Failed to load draft data')
+        return
+      }
+      
+      const draftData = draftResponse.data.application
+      
+      // Validate required fields before publishing
+      const validationErrors = []
+      if (!draftData.appName?.trim()) validationErrors.push('App name is required')
+      if (!draftData.shortDescription?.trim()) validationErrors.push('Short description is required')
+      if (!draftData.detailedDescription?.trim()) validationErrors.push('Detailed description is required')
+      if (!draftData.appCategory) validationErrors.push('App category is required')
+      if (!draftData.technologyStack || draftData.technologyStack.length === 0) {
+        validationErrors.push('At least one technology is required')
+      }
+      if (!draftData.licenseType) validationErrors.push('License type is required')
+      if (!draftData.screenshots || draftData.screenshots.length === 0) {
+        validationErrors.push('At least one screenshot is required')
+      }
+      if (!draftData.appIcon) validationErrors.push('App icon is required')
+      
+      if (validationErrors.length > 0) {
+        toast.error('Please complete all required fields before publishing')
+        validationErrors.forEach(err => toast.error(err))
+        setPublishDialog(false)
+        // Navigate to edit page
+        navigate(`/seller/applications/edit/${selectedDraft._id}`)
+        return
+      }
+      
+      // Update the draft to published status
+      const response = await api.put(`/applications/${selectedDraft._id}`, {
+        ...draftData,
         isDraft: false,
         verificationStatus: 'pending',
+        publishedAt: new Date().toISOString(),
       })
 
       if (response.data.success) {
-        toast.success('Draft published successfully!')
+        toast.success('Draft published successfully! It will be reviewed by admin.')
         setDrafts(drafts.filter((d) => d._id !== selectedDraft._id))
         setPublishDialog(false)
         setSelectedDraft(null)
       }
     } catch (error) {
-      toast.error('Failed to publish draft')
-      console.error(error)
+      console.error('Publish error:', error)
+      
+      // Show detailed error messages
+      if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
+        error.response.data.errors.forEach(err => toast.error(err))
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message)
+      } else {
+        toast.error('Failed to publish draft. Please ensure all required fields are filled.')
+      }
     } finally {
       setActionLoading(false)
     }
