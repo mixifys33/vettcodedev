@@ -138,8 +138,19 @@ const EditApplication = () => {
         }
       }
     } catch (error) {
-      toast.error('Failed to fetch application')
-      console.error(error)
+      console.error('Error fetching application:', error)
+      
+      // Show more specific error messages
+      if (error.response?.status === 404) {
+        toast.error('Application not found')
+      } else if (error.response?.status === 400) {
+        toast.error('Invalid application ID')
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message)
+      } else {
+        toast.error('Failed to fetch application. Please try again.')
+      }
+      
       navigate('/seller/applications')
     } finally {
       setLoading(false)
