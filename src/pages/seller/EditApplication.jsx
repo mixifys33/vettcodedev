@@ -19,6 +19,10 @@ import {
   CircularProgress,
   Alert,
   Autocomplete,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  Tooltip,
 } from '@mui/material'
 import {
   Add,
@@ -28,6 +32,9 @@ import {
   ArrowBack,
   ArrowForward,
   CheckCircle,
+  ZoomIn,
+  Close,
+  Image as ImageIcon,
 } from '@mui/icons-material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
@@ -59,6 +66,7 @@ const EditApplication = () => {
   const [selectedPlatforms, setSelectedPlatforms] = useState([])
   const [dependencies, setDependencies] = useState([])
   const [newDependency, setNewDependency] = useState('')
+  const [imagePreview, setImagePreview] = useState({ open: false, image: null, title: '' })
 
   const {
     register,
@@ -337,6 +345,14 @@ const EditApplication = () => {
 
   const removeDependency = (index) => {
     setDependencies((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const openImagePreview = (image, title) => {
+    setImagePreview({ open: true, image, title })
+  }
+
+  const closeImagePreview = () => {
+    setImagePreview({ open: false, image: null, title: '' })
   }
 
   const onSubmit = async (data) => {
@@ -709,105 +725,259 @@ const EditApplication = () => {
       case 2:
         return (
           <Grid container spacing={3}>
+            {/* App Icon Section */}
             <Grid item xs={12}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                App Icon
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                {appIcon && (
-                  <Box
-                    component="img"
-                    src={appIcon.preview}
-                    sx={{ width: 100, height: 100, borderRadius: 2, objectFit: 'cover' }}
-                  />
-                )}
-                <Button variant="outlined" component="label" startIcon={<CloudUpload />}>
-                  {appIcon ? 'Change Icon' : 'Upload Icon'}
-                  <input type="file" hidden accept="image/*" onChange={handleIconUpload} />
-                </Button>
-              </Box>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Screenshots (Max 5)
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-                {screenshots.map((screenshot, index) => (
-                  <Box key={index} sx={{ position: 'relative' }}>
-                    <Box
-                      component="img"
-                      src={screenshot.preview}
-                      sx={{ width: 150, height: 100, borderRadius: 2, objectFit: 'cover' }}
-                    />
-                    <IconButton
-                      size="small"
-                      sx={{
-                        position: 'absolute',
-                        top: -8,
-                        right: -8,
-                        bgcolor: 'error.main',
-                        color: 'white',
-                        '&:hover': { bgcolor: 'error.dark' },
-                      }}
-                      onClick={() => removeScreenshot(index)}
-                    >
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </Box>
-                ))}
-              </Box>
-              <Button
-                variant="outlined"
-                component="label"
-                startIcon={<CloudUpload />}
-                disabled={screenshots.length >= 5}
+              <Card
+                sx={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 2,
+                  p: 2,
+                }}
               >
-                Upload Screenshots
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  multiple
-                  onChange={handleScreenshotUpload}
-                />
-              </Button>
+                <Typography variant="subtitle1" sx={{ mb: 2, color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ImageIcon /> App Icon *
+                </Typography>
+                <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
+                  Upload a square icon (recommended: 512x512px, PNG or JPG)
+                </Typography>
+                
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {appIcon && (
+                    <Box sx={{ position: 'relative' }}>
+                      <Box
+                        component="img"
+                        src={appIcon.preview}
+                        sx={{ 
+                          width: 120, 
+                          height: 120, 
+                          borderRadius: 2, 
+                          objectFit: 'cover',
+                          border: '2px solid rgba(99, 102, 241, 0.3)',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s',
+                          '&:hover': {
+                            transform: 'scale(1.05)',
+                            border: '2px solid rgba(99, 102, 241, 0.6)',
+                          }
+                        }}
+                        onClick={() => openImagePreview(appIcon.preview, 'App Icon')}
+                      />
+                      <Tooltip title="Preview">
+                        <IconButton
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 4,
+                            right: 4,
+                            bgcolor: 'rgba(99, 102, 241, 0.9)',
+                            color: 'white',
+                            '&:hover': { bgcolor: '#6366f1' },
+                          }}
+                          onClick={() => openImagePreview(appIcon.preview, 'App Icon')}
+                        >
+                          <ZoomIn fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <IconButton
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          bottom: 4,
+                          right: 4,
+                          bgcolor: 'rgba(239, 68, 68, 0.9)',
+                          color: 'white',
+                          '&:hover': { bgcolor: '#ef4444' },
+                        }}
+                        onClick={removeIcon}
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  )}
+                  
+                  <Button 
+                    variant="contained" 
+                    component="label" 
+                    startIcon={<CloudUpload />}
+                    sx={{
+                      background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #5558e3 0%, #7c4de8 100%)',
+                      }
+                    }}
+                  >
+                    {appIcon ? 'Change Icon' : 'Upload Icon'}
+                    <input type="file" hidden accept="image/*" onChange={handleIconUpload} />
+                  </Button>
+                </Box>
+              </Card>
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="GitHub Repository URL"
-                {...register('githubRepo')}
-                placeholder="https://github.com/username/repo"
-              />
+            {/* Screenshots Section */}
+            <Grid item xs={12}>
+              <Card
+                sx={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 2,
+                  p: 2,
+                }}
+              >
+                <Typography variant="subtitle1" sx={{ mb: 2, color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ImageIcon /> Screenshots (Max 5) *
+                </Typography>
+                <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
+                  Upload high-quality screenshots of your application (recommended: 1920x1080px)
+                </Typography>
+                
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+                  {screenshots.map((screenshot, index) => (
+                    <Box key={index} sx={{ position: 'relative' }}>
+                      <Box
+                        component="img"
+                        src={screenshot.preview}
+                        sx={{ 
+                          width: 200, 
+                          height: 120, 
+                          borderRadius: 2, 
+                          objectFit: 'cover',
+                          border: '2px solid rgba(99, 102, 241, 0.3)',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s',
+                          '&:hover': {
+                            transform: 'scale(1.05)',
+                            border: '2px solid rgba(99, 102, 241, 0.6)',
+                          }
+                        }}
+                        onClick={() => openImagePreview(screenshot.preview, `Screenshot ${index + 1}`)}
+                      />
+                      <Chip
+                        label={`#${index + 1}`}
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: 4,
+                          left: 4,
+                          bgcolor: 'rgba(99, 102, 241, 0.9)',
+                          color: 'white',
+                          fontWeight: 600,
+                        }}
+                      />
+                      <Tooltip title="Preview">
+                        <IconButton
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 4,
+                            right: 4,
+                            bgcolor: 'rgba(99, 102, 241, 0.9)',
+                            color: 'white',
+                            '&:hover': { bgcolor: '#6366f1' },
+                          }}
+                          onClick={() => openImagePreview(screenshot.preview, `Screenshot ${index + 1}`)}
+                        >
+                          <ZoomIn fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <IconButton
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          bottom: 4,
+                          right: 4,
+                          bgcolor: 'rgba(239, 68, 68, 0.9)',
+                          color: 'white',
+                          '&:hover': { bgcolor: '#ef4444' },
+                        }}
+                        onClick={() => removeScreenshot(index)}
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Box>
+                
+                <Button
+                  variant="contained"
+                  component="label"
+                  startIcon={<CloudUpload />}
+                  disabled={screenshots.length >= 5}
+                  sx={{
+                    background: screenshots.length >= 5 
+                      ? 'rgba(255,255,255,0.1)' 
+                      : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    '&:hover': {
+                      background: screenshots.length >= 5 
+                        ? 'rgba(255,255,255,0.1)' 
+                        : 'linear-gradient(135deg, #5558e3 0%, #7c4de8 100%)',
+                    }
+                  }}
+                >
+                  {screenshots.length >= 5 ? 'Maximum Reached' : 'Upload Screenshots'}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    multiple
+                    onChange={handleScreenshotUpload}
+                    disabled={screenshots.length >= 5}
+                  />
+                </Button>
+                {screenshots.length > 0 && (
+                  <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'rgba(255,255,255,0.5)' }}>
+                    {screenshots.length} of 5 screenshots uploaded
+                  </Typography>
+                )}
+              </Card>
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Live Demo URL"
-                {...register('liveDemo')}
-                placeholder="https://demo.example.com"
-              />
-            </Grid>
+            {/* Optional Links Section */}
+            <Grid item xs={12}>
+              <Card
+                sx={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 2,
+                  p: 2,
+                }}
+              >
+                <Typography variant="subtitle1" sx={{ mb: 2, color: 'white', fontWeight: 600 }}>
+                  Additional Resources (Optional)
+                </Typography>
+                <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
+                  Provide links to help users understand and use your application
+                </Typography>
+                
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Live Demo URL"
+                      {...register('liveDemo')}
+                      placeholder="https://demo.example.com"
+                    />
+                  </Grid>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Documentation URL"
-                {...register('documentationUrl')}
-                placeholder="https://docs.example.com"
-              />
-            </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Documentation URL"
+                      {...register('documentationUrl')}
+                      placeholder="https://docs.example.com"
+                    />
+                  </Grid>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Video Demo URL"
-                {...register('videoDemo')}
-                placeholder="https://youtube.com/watch?v=..."
-              />
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Video Demo URL (YouTube, Vimeo, etc.)"
+                      {...register('videoDemo')}
+                      placeholder="https://youtube.com/watch?v=..."
+                    />
+                  </Grid>
+                </Grid>
+              </Card>
             </Grid>
           </Grid>
         )
@@ -946,6 +1116,60 @@ const EditApplication = () => {
           </form>
         </CardContent>
       </Card>
+
+      {/* Image Preview Modal */}
+      <Dialog
+        open={imagePreview.open}
+        onClose={closeImagePreview}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(15, 23, 42, 0.98)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 2,
+          },
+        }}
+      >
+        <DialogContent sx={{ p: 0, position: 'relative' }}>
+          <IconButton
+            onClick={closeImagePreview}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              bgcolor: 'rgba(0,0,0,0.5)',
+              color: 'white',
+              zIndex: 1,
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+            }}
+          >
+            <Close />
+          </IconButton>
+          {imagePreview.image && (
+            <Box
+              component="img"
+              src={imagePreview.image}
+              alt={imagePreview.title}
+              sx={{
+                width: '100%',
+                height: 'auto',
+                maxHeight: '80vh',
+                objectFit: 'contain',
+              }}
+            />
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <Typography variant="body2" sx={{ color: 'white', flex: 1 }}>
+            {imagePreview.title}
+          </Typography>
+          <Button onClick={closeImagePreview} sx={{ color: '#6366f1' }}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
