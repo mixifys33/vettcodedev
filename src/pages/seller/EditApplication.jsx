@@ -42,6 +42,7 @@ import toast from 'react-hot-toast'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import api from '../../utils/api'
+import { uploadToImageKit, uploadMultipleToImageKit } from '../../utils/imagekit'
 import {
   APP_CATEGORIES,
   TECHNOLOGY_STACK,
@@ -184,7 +185,6 @@ const EditApplication = () => {
     const uploadToast = toast.loading(`Uploading ${files.length} screenshot(s)...`)
 
     try {
-      const { uploadMultipleToImageKit } = await import('../utils/imagekit')
       const uploadResults = await uploadMultipleToImageKit(files, 'applications/screenshots')
       
       // Add uploaded images to screenshots
@@ -212,7 +212,6 @@ const EditApplication = () => {
     const uploadToast = toast.loading('Uploading app icon...')
 
     try {
-      const { uploadToImageKit } = await import('../utils/imagekit')
       const uploadResult = await uploadToImageKit(file, 'applications/icons')
       
       setAppIcon({
