@@ -610,6 +610,256 @@ const Home = () => {
         </Container>
       </Box>
 
+      {/* Origin Story Section - The WHY */}
+      <Box sx={{ bgcolor: 'rgba(99, 102, 241, 0.03)', py: { xs: 10, md: 16 } }}>
+        <Container maxWidth="md">
+          <Fade in timeout={1000}>
+            <Box>
+              <Box sx={{ textAlign: 'center', mb: 6 }}>
+                <Chip
+                  label="OUR STORY"
+                  sx={{
+                    bgcolor: 'rgba(99, 102, 241, 0.15)',
+                    color: '#a78bfa',
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    mb: 4,
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                  }}
+                />
+                <Typography
+                  variant="h2"
+                  sx={{
+                    fontWeight: 900,
+                    mb: 4,
+                    fontSize: { xs: '2rem', md: '3rem' },
+                    color: 'white',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  We Built VettCode Because We've Been There
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 5 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'rgba(255,255,255,0.85)',
+                    lineHeight: 1.9,
+                    fontWeight: 400,
+                    fontSize: { xs: '1.1rem', md: '1.25rem' },
+                    mb: 3,
+                  }}
+                >
+                  We realized something heartbreaking: <Box component="span" sx={{ color: '#6366f1', fontWeight: 700 }}>thousands of developers out there build real-world, production-ready applications</Box> — AI tools that solve actual problems, SaaS platforms that could change businesses, automation systems that save hours of work, APIs that power innovation.
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'rgba(255,255,255,0.85)',
+                    lineHeight: 1.9,
+                    fontWeight: 400,
+                    fontSize: { xs: '1.1rem', md: '1.25rem' },
+                    mb: 3,
+                  }}
+                >
+                  But here's the painful truth: <Box component="span" sx={{ color: '#ef4444', fontWeight: 700 }}>most of them never make a single dollar from their work.</Box>
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'rgba(255,255,255,0.85)',
+                    lineHeight: 1.9,
+                    fontWeight: 400,
+                    fontSize: { xs: '1.1rem', md: '1.25rem' },
+                    mb: 3,
+                  }}
+                >
+                  Not because their software isn't good enough. Not because there's no market. But because <Box component="span" sx={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.7)' }}>they don't have a platform that understands what they've built.</Box>
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  bgcolor: 'rgba(15, 23, 42, 0.8)',
+                  border: '2px solid rgba(99, 102, 241, 0.2)',
+                  borderRadius: 3,
+                  p: { xs: 4, md: 5 },
+                  mb: 5,
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: 'white',
+                    fontWeight: 700,
+                    mb: 3,
+                    fontSize: { xs: '1.25rem', md: '1.5rem' },
+                  }}
+                >
+                  The Problem We're Solving:
+                </Typography>
+                <Box component="ul" sx={{ m: 0, pl: 3, listStyle: 'none' }}>
+                  {[
+                    'Generic marketplaces that mix your professional software with ebooks and Photoshop templates',
+                    'Platforms that don\'t understand technical products or the developers who build them',
+                    'No proper way to showcase documentation, APIs, tech stacks, or integration capabilities',
+                    'Buyers who can\'t find quality software because it\'s buried under low-effort digital products',
+                    'Developers trading hours for money instead of building scalable product businesses',
+                  ].map((problem, idx) => (
+                    <Box
+                      component="li"
+                      key={idx}
+                      sx={{
+                        color: 'rgba(255,255,255,0.75)',
+                        fontSize: { xs: '0.95rem', md: '1.05rem' },
+                        mb: 2,
+                        position: 'relative',
+                        pl: 3,
+                        lineHeight: 1.7,
+                        '&::before': {
+                          content: '"✗"',
+                          position: 'absolute',
+                          left: 0,
+                          color: '#ef4444',
+                          fontWeight: 900,
+                        },
+                      }}
+                    >
+                      {problem}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+
+              <Box
+                sx={{
+                  bgcolor: 'rgba(16, 185, 129, 0.1)',
+                  border: '2px solid rgba(16, 185, 129, 0.3)',
+                  borderRadius: 3,
+                  p: { xs: 4, md: 5 },
+                  mb: 5,
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: 'white',
+                    fontWeight: 700,
+                    mb: 3,
+                    fontSize: { xs: '1.25rem', md: '1.5rem' },
+                  }}
+                >
+                  What VettCode Changes:
+                </Typography>
+                <Box component="ul" sx={{ m: 0, pl: 3, listStyle: 'none' }}>
+                  {[
+                    'A marketplace exclusively for real software — SaaS, AI tools, APIs, templates, and automation systems',
+                    'Built by developers who understand what makes technical products valuable',
+                    'Proper product pages with documentation, tech stack details, API references, and integration guides',
+                    'Buyers actively searching for production-ready software, not random digital downloads',
+                    'Turn your side projects into revenue-generating digital products that sell while you sleep',
+                  ].map((solution, idx) => (
+                    <Box
+                      component="li"
+                      key={idx}
+                      sx={{
+                        color: 'rgba(255,255,255,0.85)',
+                        fontSize: { xs: '0.95rem', md: '1.05rem' },
+                        mb: 2,
+                        position: 'relative',
+                        pl: 3,
+                        lineHeight: 1.7,
+                        '&::before': {
+                          content: '"✓"',
+                          position: 'absolute',
+                          left: 0,
+                          color: '#10b981',
+                          fontWeight: 900,
+                        },
+                      }}
+                    >
+                      {solution}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+
+              <Box sx={{ textAlign: 'center', mb: 5 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: 'white',
+                    fontWeight: 700,
+                    mb: 3,
+                    fontSize: { xs: '1.35rem', md: '1.75rem' },
+                    lineHeight: 1.4,
+                  }}
+                >
+                  VettCode exists to give your software the platform it deserves.
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'rgba(255,255,255,0.7)',
+                    lineHeight: 1.8,
+                    fontWeight: 400,
+                    fontSize: { xs: '1.05rem', md: '1.2rem' },
+                  }}
+                >
+                  Whether you built an AI resume generator, a SaaS boilerplate, a CRM dashboard, an automation toolkit, or an API that solves a real problem — <Box component="span" sx={{ color: '#6366f1', fontWeight: 700 }}>this is where it belongs.</Box>
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  pt: 4,
+                  borderTop: '1px solid rgba(99, 102, 241, 0.2)',
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'rgba(255,255,255,0.6)',
+                    fontStyle: 'italic',
+                    mb: 4,
+                    fontSize: { xs: '1rem', md: '1.15rem' },
+                  }}
+                >
+                  "Your code has value. Your time has value. Your expertise has value. It's time the world paid you for it."
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate('/signup')}
+                  endIcon={<ArrowForward />}
+                  sx={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    color: 'white',
+                    px: 6,
+                    py: 2.5,
+                    fontSize: '1.15rem',
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    boxShadow: '0 8px 32px rgba(99, 102, 241, 0.4)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                      boxShadow: '0 12px 40px rgba(99, 102, 241, 0.5)',
+                      transform: 'translateY(-2px)',
+                    },
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  Join the Movement
+                </Button>
+              </Box>
+            </Box>
+          </Fade>
+        </Container>
+      </Box>
+
       {/* Trust Section */}
       <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
         <Box sx={{ textAlign: 'center', mb: 8 }}>
@@ -961,7 +1211,7 @@ const Home = () => {
         </Grid>
       </Container>
 
-      {/* Emotional Section */}
+      {/* Emotional Section - Enhanced */}
       <Box sx={{ bgcolor: 'rgba(99, 102, 241, 0.05)', py: { xs: 10, md: 14 } }}>
         <Container maxWidth="md">
           <Fade in timeout={1000}>
@@ -973,6 +1223,7 @@ const Home = () => {
                   mb: 4,
                   fontSize: { xs: '2rem', md: '2.75rem' },
                   color: 'white',
+                  lineHeight: 1.3,
                 }}
               >
                 Stop Building Projects That Never Pay You Back
@@ -980,16 +1231,105 @@ const Home = () => {
               <Typography
                 variant="h6"
                 sx={{
-                  color: 'rgba(255,255,255,0.7)',
-                  lineHeight: 1.8,
+                  color: 'rgba(255,255,255,0.75)',
+                  lineHeight: 1.9,
                   fontWeight: 400,
-                  mb: 6,
+                  mb: 4,
+                  fontSize: { xs: '1.1rem', md: '1.25rem' },
                 }}
               >
-                Thousands of developers build powerful applications that never reach the right audience.
-                VettCode helps turn side projects, SaaS tools, AI systems, templates, and developer products
-                into scalable digital businesses.
+                You've spent <Box component="span" sx={{ color: '#6366f1', fontWeight: 700 }}>countless nights coding</Box>. You've solved real problems. You've built something that actually works.
               </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: 'rgba(255,255,255,0.75)',
+                  lineHeight: 1.9,
+                  fontWeight: 400,
+                  mb: 4,
+                  fontSize: { xs: '1.1rem', md: '1.25rem' },
+                }}
+              >
+                But it's sitting on GitHub. Or running locally. Or shared with a few friends who said "this is amazing, you should sell this."
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: 'rgba(255,255,255,0.75)',
+                  lineHeight: 1.9,
+                  fontWeight: 400,
+                  mb: 6,
+                  fontSize: { xs: '1.1rem', md: '1.25rem' },
+                }}
+              >
+                <Box component="span" sx={{ color: 'white', fontWeight: 700 }}>VettCode helps turn side projects, SaaS tools, AI systems, templates, and developer products into scalable digital businesses.</Box> The kind that generate revenue while you're building the next thing.
+              </Typography>
+
+              <Box
+                sx={{
+                  bgcolor: 'rgba(15, 23, 42, 0.8)',
+                  border: '2px solid rgba(99, 102, 241, 0.2)',
+                  borderRadius: 3,
+                  p: { xs: 4, md: 5 },
+                  mb: 6,
+                  textAlign: 'left',
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'white',
+                    fontWeight: 700,
+                    mb: 3,
+                  }}
+                >
+                  Imagine if:
+                </Typography>
+                <Box component="ul" sx={{ m: 0, pl: 3, listStyle: 'none' }}>
+                  {[
+                    'That AI tool you built in a weekend was earning $2,000/month',
+                    'Your SaaS boilerplate had 500+ downloads at $99 each',
+                    'Developers worldwide were using (and paying for) your automation scripts',
+                    'Your side project was generating enough to quit freelancing',
+                    'You woke up to "New Sale" notifications instead of "New Bug" reports',
+                  ].map((scenario, idx) => (
+                    <Box
+                      component="li"
+                      key={idx}
+                      sx={{
+                        color: 'rgba(255,255,255,0.8)',
+                        fontSize: { xs: '0.95rem', md: '1.05rem' },
+                        mb: 2,
+                        position: 'relative',
+                        pl: 3,
+                        lineHeight: 1.7,
+                        '&::before': {
+                          content: '"→"',
+                          position: 'absolute',
+                          left: 0,
+                          color: '#10b981',
+                          fontWeight: 900,
+                        },
+                      }}
+                    >
+                      {scenario}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+
+              <Typography
+                variant="h5"
+                sx={{
+                  color: 'white',
+                  fontWeight: 700,
+                  mb: 4,
+                  fontSize: { xs: '1.35rem', md: '1.65rem' },
+                }}
+              >
+                That's not a dream. That's what VettCode sellers do every day.
+              </Typography>
+
               <Button
                 variant="contained"
                 size="large"
