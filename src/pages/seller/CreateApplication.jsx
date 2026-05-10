@@ -135,6 +135,10 @@ const CreateApplication = () => {
     }
   }
 
+  const removeIcon = () => {
+    setAppIcon(null)
+  }
+
   const handleFileUpload = async (event) => {
     const file = event.target.files[0]
     if (!file) return
