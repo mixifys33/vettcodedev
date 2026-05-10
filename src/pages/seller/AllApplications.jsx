@@ -39,6 +39,7 @@ import {
   Schedule,
   Cancel,
   Settings as SettingsIcon,
+  Drafts,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -246,24 +247,44 @@ const AllApplications = () => {
             Manage your application catalogue
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => navigate('/seller/applications/create')}
-          sx={{
-            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-            textTransform: 'none',
-            px: 3,
-            py: 1.5,
-            fontWeight: 600,
-            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-            '&:hover': {
-              boxShadow: '0 6px 20px rgba(99, 102, 241, 0.5)',
-            },
-          }}
-        >
-          Create Application
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/seller/drafts')}
+            sx={{
+              borderColor: 'rgba(99, 102, 241, 0.5)',
+              color: '#6366f1',
+              textTransform: 'none',
+              px: 3,
+              py: 1.5,
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: '#6366f1',
+                bgcolor: 'rgba(99, 102, 241, 0.1)',
+              },
+            }}
+          >
+            View Drafts
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => navigate('/seller/applications/create')}
+            sx={{
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              textTransform: 'none',
+              px: 3,
+              py: 1.5,
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+              '&:hover': {
+                boxShadow: '0 6px 20px rgba(99, 102, 241, 0.5)',
+              },
+            }}
+          >
+            Create Application
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters */}

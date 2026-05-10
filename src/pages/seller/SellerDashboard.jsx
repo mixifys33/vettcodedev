@@ -27,6 +27,7 @@ import {
   AttachMoney,
   Person,
   Add,
+  Drafts,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
@@ -298,6 +299,56 @@ const SellerDashboard = () => {
           </Grid>
         ))}
       </Grid>
+
+      {/* Quick Actions */}
+      <Box sx={{ mb: 4 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card
+              sx={{
+                background: 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 2,
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  boxShadow: '0 8px 24px rgba(99, 102, 241, 0.2)',
+                },
+              }}
+              onClick={() => navigate('/seller/drafts')}
+            >
+              <CardContent sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1.5,
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
+                  }}
+                >
+                  <Drafts sx={{ fontSize: 24 }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>
+                    View
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'white' }}>
+                    Drafts
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
 
       <Grid container spacing={3}>
         {/* Revenue Chart */}
