@@ -147,6 +147,12 @@ const CreateApplication = () => {
 
       const sellerId = user?.id || user?._id
 
+      // Validate required fields for draft
+      if (isDraft && !data.appName?.trim()) {
+        toast.error('Application name is required to save as draft')
+        return
+      }
+
       // Prepare form data - avoid circular references
       const formData = {
         appName: data.appName,
@@ -154,7 +160,7 @@ const CreateApplication = () => {
         detailedDescription: data.detailedDescription,
         appCategory: data.appCategory,
         tags: data.tags,
-        price: data.isFree ? 0 : data.price,
+        price: data.isFree ? 0 : parseFloat(data.price) || 0,
         currency: data.currency,
         isFree: data.isFree,
         licenseType: data.licenseType,
@@ -178,14 +184,23 @@ const CreateApplication = () => {
         verificationStatus: 'pending',
       }
 
-      const response = await api.post('/applications', formData)
+      // Use different endpoint for drafts
+      const endpoint = isDraft ? '/applications/draft' : '/applications'
+      const response = await api.post(endpoint, formData)
 
       if (response.data.success) {
         toast.success(isDraft ? 'Draft saved successfully!' : 'Application created successfully!')
         navigate(isDraft ? '/seller/drafts' : '/seller/applications')
       }
     } catch (error) {
-      toast.error('Failed to create application')
+      const errorMessage = error.response?.data?.message || 'Failed to create application'
+      const errors = error.response?.data?.errors
+      
+      if (errors && errors.length > 0) {
+        toast.error(`${errorMessage}: ${errors.join(', ')}`)
+      } else {
+        toast.error(errorMessage)
+      }
       console.error(error)
     } finally {
       setLoading(false)
