@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -15,18 +16,17 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
-  useTheme,
-  useMediaQuery,
   Chip,
+  useMediaQuery,
+  useTheme,
   Fade,
   Grow,
   Slide,
   Zoom,
-  keyframes,
-} from '@mui/material'
+} from '@mui/material';
 import {
-  Menu as MenuIcon,
-  Close,
+  Code,
+  Rocket,
   TrendingUp,
   Security,
   CloudUpload,
@@ -38,78 +38,73 @@ import {
   AttachMoney,
   People,
   Inventory,
-  Code,
-  Rocket,
-  AutoAwesome,
+  Menu as MenuIcon,
+  Close,
+  LocalOffer,
   Bolt,
-  Speed,
+  AutoAwesome,
   Verified,
-} from '@mui/icons-material'
-import { useNavigate } from 'react-router-dom'
-
-// Subtle professional animations
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-`
-
-const subtleFloat = keyframes`
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-`
+  Star,
+} from '@mui/icons-material';
 
 const Home = () => {
-  const navigate = useNavigate()
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [scrollY, setScrollY] = useState(0)
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY)
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const features = [
     {
-      icon: <Store sx={{ fontSize: 40 }} />,
+      icon: <Store sx={{ fontSize: 50 }} />,
       title: 'Your Digital Storefront',
       description: 'Create your professional seller profile and showcase your applications to thousands of potential buyers.',
+      gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
     },
     {
-      icon: <CloudUpload sx={{ fontSize: 40 }} />,
+      icon: <CloudUpload sx={{ fontSize: 50 }} />,
       title: 'Easy Upload & Management',
       description: 'Upload applications individually or in bulk. Manage your entire catalogue from one powerful dashboard.',
+      gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
     },
     {
-      icon: <Campaign sx={{ fontSize: 40 }} />,
+      icon: <Campaign sx={{ fontSize: 50 }} />,
       title: 'Marketing Tools',
       description: 'Run promotional campaigns, create discount codes, and boost your sales with built-in marketing features.',
+      gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
     },
     {
-      icon: <Analytics sx={{ fontSize: 40 }} />,
+      icon: <Analytics sx={{ fontSize: 50 }} />,
       title: 'Real-time Analytics',
       description: 'Track your sales, monitor performance, and make data-driven decisions with comprehensive analytics.',
+      gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     },
     {
-      icon: <AttachMoney sx={{ fontSize: 40 }} />,
+      icon: <AttachMoney sx={{ fontSize: 50 }} />,
       title: 'Flexible Pricing',
       description: 'Set your own prices, offer free trials, and create bundle deals. You control your revenue model.',
+      gradient: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
     },
     {
-      icon: <Security sx={{ fontSize: 40 }} />,
+      icon: <Security sx={{ fontSize: 50 }} />,
       title: 'Secure Payments',
       description: 'Get paid securely through multiple payment methods. We handle the transactions, you focus on building.',
+      gradient: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
     },
-  ]
+  ];
 
   const stats = [
-    { value: '10K+', label: 'Active Buyers', icon: <People /> },
-    { value: '5K+', label: 'Applications Sold', icon: <Inventory /> },
-    { value: '$2M+', label: 'Total Revenue', icon: <AttachMoney /> },
-    { value: '98%', label: 'Seller Satisfaction', icon: <CheckCircle /> },
-  ]
+    { value: '10K+', label: 'Active Buyers', icon: <People sx={{ fontSize: 32 }} />, color: '#3b82f6' },
+    { value: '5K+', label: 'Apps Sold', icon: <Inventory sx={{ fontSize: 32 }} />, color: '#10b981' },
+    { value: '$2M+', label: 'Revenue', icon: <AttachMoney sx={{ fontSize: 32 }} />, color: '#8b5cf6' },
+    { value: '98%', label: 'Satisfaction', icon: <Star sx={{ fontSize: 32 }} />, color: '#f97316' },
+  ];
 
   const benefits = [
     'Zero upfront costs - only pay when you sell',
@@ -120,7 +115,7 @@ const Home = () => {
     'Secure payment processing',
     'Dedicated seller support',
     'Regular platform updates',
-  ]
+  ];
 
   const pricingPlans = [
     {
@@ -134,12 +129,12 @@ const Home = () => {
         '10% platform fee',
         'Manual payouts',
       ],
-      cta: 'Get Started',
       highlighted: false,
     },
     {
       name: 'Professional',
-      price: '$29/mo',
+      price: '$29',
+      period: '/month',
       description: 'For serious sellers',
       features: [
         'Unlimited applications',
@@ -150,7 +145,6 @@ const Home = () => {
         'Marketing tools',
         'Bulk upload',
       ],
-      cta: 'Start Free Trial',
       highlighted: true,
     },
     {
@@ -165,68 +159,60 @@ const Home = () => {
         'White-label options',
         'API access',
       ],
-      cta: 'Contact Sales',
       highlighted: false,
     },
-  ]
-
-  const handleGetStarted = () => {
-    navigate('/signup')
-  }
-
-  const handleLogin = () => {
-    navigate('/login')
-  }
+  ];
 
   return (
-    <Box>
+    <Box sx={{ bgcolor: '#0a0e27', minHeight: '100vh' }}>
       {/* Navigation */}
       <AppBar
-        position="sticky"
-        elevation={scrollY > 50 ? 4 : 0}
+        position="fixed"
+        elevation={scrollY > 50 ? 8 : 0}
         sx={{
-          bgcolor: 'white',
-          color: 'text.primary',
+          bgcolor: scrollY > 50 ? 'rgba(15, 23, 42, 0.95)' : 'transparent',
+          backdropFilter: scrollY > 50 ? 'blur(20px)' : 'none',
+          borderBottom: scrollY > 50 ? '1px solid rgba(139, 92, 246, 0.2)' : 'none',
           transition: 'all 0.3s ease',
-          borderBottom: scrollY > 50 ? 'none' : '1px solid rgba(0,0,0,0.08)',
         }}
       >
-        <Toolbar sx={{ py: 1 }}>
+        <Toolbar sx={{ py: { xs: 1, sm: 1.5 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: 1 }}>
             <Box
               sx={{
+                width: { xs: 40, sm: 48 },
+                height: { xs: 40, sm: 48 },
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 42,
-                height: 42,
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #14b8a6 0%, #6366f1 100%)',
+                boxShadow: '0 8px 24px rgba(139, 92, 246, 0.5)',
               }}
             >
-              <Code sx={{ fontSize: 28, color: 'white' }} />
+              <Code sx={{ fontSize: { xs: 24, sm: 28 }, color: 'white' }} />
             </Box>
             <Box>
               <Typography
                 variant="h6"
                 sx={{
                   fontWeight: 900,
-                  background: 'linear-gradient(135deg, #0f766e 0%, #6366f1 100%)',
+                  fontSize: { xs: '1.1rem', sm: '1.3rem' },
+                  background: 'linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
                   letterSpacing: '-0.5px',
                 }}
               >
                 VETTCODE
               </Typography>
               <Chip
-                label="Sellers"
+                label="SELLERS"
                 size="small"
                 sx={{
-                  height: 18,
-                  fontSize: '0.65rem',
-                  fontWeight: 800,
+                  height: 16,
+                  fontSize: '0.6rem',
+                  fontWeight: 900,
                   bgcolor: '#fcd34d',
                   color: '#0f766e',
                   '& .MuiChip-label': { px: 1 },
@@ -242,13 +228,14 @@ const Home = () => {
                   key={item}
                   href={`#${item.toLowerCase()}`}
                   sx={{
-                    color: 'text.primary',
-                    fontWeight: 600,
+                    color: 'rgba(255,255,255,0.8)',
+                    fontWeight: 700,
                     textTransform: 'none',
-                    px: 2,
+                    px: 2.5,
+                    fontSize: '0.95rem',
                     '&:hover': {
-                      bgcolor: 'rgba(20, 184, 166, 0.08)',
-                      color: '#0f766e',
+                      bgcolor: 'rgba(139, 92, 246, 0.15)',
+                      color: '#a78bfa',
                     },
                   }}
                 >
@@ -258,19 +245,20 @@ const Home = () => {
             </Box>
           )}
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 2 }}>
             <Button
               variant="outlined"
-              onClick={handleLogin}
+              onClick={() => navigate('/login')}
               sx={{
-                borderColor: '#14b8a6',
-                color: '#0f766e',
+                borderColor: '#8b5cf6',
+                color: '#a78bfa',
                 fontWeight: 700,
                 textTransform: 'none',
                 borderWidth: 2,
+                px: 3,
                 '&:hover': {
-                  borderColor: '#0f766e',
-                  bgcolor: 'rgba(15, 118, 110, 0.04)',
+                  borderColor: '#a78bfa',
+                  bgcolor: 'rgba(139, 92, 246, 0.1)',
                   borderWidth: 2,
                 },
               }}
@@ -279,17 +267,20 @@ const Home = () => {
             </Button>
             <Button
               variant="contained"
-              onClick={handleGetStarted}
+              onClick={() => navigate('/signup')}
               sx={{
-                background: 'linear-gradient(135deg, #14b8a6 0%, #6366f1 100%)',
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
                 color: 'white',
                 fontWeight: 700,
                 textTransform: 'none',
-                boxShadow: '0 4px 14px rgba(20, 184, 166, 0.3)',
+                px: 3,
+                boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #0f766e 0%, #5b21b6 100%)',
-                  boxShadow: '0 6px 20px rgba(20, 184, 166, 0.4)',
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)',
+                  boxShadow: '0 6px 20px rgba(139, 92, 246, 0.5)',
+                  transform: 'translateY(-2px)',
                 },
+                transition: 'all 0.3s ease',
               }}
             >
               Get Started
@@ -300,7 +291,7 @@ const Home = () => {
             <IconButton
               edge="end"
               onClick={() => setMobileMenuOpen(true)}
-              sx={{ ml: 2, color: '#0f766e' }}
+              sx={{ ml: 2, color: '#a78bfa' }}
             >
               <MenuIcon />
             </IconButton>
@@ -308,15 +299,23 @@ const Home = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Mobile Menu */}
+      {/* Mobile Drawer */}
       <Drawer
         anchor="right"
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
+        PaperProps={{
+          sx: {
+            width: 280,
+            bgcolor: 'rgba(15, 23, 42, 0.98)',
+            backdropFilter: 'blur(20px)',
+            borderLeft: '1px solid rgba(139, 92, 246, 0.2)',
+          },
+        }}
       >
-        <Box sx={{ width: 250, p: 2 }}>
+        <Box sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <IconButton onClick={() => setMobileMenuOpen(false)}>
+            <IconButton onClick={() => setMobileMenuOpen(false)} sx={{ color: '#a78bfa' }}>
               <Close />
             </IconButton>
           </Box>
@@ -325,8 +324,16 @@ const Home = () => {
               <ListItem key={item} disablePadding>
                 <ListItemButton
                   onClick={() => {
-                    setMobileMenuOpen(false)
-                    document.getElementById(item.toLowerCase())?.scrollIntoView({ behavior: 'smooth' })
+                    setMobileMenuOpen(false);
+                    document.getElementById(item.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  sx={{
+                    color: 'rgba(255,255,255,0.8)',
+                    fontWeight: 600,
+                    '&:hover': {
+                      bgcolor: 'rgba(139, 92, 246, 0.15)',
+                      color: '#a78bfa',
+                    },
                   }}
                 >
                   <ListItemText primary={item} />
@@ -334,43 +341,173 @@ const Home = () => {
               </ListItem>
             ))}
           </List>
+          <Box sx={{ mt: 3, px: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={() => navigate('/login')}
+              sx={{
+                borderColor: '#8b5cf6',
+                color: '#a78bfa',
+                fontWeight: 700,
+                textTransform: 'none',
+                borderWidth: 2,
+                '&:hover': {
+                  borderColor: '#a78bfa',
+                  bgcolor: 'rgba(139, 92, 246, 0.1)',
+                  borderWidth: 2,
+                },
+              }}
+            >
+              Login
+            </Button>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={() => navigate('/signup')}
+              sx={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
+                color: 'white',
+                fontWeight: 700,
+                textTransform: 'none',
+                boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)',
+              }}
+            >
+              Get Started
+            </Button>
+          </Box>
         </Box>
       </Drawer>
 
-      {/* Hero Section - Professional Dark Theme */}
+      {/* Hero Section */}
       <Box
         sx={{
           position: 'relative',
-          background: 'linear-gradient(135deg, #0a1628 0%, #1e293b 50%, #0f172a 100%)',
-          color: 'white',
-          py: { xs: 10, md: 15 },
+          pt: { xs: 12, sm: 16, md: 20 },
+          pb: { xs: 8, sm: 12, md: 16 },
           overflow: 'hidden',
         }}
       >
-        {/* Subtle Grid Pattern */}
+        {/* Animated Background */}
         <Box
           sx={{
             position: 'absolute',
             inset: 0,
-            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)',
-            backgroundSize: '40px 40px',
-            opacity: 0.3,
+            overflow: 'hidden',
+            pointerEvents: 'none',
           }}
-        />
+        >
+          {/* Grid Pattern */}
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage:
+                'linear-gradient(rgba(139,92,246,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.03) 1px, transparent 1px)',
+              backgroundSize: '50px 50px',
+            }}
+          />
+
+          {/* Floating Code Snippets */}
+          <Box
+            className="animate-float"
+            sx={{
+              position: 'absolute',
+              top: '10%',
+              left: '5%',
+              color: 'rgba(139, 92, 246, 0.2)',
+              fontFamily: 'monospace',
+              fontSize: '0.75rem',
+              display: { xs: 'none', md: 'block' },
+            }}
+          >
+            <pre>{`const sell = () => {\n  return <Revenue />;\n}`}</pre>
+          </Box>
+          <Box
+            className="animate-float-delayed"
+            sx={{
+              position: 'absolute',
+              top: '25%',
+              right: '10%',
+              color: 'rgba(59, 130, 246, 0.2)',
+              fontFamily: 'monospace',
+              fontSize: '0.75rem',
+              display: { xs: 'none', md: 'block' },
+            }}
+          >
+            <pre>{`function upload() {\n  return success;\n}`}</pre>
+          </Box>
+          <Box
+            className="animate-float-slow"
+            sx={{
+              position: 'absolute',
+              bottom: '30%',
+              left: '25%',
+              color: 'rgba(20, 184, 166, 0.2)',
+              fontFamily: 'monospace',
+              fontSize: '0.75rem',
+              display: { xs: 'none', lg: 'block' },
+            }}
+          >
+            <pre>{`import { earnings } from 'vettcode'`}</pre>
+          </Box>
+
+          {/* Gradient Orbs */}
+          <Box
+            className="animate-pulse-slow"
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 384,
+              height: 384,
+              bgcolor: 'rgba(139, 92, 246, 0.1)',
+              borderRadius: '50%',
+              filter: 'blur(80px)',
+            }}
+          />
+          <Box
+            className="animate-pulse-slower"
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: 384,
+              height: 384,
+              bgcolor: 'rgba(59, 130, 246, 0.1)',
+              borderRadius: '50%',
+              filter: 'blur(80px)',
+            }}
+          />
+          <Box
+            className="animate-pulse-slow"
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 384,
+              height: 384,
+              bgcolor: 'rgba(20, 184, 166, 0.1)',
+              borderRadius: '50%',
+              filter: 'blur(80px)',
+            }}
+          />
+        </Box>
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={6} alignItems="center">
+          <Grid container spacing={{ xs: 4, md: 8 }} alignItems="center">
             <Grid item xs={12} md={6}>
               <Fade in timeout={800}>
-                <Box>
+                <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
                   <Chip
                     icon={<Bolt sx={{ fontSize: 18 }} />}
                     label="Trusted by 10,000+ Sellers"
                     sx={{
-                      bgcolor: 'rgba(255, 255, 255, 0.2)',
-                      color: 'white',
+                      bgcolor: 'rgba(139, 92, 246, 0.2)',
+                      color: '#a78bfa',
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      border: '1px solid rgba(139, 92, 246, 0.3)',
                       mb: 3,
                       fontWeight: 700,
                     }}
@@ -380,12 +517,21 @@ const Home = () => {
                     sx={{
                       fontWeight: 900,
                       mb: 3,
-                      fontSize: { xs: '2.5rem', md: '4rem' },
+                      fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' },
                       lineHeight: 1.1,
+                      color: 'white',
                     }}
                   >
                     Turn Your Code Into{' '}
-                    <Box component="span" sx={{ display: 'block', color: '#14b8a6' }}>
+                    <Box
+                      component="span"
+                      sx={{
+                        display: 'block',
+                        background: 'linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%, #5eead4 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                      }}
+                    >
                       Revenue
                     </Box>
                   </Typography>
@@ -393,7 +539,7 @@ const Home = () => {
                     variant="h5"
                     sx={{
                       mb: 5,
-                      opacity: 0.95,
+                      color: 'rgba(255,255,255,0.8)',
                       lineHeight: 1.6,
                       fontWeight: 500,
                       fontSize: { xs: '1.1rem', md: '1.3rem' },
@@ -402,26 +548,34 @@ const Home = () => {
                     Join VETTCODE's marketplace and sell your applications to thousands of developers
                     and businesses worldwide. Start earning today.
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 5 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      gap: 3,
+                      justifyContent: { xs: 'center', md: 'flex-start' },
+                      mb: 5,
+                    }}
+                  >
                     <Button
                       variant="contained"
                       size="large"
-                      onClick={handleGetStarted}
+                      onClick={() => navigate('/signup')}
                       endIcon={<Rocket />}
                       sx={{
-                        bgcolor: '#fcd34d',
-                        color: '#0f766e',
+                        background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
+                        color: 'white',
                         px: 5,
                         py: 2,
                         fontSize: '1.2rem',
                         fontWeight: 800,
                         borderRadius: 3,
                         textTransform: 'none',
-                        boxShadow: '0 8px 32px rgba(252, 211, 77, 0.4)',
+                        boxShadow: '0 8px 32px rgba(139, 92, 246, 0.4)',
                         '&:hover': {
-                          bgcolor: '#f59e0b',
+                          background: 'linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)',
                           transform: 'translateY(-2px)',
-                          boxShadow: '0 12px 40px rgba(252, 211, 77, 0.5)',
+                          boxShadow: '0 12px 40px rgba(139, 92, 246, 0.5)',
                         },
                         transition: 'all 0.3s ease',
                       }}
@@ -431,7 +585,7 @@ const Home = () => {
                     <Button
                       variant="outlined"
                       size="large"
-                      onClick={handleLogin}
+                      onClick={() => navigate('/login')}
                       sx={{
                         borderColor: 'white',
                         color: 'white',
@@ -443,8 +597,8 @@ const Home = () => {
                         borderWidth: 2,
                         textTransform: 'none',
                         '&:hover': {
-                          borderColor: '#fcd34d',
-                          bgcolor: 'rgba(252, 211, 77, 0.1)',
+                          borderColor: '#a78bfa',
+                          bgcolor: 'rgba(167, 139, 250, 0.1)',
                           borderWidth: 2,
                         },
                       }}
@@ -455,15 +609,15 @@ const Home = () => {
                   <Grid container spacing={3}>
                     {[
                       { icon: <CheckCircle />, text: 'Zero Setup Fees' },
-                      { icon: <CheckCircle />, text: 'Instant Payouts' },
-                      { icon: <CheckCircle />, text: '24/7 Support' },
+                      { icon: <Bolt />, text: 'Instant Payouts' },
+                      { icon: <Security />, text: '24/7 Support' },
                     ].map((item, index) => (
                       <Grid item xs={12} sm={4} key={index}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, justifyContent: { xs: 'center', md: 'flex-start' } }}>
                           <Box sx={{ color: '#14b8a6', display: 'flex' }}>
                             {item.icon}
                           </Box>
-                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
                             {item.text}
                           </Typography>
                         </Box>
@@ -484,7 +638,6 @@ const Home = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  {/* Professional Dashboard Preview */}
                   <Box
                     sx={{
                       width: '100%',
@@ -503,13 +656,12 @@ const Home = () => {
                       overflow: 'hidden',
                     }}
                   >
-                    {/* Icon Grid */}
                     <Grid container spacing={3} sx={{ position: 'relative', zIndex: 1 }}>
                       {[
-                        { icon: <Code sx={{ fontSize: 50 }} />, label: 'Upload' },
-                        { icon: <Analytics sx={{ fontSize: 50 }} />, label: 'Track' },
-                        { icon: <AttachMoney sx={{ fontSize: 50 }} />, label: 'Earn' },
-                        { icon: <TrendingUp sx={{ fontSize: 50 }} />, label: 'Grow' },
+                        { icon: <Code sx={{ fontSize: 50 }} />, label: 'Upload', gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' },
+                        { icon: <Analytics sx={{ fontSize: 50 }} />, label: 'Track', gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' },
+                        { icon: <AttachMoney sx={{ fontSize: 50 }} />, label: 'Earn', gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' },
+                        { icon: <TrendingUp sx={{ fontSize: 50 }} />, label: 'Grow', gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' },
                       ].map((item, index) => (
                         <Grid item xs={6} key={index}>
                           <Box sx={{ textAlign: 'center' }}>
@@ -518,10 +670,14 @@ const Home = () => {
                                 display: 'inline-flex',
                                 p: 3,
                                 borderRadius: 3,
-                                bgcolor: 'rgba(20, 184, 166, 0.15)',
-                                color: '#14b8a6',
+                                background: item.gradient,
+                                color: 'white',
                                 mb: 2,
-                                border: '1px solid rgba(20, 184, 166, 0.2)',
+                                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                                transition: 'transform 0.3s ease',
+                                '&:hover': {
+                                  transform: 'scale(1.1)',
+                                },
                               }}
                             >
                               {item.icon}
@@ -541,8 +697,8 @@ const Home = () => {
         </Container>
       </Box>
 
-      {/* Stats Section - Animated */}
-      <Container maxWidth="lg" sx={{ py: 10 }}>
+      {/* Stats Section */}
+      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
         <Grid container spacing={4}>
           {stats.map((stat, index) => (
             <Grid item xs={6} md={3} key={index}>
@@ -552,31 +708,13 @@ const Home = () => {
                     textAlign: 'center',
                     py: 4,
                     px: 2,
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%)',
-                    border: '2px solid transparent',
-                    backgroundClip: 'padding-box',
-                    position: 'relative',
+                    background: `linear-gradient(135deg, ${stat.color}15 0%, ${stat.color}05 100%)`,
+                    border: `2px solid ${stat.color}30`,
+                    borderRadius: 3,
                     transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                     '&:hover': {
                       transform: 'translateY(-12px) scale(1.02)',
-                      boxShadow: '0 20px 40px rgba(20, 184, 166, 0.2)',
-                      '&::before': {
-                        opacity: 1,
-                      },
-                    },
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      inset: 0,
-                      borderRadius: 'inherit',
-                      padding: '2px',
-                      background: 'linear-gradient(135deg, #14b8a6, #6366f1)',
-                      WebkitMask:
-                        'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                      WebkitMaskComposite: 'xor',
-                      maskComposite: 'exclude',
-                      opacity: 0,
-                      transition: 'opacity 0.4s',
+                      boxShadow: `0 20px 40px ${stat.color}40`,
                     },
                   }}
                 >
@@ -586,8 +724,8 @@ const Home = () => {
                         display: 'inline-flex',
                         p: 2.5,
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #14b8a6 0%, #6366f1 100%)',
-                        color: 'white',
+                        bgcolor: `${stat.color}20`,
+                        color: stat.color,
                         mb: 2,
                       }}
                     >
@@ -597,16 +735,13 @@ const Home = () => {
                       variant="h3"
                       sx={{
                         fontWeight: 900,
-                        background: 'linear-gradient(135deg, #0f766e 0%, #6366f1 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
+                        color: stat.color,
                         mb: 1,
                       }}
                     >
                       {stat.value}
                     </Typography>
-                    <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                    <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
                       {stat.label}
                     </Typography>
                   </CardContent>
@@ -617,16 +752,16 @@ const Home = () => {
         </Grid>
       </Container>
 
-      {/* Features Section - Redesigned */}
-      <Box id="features" sx={{ bgcolor: '#f8fafc', py: 12 }}>
+      {/* Features Section */}
+      <Box id="features" sx={{ py: { xs: 8, md: 12 } }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 10 }}>
             <Chip
               icon={<AutoAwesome sx={{ fontSize: 18 }} />}
               label="POWERFUL FEATURES"
               sx={{
-                bgcolor: 'rgba(20, 184, 166, 0.1)',
-                color: '#0f766e',
+                bgcolor: 'rgba(139, 92, 246, 0.2)',
+                color: '#a78bfa',
                 fontWeight: 800,
                 mb: 3,
                 px: 2,
@@ -637,15 +772,15 @@ const Home = () => {
               sx={{
                 fontWeight: 900,
                 mb: 2,
-                background: 'linear-gradient(135deg, #0f766e 0%, #6366f1 100%)',
+                fontSize: { xs: '2rem', md: '3rem' },
+                background: 'linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
               }}
             >
               Everything You Need to Succeed
             </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+            <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.6)', maxWidth: 600, mx: 'auto' }}>
               Powerful tools designed specifically for application sellers
             </Typography>
           </Box>
@@ -658,34 +793,18 @@ const Home = () => {
                     sx={{
                       height: '100%',
                       p: 4,
-                      background: 'white',
-                      border: '2px solid transparent',
-                      position: 'relative',
-                      overflow: 'hidden',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      backdropFilter: 'blur(10px)',
+                      border: '2px solid rgba(139, 92, 246, 0.2)',
+                      borderRadius: 3,
                       transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                       '&:hover': {
                         transform: 'translateY(-12px) scale(1.02)',
-                        boxShadow: '0 20px 50px rgba(99, 102, 241, 0.15)',
-                        '&::before': {
-                          opacity: 1,
-                        },
+                        boxShadow: '0 20px 50px rgba(139, 92, 246, 0.3)',
+                        borderColor: 'rgba(139, 92, 246, 0.4)',
                         '& .feature-icon': {
                           transform: 'scale(1.1) rotate(5deg)',
                         },
-                      },
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: 'inherit',
-                        padding: '2px',
-                        background: 'linear-gradient(135deg, #14b8a6, #6366f1)',
-                        WebkitMask:
-                          'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                        WebkitMaskComposite: 'xor',
-                        maskComposite: 'exclude',
-                        opacity: 0,
-                        transition: 'opacity 0.4s',
                       },
                     }}
                   >
@@ -696,7 +815,7 @@ const Home = () => {
                           display: 'inline-flex',
                           p: 2.5,
                           borderRadius: 3,
-                          background: 'linear-gradient(135deg, #14b8a6 0%, #6366f1 100%)',
+                          background: feature.gradient,
                           color: 'white',
                           mb: 3,
                           transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -704,10 +823,10 @@ const Home = () => {
                       >
                         {feature.icon}
                       </Box>
-                      <Typography variant="h5" sx={{ fontWeight: 800, mb: 2, color: '#0f766e' }}>
+                      <Typography variant="h5" sx={{ fontWeight: 800, mb: 2, color: 'white' }}>
                         {feature.title}
                       </Typography>
-                      <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+                      <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
                         {feature.description}
                       </Typography>
                     </CardContent>
@@ -720,7 +839,7 @@ const Home = () => {
       </Box>
 
       {/* Benefits Section */}
-      <Container id="benefits" maxWidth="lg" sx={{ py: 12 }}>
+      <Container id="benefits" maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
         <Grid container spacing={8} alignItems="center">
           <Grid item xs={12} md={6}>
             <Fade in timeout={1000}>
@@ -729,8 +848,8 @@ const Home = () => {
                   icon={<Verified sx={{ fontSize: 18 }} />}
                   label="WHY VETTCODE"
                   sx={{
-                    bgcolor: 'rgba(99, 102, 241, 0.1)',
-                    color: '#6366f1',
+                    bgcolor: 'rgba(59, 130, 246, 0.2)',
+                    color: '#60a5fa',
                     fontWeight: 800,
                     mb: 3,
                     px: 2,
@@ -741,15 +860,15 @@ const Home = () => {
                   sx={{
                     fontWeight: 900,
                     mb: 3,
-                    background: 'linear-gradient(135deg, #0f766e 0%, #6366f1 100%)',
+                    fontSize: { xs: '2rem', md: '3rem' },
+                    background: 'linear-gradient(135deg, #60a5fa 0%, #5eead4 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
                   }}
                 >
                   Why Sell on VETTCODE?
                 </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 5 }}>
+                <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.6)', mb: 5 }}>
                   Join thousands of successful sellers who trust VETTCODE to grow their business
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -764,13 +883,13 @@ const Home = () => {
                             width: 32,
                             height: 32,
                             borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #14b8a6 0%, #6366f1 100%)',
+                            background: 'linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%)',
                             flexShrink: 0,
                           }}
                         >
                           <CheckCircle sx={{ color: 'white', fontSize: 20 }} />
                         </Box>
-                        <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1.05rem' }}>
+                        <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1.05rem', color: 'rgba(255,255,255,0.9)' }}>
                           {benefit}
                         </Typography>
                       </Box>
@@ -785,17 +904,16 @@ const Home = () => {
               <Box
                 sx={{
                   height: 500,
-                  background: 'linear-gradient(135deg, #0a1628 0%, #1e293b 100%)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  backdropFilter: 'blur(10px)',
                   borderRadius: 6,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  position: 'relative',
-                  overflow: 'hidden',
                   border: '1px solid rgba(20, 184, 166, 0.2)',
                 }}
               >
-                <TrendingUp sx={{ fontSize: 180, color: '#14b8a6', opacity: 0.2 }} />
+                <TrendingUp sx={{ fontSize: 180, color: '#14b8a6', opacity: 0.3 }} />
               </Box>
             </Zoom>
           </Grid>
@@ -803,15 +921,15 @@ const Home = () => {
       </Container>
 
       {/* Pricing Section */}
-      <Box id="pricing" sx={{ bgcolor: '#f8fafc', py: 12 }}>
+      <Box id="pricing" sx={{ py: { xs: 8, md: 12 } }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 10 }}>
             <Chip
-              icon={<AttachMoney sx={{ fontSize: 18 }} />}
+              icon={<LocalOffer sx={{ fontSize: 18 }} />}
               label="PRICING PLANS"
               sx={{
                 bgcolor: 'rgba(252, 211, 77, 0.2)',
-                color: '#d97706',
+                color: '#fcd34d',
                 fontWeight: 800,
                 mb: 3,
                 px: 2,
@@ -822,15 +940,15 @@ const Home = () => {
               sx={{
                 fontWeight: 900,
                 mb: 2,
-                background: 'linear-gradient(135deg, #0f766e 0%, #6366f1 100%)',
+                fontSize: { xs: '2rem', md: '3rem' },
+                background: 'linear-gradient(135deg, #fcd34d 0%, #f97316 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
               }}
             >
               Simple, Transparent Pricing
             </Typography>
-            <Typography variant="h6" color="text.secondary">
+            <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.6)' }}>
               Choose the plan that fits your needs
             </Typography>
           </Box>
@@ -843,18 +961,19 @@ const Home = () => {
                     sx={{
                       height: '100%',
                       position: 'relative',
-                      border: plan.highlighted ? '3px solid' : '2px solid',
-                      borderColor: plan.highlighted ? '#6366f1' : 'rgba(0,0,0,0.08)',
+                      border: plan.highlighted ? '3px solid #8b5cf6' : '2px solid rgba(139, 92, 246, 0.2)',
+                      borderRadius: 3,
                       transform: plan.highlighted ? 'scale(1.05)' : 'scale(1)',
                       transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                       background: plan.highlighted
-                        ? 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)'
-                        : 'white',
+                        ? 'rgba(139, 92, 246, 0.1)'
+                        : 'rgba(255, 255, 255, 0.05)',
+                      backdropFilter: 'blur(10px)',
                       '&:hover': {
                         transform: plan.highlighted ? 'scale(1.08)' : 'scale(1.03)',
                         boxShadow: plan.highlighted
-                          ? '0 24px 60px rgba(99, 102, 241, 0.25)'
-                          : '0 12px 32px rgba(0,0,0,0.12)',
+                          ? '0 24px 60px rgba(139, 92, 246, 0.4)'
+                          : '0 12px 32px rgba(139, 92, 246, 0.2)',
                       },
                     }}
                   >
@@ -867,7 +986,7 @@ const Home = () => {
                           left: '50%',
                           transform: 'translateX(-50%)',
                           fontWeight: 900,
-                          bgcolor: '#6366f1',
+                          bgcolor: '#8b5cf6',
                           color: 'white',
                           fontSize: '0.75rem',
                           height: 28,
@@ -875,10 +994,10 @@ const Home = () => {
                       />
                     )}
                     <CardContent sx={{ p: 5, textAlign: 'center' }}>
-                      <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: '#0f766e' }}>
+                      <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: 'white' }}>
                         {plan.name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 4 }}>
                         {plan.description}
                       </Typography>
                       <Typography
@@ -886,24 +1005,23 @@ const Home = () => {
                         sx={{
                           fontWeight: 900,
                           mb: 1,
-                          background: 'linear-gradient(135deg, #0f766e 0%, #6366f1 100%)',
+                          background: 'linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%)',
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text',
                         }}
                       >
                         {plan.price}
                       </Typography>
-                      {plan.price !== 'Custom' && plan.price !== 'Free' && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-                          per month
+                      {plan.period && (
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 4 }}>
+                          {plan.period}
                         </Typography>
                       )}
                       <Button
                         fullWidth
                         variant={plan.highlighted ? 'contained' : 'outlined'}
                         size="large"
-                        onClick={handleGetStarted}
+                        onClick={() => navigate('/signup')}
                         sx={{
                           mb: 4,
                           py: 1.5,
@@ -912,25 +1030,25 @@ const Home = () => {
                           fontSize: '1.05rem',
                           ...(plan.highlighted
                             ? {
-                                background: 'linear-gradient(135deg, #14b8a6 0%, #6366f1 100%)',
+                                background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
                                 color: 'white',
                                 '&:hover': {
-                                  background: 'linear-gradient(135deg, #0f766e 0%, #5b21b6 100%)',
+                                  background: 'linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)',
                                 },
                               }
                             : {
-                                borderColor: '#14b8a6',
-                                color: '#0f766e',
+                                borderColor: '#8b5cf6',
+                                color: '#a78bfa',
                                 borderWidth: 2,
                                 '&:hover': {
-                                  borderColor: '#0f766e',
-                                  bgcolor: 'rgba(15, 118, 110, 0.04)',
+                                  borderColor: '#a78bfa',
+                                  bgcolor: 'rgba(139, 92, 246, 0.1)',
                                   borderWidth: 2,
                                 },
                               }),
                         }}
                       >
-                        {plan.cta}
+                        {plan.highlighted ? 'Start Free Trial' : 'Get Started'}
                       </Button>
                       <Box sx={{ textAlign: 'left' }}>
                         {plan.features.map((feature, idx) => (
@@ -940,11 +1058,11 @@ const Home = () => {
                           >
                             <CheckCircle
                               sx={{
-                                color: plan.highlighted ? '#6366f1' : '#14b8a6',
+                                color: plan.highlighted ? '#8b5cf6' : '#14b8a6',
                                 fontSize: 20,
                               }}
                             />
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>
                               {feature}
                             </Typography>
                           </Box>
@@ -960,38 +1078,39 @@ const Home = () => {
       </Box>
 
       {/* CTA Section */}
-      <Box
-        sx={{
-          background: 'linear-gradient(135deg, #0a1628 0%, #1e293b 100%)',
-          color: 'white',
-          py: 12,
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <Container maxWidth="md" sx={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+      <Box sx={{ py: { xs: 8, md: 12 } }}>
+        <Container maxWidth="md" sx={{ textAlign: 'center' }}>
           <Fade in timeout={1000}>
-            <Box>
+            <Box
+              sx={{
+                background: 'rgba(139, 92, 246, 0.1)',
+                backdropFilter: 'blur(10px)',
+                border: '2px solid rgba(139, 92, 246, 0.3)',
+                borderRadius: 6,
+                p: { xs: 6, md: 10 },
+              }}
+            >
               <Typography
                 variant="h2"
                 sx={{
                   fontWeight: 900,
                   mb: 3,
                   fontSize: { xs: '2rem', md: '3rem' },
+                  color: 'white',
                 }}
               >
                 Ready to Start Selling?
               </Typography>
-              <Typography variant="h5" sx={{ mb: 5, opacity: 0.9, fontWeight: 500 }}>
+              <Typography variant="h5" sx={{ mb: 5, color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
                 Join VETTCODE today and reach thousands of potential buyers worldwide
               </Typography>
               <Button
                 variant="contained"
                 size="large"
-                onClick={handleGetStarted}
+                onClick={() => navigate('/signup')}
                 endIcon={<ArrowForward />}
                 sx={{
-                  bgcolor: '#14b8a6',
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
                   color: 'white',
                   px: 6,
                   py: 2.5,
@@ -999,11 +1118,11 @@ const Home = () => {
                   fontWeight: 900,
                   borderRadius: 3,
                   textTransform: 'none',
-                  boxShadow: '0 8px 24px rgba(20, 184, 166, 0.3)',
+                  boxShadow: '0 8px 24px rgba(139, 92, 246, 0.4)',
                   '&:hover': {
-                    bgcolor: '#0f766e',
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)',
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 12px 32px rgba(20, 184, 166, 0.4)',
+                    boxShadow: '0 12px 32px rgba(139, 92, 246, 0.5)',
                   },
                   transition: 'all 0.3s ease',
                 }}
@@ -1016,143 +1135,84 @@ const Home = () => {
       </Box>
 
       {/* Footer */}
-      <Box sx={{ bgcolor: '#0f172a', color: 'white', py: 8 }}>
+      <Box sx={{ bgcolor: '#0f172a', borderTop: '1px solid rgba(139, 92, 246, 0.2)', py: 8 }}>
         <Container maxWidth="lg">
           <Grid container spacing={6}>
             <Grid item xs={12} md={4}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                     width: 42,
                     height: 42,
                     borderRadius: 2,
-                    background: 'linear-gradient(135deg, #14b8a6 0%, #6366f1 100%)',
+                    background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
                   <Code sx={{ fontSize: 28, color: 'white' }} />
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                <Typography variant="h6" sx={{ fontWeight: 900, color: 'white' }}>
                   VETTCODE
                 </Typography>
               </Box>
-              <Typography variant="body2" sx={{ opacity: 0.8, lineHeight: 1.7 }}>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
                 The premier marketplace for buying and selling verified, production-ready applications.
                 Built by developers, trusted by founders.
               </Typography>
             </Grid>
             <Grid item xs={12} md={8}>
               <Grid container spacing={4}>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, color: '#fcd34d' }}>
-                    Product
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    {['Features', 'Pricing', 'Benefits'].map((item) => (
-                      <Button
-                        key={item}
-                        href={`#${item.toLowerCase()}`}
-                        sx={{
-                          color: 'rgba(255,255,255,0.7)',
-                          justifyContent: 'flex-start',
-                          p: 0,
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          '&:hover': { color: 'white' },
-                        }}
-                      >
-                        {item}
-                      </Button>
-                    ))}
-                  </Box>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, color: '#fcd34d' }}>
-                    Company
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    {['About', 'Blog', 'Careers'].map((item) => (
-                      <Button
-                        key={item}
-                        sx={{
-                          color: 'rgba(255,255,255,0.7)',
-                          justifyContent: 'flex-start',
-                          p: 0,
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          '&:hover': { color: 'white' },
-                        }}
-                      >
-                        {item}
-                      </Button>
-                    ))}
-                  </Box>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, color: '#fcd34d' }}>
-                    Support
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    {['Help Center', 'Contact', 'Status'].map((item) => (
-                      <Button
-                        key={item}
-                        sx={{
-                          color: 'rgba(255,255,255,0.7)',
-                          justifyContent: 'flex-start',
-                          p: 0,
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          '&:hover': { color: 'white' },
-                        }}
-                      >
-                        {item}
-                      </Button>
-                    ))}
-                  </Box>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, color: '#fcd34d' }}>
-                    Legal
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    {['Privacy', 'Terms', 'License'].map((item) => (
-                      <Button
-                        key={item}
-                        sx={{
-                          color: 'rgba(255,255,255,0.7)',
-                          justifyContent: 'flex-start',
-                          p: 0,
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          '&:hover': { color: 'white' },
-                        }}
-                      >
-                        {item}
-                      </Button>
-                    ))}
-                  </Box>
-                </Grid>
+                {[
+                  { title: 'Product', links: ['Features', 'Pricing', 'Benefits'] },
+                  { title: 'Company', links: ['About', 'Blog', 'Careers'] },
+                  { title: 'Support', links: ['Help Center', 'Contact', 'Status'] },
+                  { title: 'Legal', links: ['Privacy', 'Terms', 'License'] },
+                ].map((section, index) => (
+                  <Grid item xs={6} md={3} key={index}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, color: '#fcd34d' }}>
+                      {section.title}
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                      {section.links.map((link, idx) => (
+                        <Button
+                          key={idx}
+                          href={`#${link.toLowerCase()}`}
+                          sx={{
+                            color: 'rgba(255,255,255,0.6)',
+                            justifyContent: 'flex-start',
+                            p: 0,
+                            textTransform: 'none',
+                            fontWeight: 500,
+                            '&:hover': { color: 'white' },
+                          }}
+                        >
+                          {link}
+                        </Button>
+                      ))}
+                    </Box>
+                  </Grid>
+                ))}
               </Grid>
             </Grid>
           </Grid>
           <Box
             sx={{
-              borderTop: '1px solid rgba(255,255,255,0.1)',
+              borderTop: '1px solid rgba(139, 92, 246, 0.2)',
               mt: 8,
               pt: 6,
               textAlign: 'center',
             }}
           >
-            <Typography variant="body2" sx={{ opacity: 0.6 }}>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
               © 2026 VETTCODE. All rights reserved. Built with ❤️ for developers.
             </Typography>
           </Box>
         </Container>
       </Box>
     </Box>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
