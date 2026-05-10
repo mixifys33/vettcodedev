@@ -11,8 +11,8 @@ export const uploadToImageKit = async (file, folder = 'applications') => {
     // Convert file to base64
     const base64 = await fileToBase64(file)
     
-    // Send to backend for ImageKit upload
-    const response = await api.post('/upload/imagekit', {
+    // Send to backend for ImageKit upload using existing endpoint
+    const response = await api.post('/imagekit/upload', {
       file: base64,
       fileName: file.name,
       folder: folder,
@@ -23,7 +23,7 @@ export const uploadToImageKit = async (file, folder = 'applications') => {
         url: response.data.url,
         fileId: response.data.fileId,
         thumbnailUrl: response.data.thumbnailUrl,
-        fileName: response.data.fileName,
+        fileName: response.data.name,
       }
     } else {
       throw new Error(response.data.message || 'Upload failed')
