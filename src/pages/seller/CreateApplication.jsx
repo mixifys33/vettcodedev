@@ -241,7 +241,7 @@ const CreateApplication = () => {
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: 'white', fontWeight: 600 }}>
                 Detailed Description
               </Typography>
               <Controller
@@ -370,7 +370,7 @@ const CreateApplication = () => {
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: 'white', fontWeight: 600 }}>
                 Technology Stack
               </Typography>
               <Autocomplete
@@ -390,7 +390,7 @@ const CreateApplication = () => {
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: 'white', fontWeight: 600 }}>
                 Supported Platforms
               </Typography>
               <Autocomplete
@@ -410,7 +410,7 @@ const CreateApplication = () => {
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: 'white', fontWeight: 600 }}>
                 Dependencies
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -444,7 +444,7 @@ const CreateApplication = () => {
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: 'white', fontWeight: 600 }}>
                 App Icon
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -463,7 +463,7 @@ const CreateApplication = () => {
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: 'white', fontWeight: 600 }}>
                 Screenshots (Max 5)
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
@@ -549,58 +549,85 @@ const CreateApplication = () => {
       case 3:
         return (
           <Box>
-            <Alert severity="info" sx={{ mb: 3 }}>
+            <Alert 
+              severity="info" 
+              sx={{ 
+                mb: 3,
+                bgcolor: 'rgba(99, 102, 241, 0.1)',
+                border: '1px solid rgba(99, 102, 241, 0.3)',
+                color: 'white',
+                '& .MuiAlert-icon': {
+                  color: '#6366f1',
+                },
+              }}
+            >
               Please review your application details before submitting. Your application will be
               reviewed by our team before it goes live.
             </Alert>
 
-            <Card variant="outlined" sx={{ mb: 2 }}>
+            <Card 
+              sx={{ 
+                mb: 2,
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 2,
+              }}
+            >
               <CardContent>
-                <Typography variant="h6" sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2, color: 'white', fontWeight: 600 }}>
                   Application Summary
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
                       Name
                     </Typography>
-                    <Typography variant="body2">{watch('appName') || 'N/A'}</Typography>
+                    <Typography variant="body2" sx={{ color: 'white' }}>{watch('appName') || 'N/A'}</Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
                       Category
                     </Typography>
-                    <Typography variant="body2">{watch('appCategory') || 'N/A'}</Typography>
+                    <Typography variant="body2" sx={{ color: 'white' }}>{watch('appCategory') || 'N/A'}</Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
                       Price
                     </Typography>
-                    <Typography variant="body2">
+                    <Typography variant="body2" sx={{ color: 'white' }}>
                       {watch('isFree') ? 'Free' : `${watch('currency')} ${watch('price')}`}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
                       License
                     </Typography>
-                    <Typography variant="body2">{watch('licenseType') || 'N/A'}</Typography>
+                    <Typography variant="body2" sx={{ color: 'white' }}>{watch('licenseType') || 'N/A'}</Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
                       Technologies
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
                       {selectedTech.map((tech) => (
-                        <Chip key={tech} label={tech} size="small" />
+                        <Chip 
+                          key={tech} 
+                          label={tech} 
+                          size="small"
+                          sx={{
+                            bgcolor: 'rgba(99, 102, 241, 0.2)',
+                            color: '#6366f1',
+                            border: '1px solid rgba(99, 102, 241, 0.3)',
+                          }}
+                        />
                       ))}
                     </Box>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
                       Screenshots
                     </Typography>
-                    <Typography variant="body2">{screenshots.length} uploaded</Typography>
+                    <Typography variant="body2" sx={{ color: 'white' }}>{screenshots.length} uploaded</Typography>
                   </Grid>
                 </Grid>
               </CardContent>
@@ -614,28 +641,72 @@ const CreateApplication = () => {
   }
 
   return (
-    <Box>
+    <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Button
           startIcon={<ArrowBack />}
           onClick={() => navigate('/seller/applications')}
-          sx={{ mb: 2 }}
+          sx={{ 
+            mb: 2,
+            color: 'rgba(255,255,255,0.7)',
+            '&:hover': {
+              color: 'white',
+              bgcolor: 'rgba(255,255,255,0.05)',
+            },
+          }}
         >
           Back to Applications
         </Button>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: 'white', mb: 0.5 }}>
           Create New Application
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Fill in the details to list your application
+        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+          Fill in the details to list your application on the marketplace
         </Typography>
       </Box>
 
       {/* Stepper */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Stepper activeStep={activeStep}>
+      <Card
+        sx={{
+          mb: 3,
+          background: 'rgba(255,255,255,0.03)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 2,
+        }}
+      >
+        <CardContent sx={{ p: 3 }}>
+          <Stepper 
+            activeStep={activeStep}
+            sx={{
+              '& .MuiStepLabel-root .Mui-completed': {
+                color: '#10b981',
+              },
+              '& .MuiStepLabel-root .Mui-active': {
+                color: '#6366f1',
+              },
+              '& .MuiStepLabel-label': {
+                color: 'rgba(255,255,255,0.6)',
+              },
+              '& .MuiStepLabel-label.Mui-active': {
+                color: 'white',
+                fontWeight: 600,
+              },
+              '& .MuiStepLabel-label.Mui-completed': {
+                color: 'rgba(255,255,255,0.8)',
+              },
+              '& .MuiStepIcon-root': {
+                color: 'rgba(255,255,255,0.2)',
+              },
+              '& .MuiStepIcon-root.Mui-active': {
+                color: '#6366f1',
+              },
+              '& .MuiStepIcon-root.Mui-completed': {
+                color: '#10b981',
+              },
+            }}
+          >
             {steps.map((label) => (
               <Step key={label}>
                 <StepLabel>{label}</StepLabel>
@@ -646,15 +717,82 @@ const CreateApplication = () => {
       </Card>
 
       {/* Form */}
-      <Card>
-        <CardContent>
+      <Card
+        sx={{
+          background: 'rgba(255,255,255,0.03)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 2,
+        }}
+      >
+        <CardContent sx={{ p: 3 }}>
           <form onSubmit={handleSubmit(onSubmit)}>
-            {renderStepContent()}
+            <Box
+              sx={{
+                '& .MuiTextField-root': {
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'rgba(255,255,255,0.05)',
+                    color: 'white',
+                    '& fieldset': {
+                      borderColor: 'rgba(255,255,255,0.1)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#6366f1',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(255,255,255,0.6)',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#6366f1',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: 'rgba(255,255,255,0.5)',
+                  },
+                },
+                '& .MuiAutocomplete-root': {
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'rgba(255,255,255,0.05)',
+                    color: 'white',
+                  },
+                },
+                '& .MuiChip-root': {
+                  bgcolor: 'rgba(99, 102, 241, 0.2)',
+                  color: '#6366f1',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                },
+                '& .MuiSwitch-root': {
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: '#6366f1',
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    bgcolor: '#6366f1',
+                  },
+                },
+              }}
+            >
+              {renderStepContent()}
+            </Box>
 
             {/* Navigation */}
-            <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
+            <Box sx={{ display: 'flex', gap: 2, mt: 4, pt: 3, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
               {activeStep > 0 && (
-                <Button variant="outlined" onClick={handleBack} startIcon={<ArrowBack />}>
+                <Button 
+                  variant="outlined" 
+                  onClick={handleBack} 
+                  startIcon={<ArrowBack />}
+                  sx={{
+                    borderColor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    '&:hover': {
+                      borderColor: '#6366f1',
+                      bgcolor: 'rgba(99, 102, 241, 0.1)',
+                    },
+                  }}
+                >
                   Back
                 </Button>
               )}
@@ -666,12 +804,35 @@ const CreateApplication = () => {
                 onClick={handleSaveDraft}
                 disabled={savingDraft || loading}
                 startIcon={savingDraft ? <CircularProgress size={16} /> : <Save />}
+                sx={{
+                  borderColor: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  '&:hover': {
+                    borderColor: '#8b5cf6',
+                    bgcolor: 'rgba(139, 92, 246, 0.1)',
+                  },
+                  '&:disabled': {
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    color: 'rgba(255,255,255,0.3)',
+                  },
+                }}
               >
                 {savingDraft ? 'Saving...' : 'Save Draft'}
               </Button>
 
               {activeStep < steps.length - 1 ? (
-                <Button variant="contained" onClick={handleNext} endIcon={<ArrowForward />}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleNext} 
+                  endIcon={<ArrowForward />}
+                  sx={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+                    '&:hover': {
+                      boxShadow: '0 6px 16px rgba(99, 102, 241, 0.5)',
+                    },
+                  }}
+                >
                   Next
                 </Button>
               ) : (
@@ -680,6 +841,17 @@ const CreateApplication = () => {
                   variant="contained"
                   disabled={loading || savingDraft}
                   startIcon={loading ? <CircularProgress size={16} /> : <CheckCircle />}
+                  sx={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+                    '&:hover': {
+                      boxShadow: '0 6px 16px rgba(16, 185, 129, 0.5)',
+                    },
+                    '&:disabled': {
+                      background: 'rgba(255,255,255,0.1)',
+                      color: 'rgba(255,255,255,0.3)',
+                    },
+                  }}
                 >
                   {loading ? 'Creating...' : 'Create Application'}
                 </Button>
