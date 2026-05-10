@@ -101,7 +101,6 @@ const EditApplication = () => {
         setValue('currency', app.currency || 'USD')
         setValue('isFree', app.isFree || false)
         setValue('licenseType', app.licenseType || '')
-        setValue('githubRepo', app.githubRepo || '')
         setValue('liveDemo', app.liveDemo || '')
         setValue('documentationUrl', app.documentationUrl || '')
         setValue('videoDemo', app.videoDemo || '')
@@ -403,7 +402,6 @@ const EditApplication = () => {
         currency: data.currency,
         isFree: data.isFree,
         licenseType: data.licenseType,
-        githubRepo: data.githubRepo,
         liveDemo: data.liveDemo,
         documentationUrl: data.documentationUrl,
         videoDemo: data.videoDemo,
