@@ -155,33 +155,31 @@ const CreateApplication = () => {
 
       // Prepare form data - avoid circular references
       const formData = {
-        appName: data.appName,
-        shortDescription: data.shortDescription,
-        detailedDescription: data.detailedDescription,
-        appCategory: data.appCategory,
-        tags: data.tags,
+        appName: data.appName?.trim() || '',
+        shortDescription: data.shortDescription?.trim() || '',
+        detailedDescription: data.detailedDescription?.trim() || '',
+        appCategory: data.appCategory || '',
+        tags: data.tags?.trim() || '',
         price: data.isFree ? 0 : parseFloat(data.price) || 0,
-        currency: data.currency,
-        isFree: data.isFree,
-        licenseType: data.licenseType,
-        githubRepo: data.githubRepo,
-        liveDemo: data.liveDemo,
-        documentationUrl: data.documentationUrl,
-        videoDemo: data.videoDemo,
-        commercialUse: data.commercialUse,
-        resaleRights: data.resaleRights,
-        supportLevel: data.supportLevel,
-        updateFrequency: data.updateFrequency,
-        warranty: data.warranty,
-        installationSupport: data.installationSupport,
+        currency: data.currency || 'USD',
+        isFree: Boolean(data.isFree),
+        licenseType: data.licenseType || '',
+        githubRepo: data.githubRepo?.trim() || '',
+        liveDemo: data.liveDemo?.trim() || '',
+        documentationUrl: data.documentationUrl?.trim() || '',
+        videoDemo: data.videoDemo?.trim() || '',
+        commercialUse: data.commercialUse || 'Yes',
+        resaleRights: data.resaleRights || 'No',
+        supportLevel: data.supportLevel || 'Community',
+        updateFrequency: data.updateFrequency || 'Active',
+        warranty: data.warranty || '30 days',
+        installationSupport: data.installationSupport || 'Yes',
         sellerId,
-        technologyStack: selectedTech,
-        supportedPlatforms: selectedPlatforms,
-        dependencies,
-        screenshots: screenshots.map((s) => s.preview),
-        appIcon: appIcon?.preview,
-        isDraft,
-        verificationStatus: 'pending',
+        technologyStack: Array.isArray(selectedTech) ? selectedTech : [],
+        supportedPlatforms: Array.isArray(selectedPlatforms) ? selectedPlatforms : [],
+        dependencies: Array.isArray(dependencies) ? dependencies.filter(d => typeof d === 'string') : [],
+        screenshots: Array.isArray(screenshots) ? screenshots.map((s) => s.preview).filter(Boolean) : [],
+        appIcon: appIcon?.preview || null,
       }
 
       // Use different endpoint for drafts
@@ -208,8 +206,7 @@ const CreateApplication = () => {
     }
   }
 
-  const handleSaveDraft = (e) => {
-    e.preventDefault()
+  const handleSaveDraft = () => {
     handleSubmit((data) => onSubmit(data, true))()
   }
 
