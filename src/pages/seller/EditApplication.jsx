@@ -173,30 +173,60 @@ const EditApplication = () => {
     setActiveStep((prev) => Math.max(prev - 1, 0))
   }
 
-  const handleScreenshotUpload = (event) => {
+  const handleScreenshotUpload = async (event) => {
     const files = Array.from(event.target.files)
     if (screenshots.length + files.length > 5) {
       toast.error('Maximum 5 screenshots allowed')
       return
     }
 
-    files.forEach((file) => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setScreenshots((prev) => [...prev, { file, preview: reader.result, existing: false }])
-      }
-      reader.readAsDataURL(file)
-    })
+    // Show loading toast
+    const uploadToast = toast.loading(`Uploading ${files.length} screenshot(s)...`)
+
+    try {
+      const { uploadMultipleToImageKit } = await import('../utils/imagekit')
+      const uploadResults = await uploadMultipleToImageKit(files, 'applications/screenshots')
+      
+      // Add uploaded images to screenshots
+      const newScreenshots = uploadResults.map(result => ({
+        preview: result.url,
+        fileId: result.fileId,
+        fileName: result.fileName,
+        uploaded: true,
+        existing: false
+      }))
+      
+      setScreenshots((prev) => [...prev, ...newScreenshots])
+      toast.success(`${files.length} screenshot(s) uploaded successfully`, { id: uploadToast })
+    } catch (error) {
+      console.error('Screenshot upload error:', error)
+      toast.error('Failed to upload screenshots. Please try again.', { id: uploadToast })
+    }
   }
 
-  const handleIconUpload = (event) => {
+  const handleIconUpload = async (event) => {
     const file = event.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setAppIcon({ file, preview: reader.result, existing: false })
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+
+    // Show loading toast
+    const uploadToast = toast.loading('Uploading app icon...')
+
+    try {
+      const { uploadToImageKit } = await import('../utils/imagekit')
+      const uploadResult = await uploadToImageKit(file, 'applications/icons')
+      
+      setAppIcon({
+        preview: uploadResult.url,
+        fileId: uploadResult.fileId,
+        fileName: uploadResult.fileName,
+        uploaded: true,
+        existing: false
+      })
+      
+      toast.success('App icon uploaded successfully', { id: uploadToast })
+    } catch (error) {
+      console.error('Icon upload error:', error)
+      toast.error('Failed to upload app icon. Please try again.', { id: uploadToast })
     }
   }
 
@@ -407,8 +437,24 @@ const EditApplication = () => {
         navigate('/seller/applications')
       }
     } catch (error) {
-      toast.error('Failed to update application')
-      console.error(error)
+      console.error('Error updating application:', error)
+      
+      // Show detailed error messages
+      if (error.response?.data?.details && error.response.data.details.length > 0) {
+        // Show field-specific errors
+        error.response.data.details.forEach(detail => {
+          toast.error(`${detail.field}: ${detail.message}`)
+        })
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message)
+      } else if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
+        // Show validation errors
+        error.response.data.errors.forEach(err => {
+          toast.error(err)
+        })
+      } else {
+        toast.error('Failed to update application. Please check all required fields.')
+      }
     } finally {
       setSaving(false)
     }

@@ -108,30 +108,58 @@ const CreateApplication = () => {
     setActiveStep((prev) => Math.max(prev - 1, 0))
   }
 
-  const handleScreenshotUpload = (event) => {
+  const handleScreenshotUpload = async (event) => {
     const files = Array.from(event.target.files)
     if (screenshots.length + files.length > 5) {
       toast.error('Maximum 5 screenshots allowed')
       return
     }
 
-    files.forEach((file) => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setScreenshots((prev) => [...prev, { file, preview: reader.result }])
-      }
-      reader.readAsDataURL(file)
-    })
+    // Show loading toast
+    const uploadToast = toast.loading(`Uploading ${files.length} screenshot(s)...`)
+
+    try {
+      const { uploadMultipleToImageKit } = await import('../utils/imagekit')
+      const uploadResults = await uploadMultipleToImageKit(files, 'applications/screenshots')
+      
+      // Add uploaded images to screenshots
+      const newScreenshots = uploadResults.map(result => ({
+        preview: result.url,
+        fileId: result.fileId,
+        fileName: result.fileName,
+        uploaded: true
+      }))
+      
+      setScreenshots((prev) => [...prev, ...newScreenshots])
+      toast.success(`${files.length} screenshot(s) uploaded successfully`, { id: uploadToast })
+    } catch (error) {
+      console.error('Screenshot upload error:', error)
+      toast.error('Failed to upload screenshots. Please try again.', { id: uploadToast })
+    }
   }
 
-  const handleIconUpload = (event) => {
+  const handleIconUpload = async (event) => {
     const file = event.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setAppIcon({ file, preview: reader.result })
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+
+    // Show loading toast
+    const uploadToast = toast.loading('Uploading app icon...')
+
+    try {
+      const { uploadToImageKit } = await import('../utils/imagekit')
+      const uploadResult = await uploadToImageKit(file, 'applications/icons')
+      
+      setAppIcon({
+        preview: uploadResult.url,
+        fileId: uploadResult.fileId,
+        fileName: uploadResult.fileName,
+        uploaded: true
+      })
+      
+      toast.success('App icon uploaded successfully', { id: uploadToast })
+    } catch (error) {
+      console.error('Icon upload error:', error)
+      toast.error('Failed to upload app icon. Please try again.', { id: uploadToast })
     }
   }
 
@@ -302,7 +330,7 @@ const CreateApplication = () => {
         return
       }
 
-      // Prepare form data - avoid circular references
+      // Prepare form data - images are already uploaded to ImageKit
       const formData = {
         appName: data.appName?.trim() || '',
         shortDescription: data.shortDescription?.trim() || '',
