@@ -30,7 +30,6 @@ import {
   TrendingUp,
   Security,
   CloudUpload,
-  Campaign,
   Analytics,
   CheckCircle,
   ArrowForward,
@@ -40,11 +39,18 @@ import {
   Inventory,
   Menu as MenuIcon,
   Close,
-  LocalOffer,
-  Bolt,
-  AutoAwesome,
+  Speed,
   Verified,
   Star,
+  BarChart,
+  Update,
+  Lock,
+  Language,
+  Description,
+  Api,
+  AutoAwesome,
+  Bolt,
+  Shield,
 } from '@mui/icons-material';
 
 const Home = () => {
@@ -60,107 +66,75 @@ const Home = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const trustCards = [
+    {
+      icon: <Code sx={{ fontSize: 40 }} />,
+      title: 'Sell Digital Products',
+      items: ['SaaS applications', 'AI tools', 'APIs', 'Source code', 'Templates', 'Automation systems'],
+    },
+    {
+      icon: <Language sx={{ fontSize: 40 }} />,
+      title: 'Reach Global Buyers',
+      items: ['Developers', 'Startups', 'Agencies', 'Businesses'],
+    },
+    {
+      icon: <Speed sx={{ fontSize: 40 }} />,
+      title: 'Keep Control',
+      items: ['Set your own pricing', 'Update products anytime', 'Manage licenses', 'Track analytics'],
+    },
+    {
+      icon: <AttachMoney sx={{ fontSize: 40 }} />,
+      title: 'Fast Payouts',
+      items: ['Secure payments', 'Seller dashboard', 'Transparent earnings'],
+    },
+  ];
+
+  const whyVettCode = [
+    {
+      title: 'Built for Software — Not Generic Digital Junk',
+      description: 'Most marketplaces mix ebooks, PDFs, and low-quality assets together. VettCode focuses on real software products and developer tools.',
+      icon: <Verified sx={{ fontSize: 40 }} />,
+    },
+    {
+      title: 'Better Discovery for Technical Products',
+      description: 'Your products are organized for developers searching for real solutions — not random marketplace clutter.',
+      icon: <AutoAwesome sx={{ fontSize: 40 }} />,
+    },
+    {
+      title: 'Grow Beyond Freelancing',
+      description: 'Instead of trading hours for money, sell scalable digital products that can generate revenue repeatedly.',
+      icon: <TrendingUp sx={{ fontSize: 40 }} />,
+    },
+    {
+      title: 'Launch Faster',
+      description: 'Upload your product, add screenshots, pricing, documentation, and start selling globally.',
+      icon: <Rocket sx={{ fontSize: 40 }} />,
+    },
+  ];
+
+  const exampleProducts = [
+    { name: 'AI Resume Builder', price: '$49', downloads: '2.4K', rating: 4.9, revenue: '$117K' },
+    { name: 'SaaS Boilerplate', price: '$99', downloads: '1.8K', rating: 4.8, revenue: '$178K' },
+    { name: 'AI Chat Template', price: '$39', downloads: '3.2K', rating: 4.9, revenue: '$124K' },
+    { name: 'CRM Dashboard', price: '$79', downloads: '1.5K', rating: 4.7, revenue: '$118K' },
+  ];
+
   const features = [
-    {
-      icon: <Store sx={{ fontSize: 50 }} />,
-      title: 'Your Digital Storefront',
-      description: 'Create your professional seller profile and showcase your applications to thousands of potential buyers.',
-      gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-    },
-    {
-      icon: <CloudUpload sx={{ fontSize: 50 }} />,
-      title: 'Easy Upload & Management',
-      description: 'Upload applications individually or in bulk. Manage your entire catalogue from one powerful dashboard.',
-      gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-    },
-    {
-      icon: <Campaign sx={{ fontSize: 50 }} />,
-      title: 'Marketing Tools',
-      description: 'Run promotional campaigns, create discount codes, and boost your sales with built-in marketing features.',
-      gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-    },
-    {
-      icon: <Analytics sx={{ fontSize: 50 }} />,
-      title: 'Real-time Analytics',
-      description: 'Track your sales, monitor performance, and make data-driven decisions with comprehensive analytics.',
-      gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-    },
-    {
-      icon: <AttachMoney sx={{ fontSize: 50 }} />,
-      title: 'Flexible Pricing',
-      description: 'Set your own prices, offer free trials, and create bundle deals. You control your revenue model.',
-      gradient: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
-    },
-    {
-      icon: <Security sx={{ fontSize: 50 }} />,
-      title: 'Secure Payments',
-      description: 'Get paid securely through multiple payment methods. We handle the transactions, you focus on building.',
-      gradient: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-    },
+    { icon: <Analytics />, label: 'Seller Analytics' },
+    { icon: <BarChart />, label: 'Product Performance' },
+    { icon: <Update />, label: 'Instant Updates' },
+    { icon: <Lock />, label: 'Secure Checkout' },
+    { icon: <Star />, label: 'Ratings & Reviews' },
+    { icon: <Shield />, label: 'Licensing' },
+    { icon: <Api />, label: 'API Integration' },
+    { icon: <Description />, label: 'Documentation Support' },
   ];
 
   const stats = [
-    { value: '10K+', label: 'Active Buyers', icon: <People sx={{ fontSize: 32 }} />, color: '#3b82f6' },
-    { value: '5K+', label: 'Apps Sold', icon: <Inventory sx={{ fontSize: 32 }} />, color: '#10b981' },
-    { value: '$2M+', label: 'Revenue', icon: <AttachMoney sx={{ fontSize: 32 }} />, color: '#8b5cf6' },
-    { value: '98%', label: 'Satisfaction', icon: <Star sx={{ fontSize: 32 }} />, color: '#f97316' },
-  ];
-
-  const benefits = [
-    'Zero upfront costs - only pay when you sell',
-    'Reach a global audience of developers and businesses',
-    'Automated delivery and distribution',
-    'Comprehensive seller dashboard',
-    'Marketing and promotional tools',
-    'Secure payment processing',
-    'Dedicated seller support',
-    'Regular platform updates',
-  ];
-
-  const pricingPlans = [
-    {
-      name: 'Starter',
-      price: 'Free',
-      description: 'Perfect for getting started',
-      features: [
-        'List up to 5 applications',
-        'Basic analytics',
-        'Standard support',
-        '10% platform fee',
-        'Manual payouts',
-      ],
-      highlighted: false,
-    },
-    {
-      name: 'Professional',
-      price: '$29',
-      period: '/month',
-      description: 'For serious sellers',
-      features: [
-        'Unlimited applications',
-        'Advanced analytics',
-        'Priority support',
-        '5% platform fee',
-        'Automated payouts',
-        'Marketing tools',
-        'Bulk upload',
-      ],
-      highlighted: true,
-    },
-    {
-      name: 'Enterprise',
-      price: 'Custom',
-      description: 'For large organizations',
-      features: [
-        'Everything in Professional',
-        'Dedicated account manager',
-        'Custom integrations',
-        'Negotiable fees',
-        'White-label options',
-        'API access',
-      ],
-      highlighted: false,
-    },
+    { value: '10K+', label: 'Downloads' },
+    { value: '2.5K+', label: 'Products Sold' },
+    { value: '500+', label: 'Active Sellers' },
+    { value: '80+', label: 'Countries' },
   ];
 
   return (
@@ -170,9 +144,9 @@ const Home = () => {
         position="fixed"
         elevation={scrollY > 50 ? 8 : 0}
         sx={{
-          bgcolor: scrollY > 50 ? 'rgba(15, 23, 42, 0.95)' : 'transparent',
+          bgcolor: scrollY > 50 ? 'rgba(10, 14, 39, 0.95)' : 'transparent',
           backdropFilter: scrollY > 50 ? 'blur(20px)' : 'none',
-          borderBottom: scrollY > 50 ? '1px solid rgba(139, 92, 246, 0.2)' : 'none',
+          borderBottom: scrollY > 50 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none',
           transition: 'all 0.3s ease',
         }}
       >
@@ -182,66 +156,62 @@ const Home = () => {
               sx={{
                 width: { xs: 40, sm: 48 },
                 height: { xs: 40, sm: 48 },
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
+                borderRadius: 1.5,
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 8px 24px rgba(139, 92, 246, 0.5)',
               }}
             >
               <Code sx={{ fontSize: { xs: 24, sm: 28 }, color: 'white' }} />
             </Box>
-            <Box>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 900,
-                  fontSize: { xs: '1.1rem', sm: '1.3rem' },
-                  background: 'linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.5px',
-                }}
-              >
-                VETTCODE
-              </Typography>
-              <Chip
-                label="SELLERS"
-                size="small"
-                sx={{
-                  height: 16,
-                  fontSize: '0.6rem',
-                  fontWeight: 900,
-                  bgcolor: '#fcd34d',
-                  color: '#0f766e',
-                  '& .MuiChip-label': { px: 1 },
-                }}
-              />
-            </Box>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: '1.1rem', sm: '1.3rem' },
+                color: 'white',
+                letterSpacing: '-0.5px',
+              }}
+            >
+              VettCode
+            </Typography>
           </Box>
 
           {!isMobile && (
             <Box sx={{ display: 'flex', gap: 1, mr: 3 }}>
-              {['Features', 'Benefits', 'Pricing'].map((item) => (
-                <Button
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  sx={{
-                    color: 'rgba(255,255,255,0.8)',
-                    fontWeight: 700,
-                    textTransform: 'none',
-                    px: 2.5,
-                    fontSize: '0.95rem',
-                    '&:hover': {
-                      bgcolor: 'rgba(139, 92, 246, 0.15)',
-                      color: '#a78bfa',
-                    },
-                  }}
-                >
-                  {item}
-                </Button>
-              ))}
+              <Button
+                href="#why"
+                sx={{
+                  color: 'rgba(255,255,255,0.7)',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  px: 2.5,
+                  fontSize: '0.95rem',
+                  '&:hover': {
+                    bgcolor: 'rgba(99, 102, 241, 0.1)',
+                    color: 'white',
+                  },
+                }}
+              >
+                Why VettCode
+              </Button>
+              <Button
+                href="#how"
+                sx={{
+                  color: 'rgba(255,255,255,0.7)',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  px: 2.5,
+                  fontSize: '0.95rem',
+                  '&:hover': {
+                    bgcolor: 'rgba(99, 102, 241, 0.1)',
+                    color: 'white',
+                  },
+                }}
+              >
+                How It Works
+              </Button>
             </Box>
           )}
 
@@ -250,16 +220,14 @@ const Home = () => {
               variant="outlined"
               onClick={() => navigate('/login')}
               sx={{
-                borderColor: '#8b5cf6',
-                color: '#a78bfa',
-                fontWeight: 700,
+                borderColor: 'rgba(99, 102, 241, 0.5)',
+                color: 'white',
+                fontWeight: 600,
                 textTransform: 'none',
-                borderWidth: 2,
                 px: 3,
                 '&:hover': {
-                  borderColor: '#a78bfa',
-                  bgcolor: 'rgba(139, 92, 246, 0.1)',
-                  borderWidth: 2,
+                  borderColor: '#6366f1',
+                  bgcolor: 'rgba(99, 102, 241, 0.1)',
                 },
               }}
             >
@@ -269,21 +237,19 @@ const Home = () => {
               variant="contained"
               onClick={() => navigate('/signup')}
               sx={{
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                 color: 'white',
                 fontWeight: 700,
                 textTransform: 'none',
                 px: 3,
-                boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)',
+                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)',
-                  boxShadow: '0 6px 20px rgba(139, 92, 246, 0.5)',
-                  transform: 'translateY(-2px)',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                  boxShadow: '0 6px 20px rgba(99, 102, 241, 0.5)',
                 },
-                transition: 'all 0.3s ease',
               }}
             >
-              Get Started
+              Start Selling
             </Button>
           </Box>
 
@@ -291,7 +257,7 @@ const Home = () => {
             <IconButton
               edge="end"
               onClick={() => setMobileMenuOpen(true)}
-              sx={{ ml: 2, color: '#a78bfa' }}
+              sx={{ ml: 2, color: 'white' }}
             >
               <MenuIcon />
             </IconButton>
@@ -307,32 +273,30 @@ const Home = () => {
         PaperProps={{
           sx: {
             width: 280,
-            bgcolor: 'rgba(15, 23, 42, 0.98)',
-            backdropFilter: 'blur(20px)',
-            borderLeft: '1px solid rgba(139, 92, 246, 0.2)',
+            bgcolor: '#0f172a',
+            borderLeft: '1px solid rgba(99, 102, 241, 0.2)',
           },
         }}
       >
         <Box sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <IconButton onClick={() => setMobileMenuOpen(false)} sx={{ color: '#a78bfa' }}>
+            <IconButton onClick={() => setMobileMenuOpen(false)} sx={{ color: 'white' }}>
               <Close />
             </IconButton>
           </Box>
           <List>
-            {['Features', 'Benefits', 'Pricing'].map((item) => (
+            {['Why VettCode', 'How It Works'].map((item) => (
               <ListItem key={item} disablePadding>
                 <ListItemButton
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    document.getElementById(item.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
+                    document.getElementById(item === 'Why VettCode' ? 'why' : 'how')?.scrollIntoView({ behavior: 'smooth' });
                   }}
                   sx={{
                     color: 'rgba(255,255,255,0.8)',
-                    fontWeight: 600,
                     '&:hover': {
-                      bgcolor: 'rgba(139, 92, 246, 0.15)',
-                      color: '#a78bfa',
+                      bgcolor: 'rgba(99, 102, 241, 0.1)',
+                      color: 'white',
                     },
                   }}
                 >
@@ -347,15 +311,13 @@ const Home = () => {
               fullWidth
               onClick={() => navigate('/login')}
               sx={{
-                borderColor: '#8b5cf6',
-                color: '#a78bfa',
-                fontWeight: 700,
+                borderColor: 'rgba(99, 102, 241, 0.5)',
+                color: 'white',
+                fontWeight: 600,
                 textTransform: 'none',
-                borderWidth: 2,
                 '&:hover': {
-                  borderColor: '#a78bfa',
-                  bgcolor: 'rgba(139, 92, 246, 0.1)',
-                  borderWidth: 2,
+                  borderColor: '#6366f1',
+                  bgcolor: 'rgba(99, 102, 241, 0.1)',
                 },
               }}
             >
@@ -366,14 +328,13 @@ const Home = () => {
               fullWidth
               onClick={() => navigate('/signup')}
               sx={{
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                 color: 'white',
                 fontWeight: 700,
                 textTransform: 'none',
-                boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)',
               }}
             >
-              Get Started
+              Start Selling
             </Button>
           </Box>
         </Box>
@@ -383,367 +344,341 @@ const Home = () => {
       <Box
         sx={{
           position: 'relative',
-          pt: { xs: 12, sm: 16, md: 20 },
-          pb: { xs: 8, sm: 12, md: 16 },
+          pt: { xs: 14, sm: 18, md: 22 },
+          pb: { xs: 10, sm: 14, md: 18 },
           overflow: 'hidden',
         }}
       >
-        {/* Animated Background */}
+        {/* Minimal Background */}
         <Box
           sx={{
             position: 'absolute',
             inset: 0,
-            overflow: 'hidden',
-            pointerEvents: 'none',
+            background: 'radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.1) 0%, transparent 50%)',
           }}
-        >
-          {/* Grid Pattern */}
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              backgroundImage:
-                'linear-gradient(rgba(139,92,246,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.03) 1px, transparent 1px)',
-              backgroundSize: '50px 50px',
-            }}
-          />
-
-          {/* Floating Code Snippets */}
-          <Box
-            className="animate-float"
-            sx={{
-              position: 'absolute',
-              top: '10%',
-              left: '5%',
-              color: 'rgba(139, 92, 246, 0.2)',
-              fontFamily: 'monospace',
-              fontSize: '0.75rem',
-              display: { xs: 'none', md: 'block' },
-            }}
-          >
-            <pre>{`const sell = () => {\n  return <Revenue />;\n}`}</pre>
-          </Box>
-          <Box
-            className="animate-float-delayed"
-            sx={{
-              position: 'absolute',
-              top: '25%',
-              right: '10%',
-              color: 'rgba(59, 130, 246, 0.2)',
-              fontFamily: 'monospace',
-              fontSize: '0.75rem',
-              display: { xs: 'none', md: 'block' },
-            }}
-          >
-            <pre>{`function upload() {\n  return success;\n}`}</pre>
-          </Box>
-          <Box
-            className="animate-float-slow"
-            sx={{
-              position: 'absolute',
-              bottom: '30%',
-              left: '25%',
-              color: 'rgba(20, 184, 166, 0.2)',
-              fontFamily: 'monospace',
-              fontSize: '0.75rem',
-              display: { xs: 'none', lg: 'block' },
-            }}
-          >
-            <pre>{`import { earnings } from 'vettcode'`}</pre>
-          </Box>
-
-          {/* Gradient Orbs */}
-          <Box
-            className="animate-pulse-slow"
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: 384,
-              height: 384,
-              bgcolor: 'rgba(139, 92, 246, 0.1)',
-              borderRadius: '50%',
-              filter: 'blur(80px)',
-            }}
-          />
-          <Box
-            className="animate-pulse-slower"
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              width: 384,
-              height: 384,
-              bgcolor: 'rgba(59, 130, 246, 0.1)',
-              borderRadius: '50%',
-              filter: 'blur(80px)',
-            }}
-          />
-          <Box
-            className="animate-pulse-slow"
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 384,
-              height: 384,
-              bgcolor: 'rgba(20, 184, 166, 0.1)',
-              borderRadius: '50%',
-              filter: 'blur(80px)',
-            }}
-          />
-        </Box>
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage:
+              'linear-gradient(rgba(99,102,241,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.02) 1px, transparent 1px)',
+            backgroundSize: '64px 64px',
+          }}
+        />
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={{ xs: 4, md: 8 }} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <Fade in timeout={800}>
-                <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-                  <Chip
-                    icon={<Bolt sx={{ fontSize: 18 }} />}
-                    label="Trusted by 10,000+ Sellers"
-                    sx={{
-                      bgcolor: 'rgba(139, 92, 246, 0.2)',
-                      color: '#a78bfa',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(139, 92, 246, 0.3)',
-                      mb: 3,
-                      fontWeight: 700,
-                    }}
-                  />
-                  <Typography
-                    variant="h1"
-                    sx={{
-                      fontWeight: 900,
-                      mb: 3,
-                      fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' },
-                      lineHeight: 1.1,
-                      color: 'white',
-                    }}
-                  >
-                    Turn Your Code Into{' '}
-                    <Box
-                      component="span"
-                      sx={{
-                        display: 'block',
-                        background: 'linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%, #5eead4 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                      }}
-                    >
-                      Revenue
-                    </Box>
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      mb: 5,
-                      color: 'rgba(255,255,255,0.8)',
-                      lineHeight: 1.6,
-                      fontWeight: 500,
-                      fontSize: { xs: '1.1rem', md: '1.3rem' },
-                    }}
-                  >
-                    Join VETTCODE's marketplace and sell your applications to thousands of developers
-                    and businesses worldwide. Start earning today.
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: { xs: 'column', sm: 'row' },
-                      gap: 3,
-                      justifyContent: { xs: 'center', md: 'flex-start' },
-                      mb: 5,
-                    }}
-                  >
-                    <Button
-                      variant="contained"
-                      size="large"
-                      onClick={() => navigate('/signup')}
-                      endIcon={<Rocket />}
-                      sx={{
-                        background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
-                        color: 'white',
-                        px: 5,
-                        py: 2,
-                        fontSize: '1.2rem',
-                        fontWeight: 800,
-                        borderRadius: 3,
-                        textTransform: 'none',
-                        boxShadow: '0 8px 32px rgba(139, 92, 246, 0.4)',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)',
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 12px 40px rgba(139, 92, 246, 0.5)',
-                        },
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      Start Selling Free
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="large"
-                      onClick={() => navigate('/login')}
-                      sx={{
-                        borderColor: 'white',
-                        color: 'white',
-                        px: 5,
-                        py: 2,
-                        fontSize: '1.2rem',
-                        fontWeight: 700,
-                        borderRadius: 3,
-                        borderWidth: 2,
-                        textTransform: 'none',
-                        '&:hover': {
-                          borderColor: '#a78bfa',
-                          bgcolor: 'rgba(167, 139, 250, 0.1)',
-                          borderWidth: 2,
-                        },
-                      }}
-                    >
-                      Sign In
-                    </Button>
-                  </Box>
+          <Fade in timeout={800}>
+            <Box sx={{ textAlign: 'center', maxWidth: 900, mx: 'auto' }}>
+              <Chip
+                label="Trusted by developers building the next generation of software products"
+                sx={{
+                  bgcolor: 'rgba(99, 102, 241, 0.1)',
+                  color: 'rgba(255,255,255,0.9)',
+                  border: '1px solid rgba(99, 102, 241, 0.2)',
+                  mb: 4,
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                }}
+              />
+              <Typography
+                variant="h1"
+                sx={{
+                  fontWeight: 900,
+                  mb: 3,
+                  fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' },
+                  lineHeight: 1.1,
+                  color: 'white',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Sell Software That{' '}
+                <Box
+                  component="span"
+                  sx={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  Actually Matters
+                </Box>
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{
+                  mb: 6,
+                  color: 'rgba(255,255,255,0.7)',
+                  lineHeight: 1.6,
+                  fontWeight: 400,
+                  fontSize: { xs: '1.1rem', md: '1.35rem' },
+                  maxWidth: 800,
+                  mx: 'auto',
+                }}
+              >
+                Monetize your SaaS products, AI tools, APIs, templates, and developer systems with a marketplace built for modern software creators.
+              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 3,
+                  justifyContent: 'center',
+                  mb: 8,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate('/signup')}
+                  sx={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    color: 'white',
+                    px: 6,
+                    py: 2,
+                    fontSize: '1.1rem',
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                      boxShadow: '0 12px 40px rgba(99, 102, 241, 0.4)',
+                    },
+                  }}
+                >
+                  Start Selling
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => navigate('/products')}
+                  sx={{
+                    borderColor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    px: 6,
+                    py: 2,
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: 'rgba(255,255,255,0.4)',
+                      bgcolor: 'rgba(255,255,255,0.05)',
+                    },
+                  }}
+                >
+                  Explore Marketplace
+                </Button>
+              </Box>
+
+              {/* Hero Visual - Dashboard Preview */}
+              <Zoom in timeout={1000}>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    borderRadius: 3,
+                    overflow: 'hidden',
+                    border: '1px solid rgba(99, 102, 241, 0.2)',
+                    bgcolor: 'rgba(15, 23, 42, 0.6)',
+                    backdropFilter: 'blur(20px)',
+                    p: 4,
+                  }}
+                >
                   <Grid container spacing={3}>
-                    {[
-                      { icon: <CheckCircle />, text: 'Zero Setup Fees' },
-                      { icon: <Bolt />, text: 'Instant Payouts' },
-                      { icon: <Security />, text: '24/7 Support' },
-                    ].map((item, index) => (
-                      <Grid item xs={12} sm={4} key={index}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, justifyContent: { xs: 'center', md: 'flex-start' } }}>
-                          <Box sx={{ color: '#14b8a6', display: 'flex' }}>
-                            {item.icon}
+                    {/* Earnings Card */}
+                    <Grid item xs={12} md={4}>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(16, 185, 129, 0.1)',
+                          border: '1px solid rgba(16, 185, 129, 0.2)',
+                          borderRadius: 2,
+                          p: 3,
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 1 }}>
+                          Total Earnings
+                        </Typography>
+                        <Typography variant="h3" sx={{ color: '#10b981', fontWeight: 900, mb: 1 }}>
+                          $24,580
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <TrendingUp sx={{ fontSize: 16, color: '#10b981' }} />
+                          <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 600 }}>
+                            +18% this month
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Downloads Card */}
+                    <Grid item xs={12} md={4}>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(99, 102, 241, 0.1)',
+                          border: '1px solid rgba(99, 102, 241, 0.2)',
+                          borderRadius: 2,
+                          p: 3,
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 1 }}>
+                          Total Downloads
+                        </Typography>
+                        <Typography variant="h3" sx={{ color: '#6366f1', fontWeight: 900, mb: 1 }}>
+                          8,420
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Inventory sx={{ fontSize: 16, color: '#6366f1' }} />
+                          <Typography variant="body2" sx={{ color: '#6366f1', fontWeight: 600 }}>
+                            Across 4 products
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Rating Card */}
+                    <Grid item xs={12} md={4}>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(251, 191, 36, 0.1)',
+                          border: '1px solid rgba(251, 191, 36, 0.2)',
+                          borderRadius: 2,
+                          p: 3,
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 1 }}>
+                          Average Rating
+                        </Typography>
+                        <Typography variant="h3" sx={{ color: '#fbbf24', fontWeight: 900, mb: 1 }}>
+                          4.9
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Star sx={{ fontSize: 16, color: '#fbbf24' }} />
+                          <Typography variant="body2" sx={{ color: '#fbbf24', fontWeight: 600 }}>
+                            From 2,340 reviews
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  </Grid>
+
+                  {/* Mini Product Cards */}
+                  <Grid container spacing={2} sx={{ mt: 2 }}>
+                    {['AI Resume Builder', 'SaaS Boilerplate'].map((product, index) => (
+                      <Grid item xs={12} sm={6} key={index}>
+                        <Box
+                          sx={{
+                            bgcolor: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: 2,
+                            p: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 2,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              borderRadius: 1.5,
+                              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Code sx={{ color: 'white' }} />
                           </Box>
-                          <Typography variant="body1" sx={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
-                            {item.text}
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" sx={{ color: 'white', fontWeight: 600, mb: 0.5 }}>
+                              {product}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                              {index === 0 ? '2.4K downloads' : '1.8K downloads'}
+                            </Typography>
+                          </Box>
+                          <Typography variant="h6" sx={{ color: '#10b981', fontWeight: 700 }}>
+                            {index === 0 ? '$49' : '$99'}
                           </Typography>
                         </Box>
                       </Grid>
                     ))}
                   </Grid>
                 </Box>
-              </Fade>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Zoom in timeout={1000}>
-                <Box
-                  sx={{
-                    position: 'relative',
-                    height: { xs: 350, md: 500 },
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      borderRadius: 4,
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 4,
-                      p: 4,
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <Grid container spacing={3} sx={{ position: 'relative', zIndex: 1 }}>
-                      {[
-                        { icon: <Code sx={{ fontSize: 50 }} />, label: 'Upload', gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' },
-                        { icon: <Analytics sx={{ fontSize: 50 }} />, label: 'Track', gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' },
-                        { icon: <AttachMoney sx={{ fontSize: 50 }} />, label: 'Earn', gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' },
-                        { icon: <TrendingUp sx={{ fontSize: 50 }} />, label: 'Grow', gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' },
-                      ].map((item, index) => (
-                        <Grid item xs={6} key={index}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Box
-                              sx={{
-                                display: 'inline-flex',
-                                p: 3,
-                                borderRadius: 3,
-                                background: item.gradient,
-                                color: 'white',
-                                mb: 2,
-                                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                                transition: 'transform 0.3s ease',
-                                '&:hover': {
-                                  transform: 'scale(1.1)',
-                                },
-                              }}
-                            >
-                              {item.icon}
-                            </Box>
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>
-                              {item.label}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </Box>
-                </Box>
               </Zoom>
-            </Grid>
-          </Grid>
+            </Box>
+          </Fade>
         </Container>
       </Box>
 
-      {/* Stats Section */}
+      {/* Trust Section */}
       <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
+        <Box sx={{ textAlign: 'center', mb: 8 }}>
+          <Typography
+            variant="h2"
+            sx={{
+              fontWeight: 800,
+              mb: 2,
+              fontSize: { xs: '2rem', md: '2.5rem' },
+              color: 'white',
+            }}
+          >
+            Built for Serious Developers & Digital Founders
+          </Typography>
+        </Box>
+
         <Grid container spacing={4}>
-          {stats.map((stat, index) => (
-            <Grid item xs={6} md={3} key={index}>
-              <Grow in timeout={800 + index * 200}>
+          {trustCards.map((card, index) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <Grow in timeout={600 + index * 150}>
                 <Card
                   sx={{
-                    textAlign: 'center',
-                    py: 4,
-                    px: 2,
-                    background: `linear-gradient(135deg, ${stat.color}15 0%, ${stat.color}05 100%)`,
-                    border: `2px solid ${stat.color}30`,
-                    borderRadius: 3,
-                    transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    height: '100%',
+                    bgcolor: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(99, 102, 241, 0.1)',
+                    borderRadius: 2,
+                    p: 3,
+                    transition: 'all 0.3s ease',
                     '&:hover': {
-                      transform: 'translateY(-12px) scale(1.02)',
-                      boxShadow: `0 20px 40px ${stat.color}40`,
+                      bgcolor: 'rgba(255,255,255,0.04)',
+                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                      transform: 'translateY(-4px)',
                     },
                   }}
                 >
-                  <CardContent>
+                  <CardContent sx={{ p: 0 }}>
                     <Box
                       sx={{
-                        display: 'inline-flex',
-                        p: 2.5,
-                        borderRadius: '50%',
-                        bgcolor: `${stat.color}20`,
-                        color: stat.color,
+                        color: '#6366f1',
                         mb: 2,
                       }}
                     >
-                      {stat.icon}
+                      {card.icon}
                     </Box>
-                    <Typography
-                      variant="h3"
-                      sx={{
-                        fontWeight: 900,
-                        color: stat.color,
-                        mb: 1,
-                      }}
-                    >
-                      {stat.value}
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: 'white' }}>
+                      {card.title}
                     </Typography>
-                    <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
-                      {stat.label}
-                    </Typography>
+                    <Box component="ul" sx={{ m: 0, pl: 2.5, listStyle: 'none' }}>
+                      {card.items.map((item, idx) => (
+                        <Box
+                          component="li"
+                          key={idx}
+                          sx={{
+                            color: 'rgba(255,255,255,0.6)',
+                            fontSize: '0.9rem',
+                            mb: 0.75,
+                            position: 'relative',
+                            '&::before': {
+                              content: '"•"',
+                              position: 'absolute',
+                              left: -16,
+                              color: '#6366f1',
+                            },
+                          }}
+                        >
+                          {item}
+                        </Box>
+                      ))}
+                    </Box>
                   </CardContent>
                 </Card>
               </Grow>
@@ -752,321 +687,199 @@ const Home = () => {
         </Grid>
       </Container>
 
-      {/* Features Section */}
-      <Box id="features" sx={{ py: { xs: 8, md: 12 } }}>
+      {/* Stats Section */}
+      <Box sx={{ bgcolor: 'rgba(99, 102, 241, 0.05)', py: { xs: 6, md: 8 } }}>
         <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 10 }}>
-            <Chip
-              icon={<AutoAwesome sx={{ fontSize: 18 }} />}
-              label="POWERFUL FEATURES"
-              sx={{
-                bgcolor: 'rgba(139, 92, 246, 0.2)',
-                color: '#a78bfa',
-                fontWeight: 800,
-                mb: 3,
-                px: 2,
-              }}
-            />
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 900,
-                mb: 2,
-                fontSize: { xs: '2rem', md: '3rem' },
-                background: 'linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Everything You Need to Succeed
-            </Typography>
-            <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.6)', maxWidth: 600, mx: 'auto' }}>
-              Powerful tools designed specifically for application sellers
-            </Typography>
-          </Box>
-
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: 800,
+              mb: 6,
+              fontSize: { xs: '1.75rem', md: '2.25rem' },
+              color: 'white',
+              textAlign: 'center',
+            }}
+          >
+            Developers Are Building Businesses Here
+          </Typography>
           <Grid container spacing={4}>
-            {features.map((feature, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Slide direction="up" in timeout={600 + index * 150}>
-                  <Card
+            {stats.map((stat, index) => (
+              <Grid item xs={6} md={3} key={index}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography
+                    variant="h2"
                     sx={{
-                      height: '100%',
-                      p: 4,
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      backdropFilter: 'blur(10px)',
-                      border: '2px solid rgba(139, 92, 246, 0.2)',
-                      borderRadius: 3,
-                      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      '&:hover': {
-                        transform: 'translateY(-12px) scale(1.02)',
-                        boxShadow: '0 20px 50px rgba(139, 92, 246, 0.3)',
-                        borderColor: 'rgba(139, 92, 246, 0.4)',
-                        '& .feature-icon': {
-                          transform: 'scale(1.1) rotate(5deg)',
-                        },
-                      },
+                      fontWeight: 900,
+                      color: '#6366f1',
+                      mb: 1,
+                      fontSize: { xs: '2.5rem', md: '3rem' },
                     }}
                   >
-                    <CardContent sx={{ p: 0 }}>
-                      <Box
-                        className="feature-icon"
-                        sx={{
-                          display: 'inline-flex',
-                          p: 2.5,
-                          borderRadius: 3,
-                          background: feature.gradient,
-                          color: 'white',
-                          mb: 3,
-                          transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                        }}
-                      >
-                        {feature.icon}
-                      </Box>
-                      <Typography variant="h5" sx={{ fontWeight: 800, mb: 2, color: 'white' }}>
-                        {feature.title}
-                      </Typography>
-                      <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-                        {feature.description}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Slide>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                    {stat.label}
+                  </Typography>
+                </Box>
               </Grid>
             ))}
           </Grid>
         </Container>
       </Box>
 
-      {/* Benefits Section */}
-      <Container id="benefits" maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
-        <Grid container spacing={8} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <Fade in timeout={1000}>
-              <Box>
-                <Chip
-                  icon={<Verified sx={{ fontSize: 18 }} />}
-                  label="WHY VETTCODE"
+      {/* Why VettCode Section */}
+      <Container id="why" maxWidth="lg" sx={{ py: { xs: 10, md: 14 } }}>
+        <Box sx={{ textAlign: 'center', mb: 10 }}>
+          <Typography
+            variant="h2"
+            sx={{
+              fontWeight: 800,
+              mb: 3,
+              fontSize: { xs: '2rem', md: '2.75rem' },
+              color: 'white',
+            }}
+          >
+            Why Developers Choose VettCode
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{
+              color: 'rgba(255,255,255,0.6)',
+              maxWidth: 700,
+              mx: 'auto',
+              fontWeight: 400,
+            }}
+          >
+            A marketplace designed for real software products, not generic digital clutter
+          </Typography>
+        </Box>
+
+        <Grid container spacing={4}>
+          {whyVettCode.map((item, index) => (
+            <Grid item xs={12} md={6} key={index}>
+              <Slide direction="up" in timeout={700 + index * 150}>
+                <Box
                   sx={{
-                    bgcolor: 'rgba(59, 130, 246, 0.2)',
-                    color: '#60a5fa',
-                    fontWeight: 800,
-                    mb: 3,
-                    px: 2,
-                  }}
-                />
-                <Typography
-                  variant="h2"
-                  sx={{
-                    fontWeight: 900,
-                    mb: 3,
-                    fontSize: { xs: '2rem', md: '3rem' },
-                    background: 'linear-gradient(135deg, #60a5fa 0%, #5eead4 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
+                    bgcolor: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(99, 102, 241, 0.1)',
+                    borderRadius: 2,
+                    p: 4,
+                    height: '100%',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      bgcolor: 'rgba(255,255,255,0.04)',
+                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                      transform: 'translateY(-4px)',
+                    },
                   }}
                 >
-                  Why Sell on VETTCODE?
-                </Typography>
-                <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.6)', mb: 5 }}>
-                  Join thousands of successful sellers who trust VETTCODE to grow their business
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                  {benefits.map((benefit, index) => (
-                    <Slide direction="right" in timeout={800 + index * 100} key={index}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 32,
-                            height: 32,
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%)',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <CheckCircle sx={{ color: 'white', fontSize: 20 }} />
-                        </Box>
-                        <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1.05rem', color: 'rgba(255,255,255,0.9)' }}>
-                          {benefit}
-                        </Typography>
-                      </Box>
-                    </Slide>
-                  ))}
+                  <Box sx={{ color: '#6366f1', mb: 2 }}>{item.icon}</Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: 'white' }}>
+                    {item.title}
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+                    {item.description}
+                  </Typography>
                 </Box>
-              </Box>
-            </Fade>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Zoom in timeout={1200}>
-              <Box
-                sx={{
-                  height: 500,
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: 6,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid rgba(20, 184, 166, 0.2)',
-                }}
-              >
-                <TrendingUp sx={{ fontSize: 180, color: '#14b8a6', opacity: 0.3 }} />
-              </Box>
-            </Zoom>
-          </Grid>
+              </Slide>
+            </Grid>
+          ))}
         </Grid>
       </Container>
 
-      {/* Pricing Section */}
-      <Box id="pricing" sx={{ py: { xs: 8, md: 12 } }}>
+      {/* Seller Earnings Section */}
+      <Box sx={{ bgcolor: 'rgba(99, 102, 241, 0.05)', py: { xs: 10, md: 14 } }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 10 }}>
-            <Chip
-              icon={<LocalOffer sx={{ fontSize: 18 }} />}
-              label="PRICING PLANS"
-              sx={{
-                bgcolor: 'rgba(252, 211, 77, 0.2)',
-                color: '#fcd34d',
-                fontWeight: 800,
-                mb: 3,
-                px: 2,
-              }}
-            />
             <Typography
               variant="h2"
               sx={{
-                fontWeight: 900,
-                mb: 2,
-                fontSize: { xs: '2rem', md: '3rem' },
-                background: 'linear-gradient(135deg, #fcd34d 0%, #f97316 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                fontWeight: 800,
+                mb: 3,
+                fontSize: { xs: '2rem', md: '2.75rem' },
+                color: 'white',
               }}
             >
-              Simple, Transparent Pricing
+              Build Once. Sell Repeatedly.
             </Typography>
-            <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-              Choose the plan that fits your needs
+            <Typography
+              variant="h6"
+              sx={{
+                color: 'rgba(255,255,255,0.6)',
+                maxWidth: 700,
+                mx: 'auto',
+                fontWeight: 400,
+              }}
+            >
+              Real developers earning from their software products
             </Typography>
           </Box>
 
-          <Grid container spacing={4} justifyContent="center">
-            {pricingPlans.map((plan, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Grow in timeout={800 + index * 200}>
+          <Grid container spacing={3}>
+            {exampleProducts.map((product, index) => (
+              <Grid item xs={12} sm={6} md={3} key={index}>
+                <Grow in timeout={800 + index * 150}>
                   <Card
                     sx={{
-                      height: '100%',
-                      position: 'relative',
-                      border: plan.highlighted ? '3px solid #8b5cf6' : '2px solid rgba(139, 92, 246, 0.2)',
-                      borderRadius: 3,
-                      transform: plan.highlighted ? 'scale(1.05)' : 'scale(1)',
-                      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      background: plan.highlighted
-                        ? 'rgba(139, 92, 246, 0.1)'
-                        : 'rgba(255, 255, 255, 0.05)',
-                      backdropFilter: 'blur(10px)',
+                      bgcolor: 'rgba(15, 23, 42, 0.8)',
+                      border: '1px solid rgba(99, 102, 241, 0.2)',
+                      borderRadius: 2,
+                      p: 3,
+                      transition: 'all 0.3s ease',
                       '&:hover': {
-                        transform: plan.highlighted ? 'scale(1.08)' : 'scale(1.03)',
-                        boxShadow: plan.highlighted
-                          ? '0 24px 60px rgba(139, 92, 246, 0.4)'
-                          : '0 12px 32px rgba(139, 92, 246, 0.2)',
+                        borderColor: 'rgba(99, 102, 241, 0.4)',
+                        transform: 'translateY(-8px)',
+                        boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2)',
                       },
                     }}
                   >
-                    {plan.highlighted && (
-                      <Chip
-                        label="MOST POPULAR"
+                    <CardContent sx={{ p: 0 }}>
+                      <Box
                         sx={{
-                          position: 'absolute',
-                          top: -14,
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          fontWeight: 900,
-                          bgcolor: '#8b5cf6',
-                          color: 'white',
-                          fontSize: '0.75rem',
-                          height: 28,
-                        }}
-                      />
-                    )}
-                    <CardContent sx={{ p: 5, textAlign: 'center' }}>
-                      <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: 'white' }}>
-                        {plan.name}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 4 }}>
-                        {plan.description}
-                      </Typography>
-                      <Typography
-                        variant="h2"
-                        sx={{
-                          fontWeight: 900,
-                          mb: 1,
-                          background: 'linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
+                          width: '100%',
+                          height: 120,
+                          borderRadius: 1.5,
+                          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mb: 2,
                         }}
                       >
-                        {plan.price}
+                        <Code sx={{ fontSize: 48, color: 'white' }} />
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'white' }}>
+                        {product.name}
                       </Typography>
-                      {plan.period && (
-                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 4 }}>
-                          {plan.period}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800, color: '#6366f1' }}>
+                          {product.price}
                         </Typography>
-                      )}
-                      <Button
-                        fullWidth
-                        variant={plan.highlighted ? 'contained' : 'outlined'}
-                        size="large"
-                        onClick={() => navigate('/signup')}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Star sx={{ fontSize: 16, color: '#fbbf24' }} />
+                          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                            {product.rating}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mb: 2 }}>
+                        {product.downloads} downloads
+                      </Typography>
+                      <Box
                         sx={{
-                          mb: 4,
-                          py: 1.5,
-                          fontWeight: 800,
-                          textTransform: 'none',
-                          fontSize: '1.05rem',
-                          ...(plan.highlighted
-                            ? {
-                                background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
-                                color: 'white',
-                                '&:hover': {
-                                  background: 'linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)',
-                                },
-                              }
-                            : {
-                                borderColor: '#8b5cf6',
-                                color: '#a78bfa',
-                                borderWidth: 2,
-                                '&:hover': {
-                                  borderColor: '#a78bfa',
-                                  bgcolor: 'rgba(139, 92, 246, 0.1)',
-                                  borderWidth: 2,
-                                },
-                              }),
+                          bgcolor: 'rgba(16, 185, 129, 0.1)',
+                          border: '1px solid rgba(16, 185, 129, 0.2)',
+                          borderRadius: 1,
+                          p: 1.5,
+                          textAlign: 'center',
                         }}
                       >
-                        {plan.highlighted ? 'Start Free Trial' : 'Get Started'}
-                      </Button>
-                      <Box sx={{ textAlign: 'left' }}>
-                        {plan.features.map((feature, idx) => (
-                          <Box
-                            key={idx}
-                            sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}
-                          >
-                            <CheckCircle
-                              sx={{
-                                color: plan.highlighted ? '#8b5cf6' : '#14b8a6',
-                                fontSize: 20,
-                              }}
-                            />
-                            <Typography variant="body2" sx={{ fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>
-                              {feature}
-                            </Typography>
-                          </Box>
-                        ))}
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', display: 'block', mb: 0.5 }}>
+                          Total Revenue
+                        </Typography>
+                        <Typography variant="h6" sx={{ color: '#10b981', fontWeight: 800 }}>
+                          {product.revenue}
+                        </Typography>
                       </Box>
                     </CardContent>
                   </Card>
@@ -1077,32 +890,105 @@ const Home = () => {
         </Container>
       </Box>
 
-      {/* CTA Section */}
-      <Box sx={{ py: { xs: 8, md: 12 } }}>
-        <Container maxWidth="md" sx={{ textAlign: 'center' }}>
+      {/* How It Works Section */}
+      <Container id="how" maxWidth="lg" sx={{ py: { xs: 10, md: 14 } }}>
+        <Box sx={{ textAlign: 'center', mb: 10 }}>
+          <Typography
+            variant="h2"
+            sx={{
+              fontWeight: 800,
+              mb: 3,
+              fontSize: { xs: '2rem', md: '2.75rem' },
+              color: 'white',
+            }}
+          >
+            How It Works
+          </Typography>
+        </Box>
+
+        <Grid container spacing={4}>
+          {[
+            { step: '1', title: 'Upload Your Product', description: 'Add your software, screenshots, and documentation', icon: <CloudUpload sx={{ fontSize: 40 }} /> },
+            { step: '2', title: 'Add Pricing & Documentation', description: 'Set your price, add features, and create product pages', icon: <Description sx={{ fontSize: 40 }} /> },
+            { step: '3', title: 'Reach Buyers Worldwide', description: 'Your product is instantly available to global developers', icon: <Language sx={{ fontSize: 40 }} /> },
+            { step: '4', title: 'Earn From Every Sale', description: 'Get paid securely with transparent seller analytics', icon: <AttachMoney sx={{ fontSize: 40 }} /> },
+          ].map((item, index) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <Fade in timeout={800 + index * 150}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 3,
+                      position: 'relative',
+                      '&::before': {
+                        content: `"${item.step}"`,
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        bgcolor: '#10b981',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '1rem',
+                      },
+                    }}
+                  >
+                    <Box sx={{ color: 'white' }}>{item.icon}</Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5, color: 'white' }}>
+                    {item.title}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
+                    {item.description}
+                  </Typography>
+                </Box>
+              </Fade>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
+      {/* Emotional Section */}
+      <Box sx={{ bgcolor: 'rgba(99, 102, 241, 0.05)', py: { xs: 10, md: 14 } }}>
+        <Container maxWidth="md">
           <Fade in timeout={1000}>
-            <Box
-              sx={{
-                background: 'rgba(139, 92, 246, 0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '2px solid rgba(139, 92, 246, 0.3)',
-                borderRadius: 6,
-                p: { xs: 6, md: 10 },
-              }}
-            >
+            <Box sx={{ textAlign: 'center' }}>
               <Typography
                 variant="h2"
                 sx={{
-                  fontWeight: 900,
-                  mb: 3,
-                  fontSize: { xs: '2rem', md: '3rem' },
+                  fontWeight: 800,
+                  mb: 4,
+                  fontSize: { xs: '2rem', md: '2.75rem' },
                   color: 'white',
                 }}
               >
-                Ready to Start Selling?
+                Stop Building Projects That Never Pay You Back
               </Typography>
-              <Typography variant="h5" sx={{ mb: 5, color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
-                Join VETTCODE today and reach thousands of potential buyers worldwide
+              <Typography
+                variant="h6"
+                sx={{
+                  color: 'rgba(255,255,255,0.7)',
+                  lineHeight: 1.8,
+                  fontWeight: 400,
+                  mb: 6,
+                }}
+              >
+                Thousands of developers build powerful applications that never reach the right audience.
+                VettCode helps turn side projects, SaaS tools, AI systems, templates, and developer products
+                into scalable digital businesses.
               </Typography>
               <Button
                 variant="contained"
@@ -1110,32 +996,164 @@ const Home = () => {
                 onClick={() => navigate('/signup')}
                 endIcon={<ArrowForward />}
                 sx={{
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                   color: 'white',
                   px: 6,
                   py: 2.5,
-                  fontSize: '1.3rem',
-                  fontWeight: 900,
-                  borderRadius: 3,
+                  fontSize: '1.2rem',
+                  fontWeight: 700,
                   textTransform: 'none',
-                  boxShadow: '0 8px 24px rgba(139, 92, 246, 0.4)',
+                  boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 12px 32px rgba(139, 92, 246, 0.5)',
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                    boxShadow: '0 12px 40px rgba(99, 102, 241, 0.4)',
                   },
-                  transition: 'all 0.3s ease',
                 }}
               >
-                Get Started for Free
+                Start Selling Today
               </Button>
             </Box>
           </Fade>
         </Container>
       </Box>
 
+      {/* Features Grid */}
+      <Container maxWidth="lg" sx={{ py: { xs: 10, md: 14 } }}>
+        <Box sx={{ textAlign: 'center', mb: 8 }}>
+          <Typography
+            variant="h2"
+            sx={{
+              fontWeight: 800,
+              mb: 3,
+              fontSize: { xs: '2rem', md: '2.75rem' },
+              color: 'white',
+            }}
+          >
+            Everything You Need to Succeed
+          </Typography>
+        </Box>
+
+        <Grid container spacing={3}>
+          {features.map((feature, index) => (
+            <Grid item xs={6} sm={4} md={3} key={index}>
+              <Grow in timeout={600 + index * 100}>
+                <Box
+                  sx={{
+                    bgcolor: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(99, 102, 241, 0.1)',
+                    borderRadius: 2,
+                    p: 3,
+                    textAlign: 'center',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      bgcolor: 'rgba(255,255,255,0.04)',
+                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                      transform: 'translateY(-4px)',
+                    },
+                  }}
+                >
+                  <Box sx={{ color: '#6366f1', mb: 1.5 }}>{feature.icon}</Box>
+                  <Typography variant="body2" sx={{ color: 'white', fontWeight: 600 }}>
+                    {feature.label}
+                  </Typography>
+                </Box>
+              </Grow>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
+      {/* Final CTA */}
+      <Box sx={{ bgcolor: 'rgba(99, 102, 241, 0.05)', py: { xs: 10, md: 14 } }}>
+        <Container maxWidth="md">
+          <Fade in timeout={1000}>
+            <Box
+              sx={{
+                bgcolor: 'rgba(15, 23, 42, 0.8)',
+                border: '2px solid rgba(99, 102, 241, 0.3)',
+                borderRadius: 3,
+                p: { xs: 6, md: 8 },
+                textAlign: 'center',
+              }}
+            >
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 900,
+                  mb: 3,
+                  fontSize: { xs: '2rem', md: '2.75rem' },
+                  color: 'white',
+                }}
+              >
+                Start Selling on VettCode Today
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 5,
+                  color: 'rgba(255,255,255,0.7)',
+                  fontWeight: 400,
+                }}
+              >
+                Launch your software products to developers, startups, and businesses worldwide.
+              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 3,
+                  justifyContent: 'center',
+                }}
+              >
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate('/signup')}
+                  sx={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    color: 'white',
+                    px: 6,
+                    py: 2.5,
+                    fontSize: '1.2rem',
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                      boxShadow: '0 12px 40px rgba(99, 102, 241, 0.4)',
+                    },
+                  }}
+                >
+                  Become a Seller
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => navigate('/signup')}
+                  sx={{
+                    borderColor: 'rgba(255,255,255,0.3)',
+                    color: 'white',
+                    px: 6,
+                    py: 2.5,
+                    fontSize: '1.2rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: 'rgba(255,255,255,0.5)',
+                      bgcolor: 'rgba(255,255,255,0.05)',
+                    },
+                  }}
+                >
+                  Upload Your First Product
+                </Button>
+              </Box>
+            </Box>
+          </Fade>
+        </Container>
+      </Box>
+
       {/* Footer */}
-      <Box sx={{ bgcolor: '#0f172a', borderTop: '1px solid rgba(139, 92, 246, 0.2)', py: 8 }}>
+      <Box sx={{ bgcolor: '#0f172a', borderTop: '1px solid rgba(99, 102, 241, 0.1)', py: 8 }}>
         <Container maxWidth="lg">
           <Grid container spacing={6}>
             <Grid item xs={12} md={4}>
@@ -1144,8 +1162,8 @@ const Home = () => {
                   sx={{
                     width: 42,
                     height: 42,
-                    borderRadius: 2,
-                    background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
+                    borderRadius: 1.5,
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1153,38 +1171,38 @@ const Home = () => {
                 >
                   <Code sx={{ fontSize: 28, color: 'white' }} />
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 900, color: 'white' }}>
-                  VETTCODE
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'white' }}>
+                  VettCode
                 </Typography>
               </Box>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
-                The premier marketplace for buying and selling verified, production-ready applications.
-                Built by developers, trusted by founders.
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
+                A marketplace built for modern software creators. Sell SaaS products, AI tools, APIs, templates, and developer systems to a global audience.
               </Typography>
             </Grid>
             <Grid item xs={12} md={8}>
               <Grid container spacing={4}>
                 {[
-                  { title: 'Product', links: ['Features', 'Pricing', 'Benefits'] },
+                  { title: 'Product', links: ['Marketplace', 'Pricing', 'Features'] },
+                  { title: 'Sellers', links: ['Become a Seller', 'Seller Dashboard', 'Documentation'] },
                   { title: 'Company', links: ['About', 'Blog', 'Careers'] },
-                  { title: 'Support', links: ['Help Center', 'Contact', 'Status'] },
-                  { title: 'Legal', links: ['Privacy', 'Terms', 'License'] },
+                  { title: 'Support', links: ['Help Center', 'Contact', 'Terms'] },
                 ].map((section, index) => (
                   <Grid item xs={6} md={3} key={index}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, color: '#fcd34d' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'white' }}>
                       {section.title}
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                       {section.links.map((link, idx) => (
                         <Button
                           key={idx}
-                          href={`#${link.toLowerCase()}`}
+                          href="#"
                           sx={{
-                            color: 'rgba(255,255,255,0.6)',
+                            color: 'rgba(255,255,255,0.5)',
                             justifyContent: 'flex-start',
                             p: 0,
                             textTransform: 'none',
                             fontWeight: 500,
+                            fontSize: '0.875rem',
                             '&:hover': { color: 'white' },
                           }}
                         >
@@ -1199,14 +1217,14 @@ const Home = () => {
           </Grid>
           <Box
             sx={{
-              borderTop: '1px solid rgba(139, 92, 246, 0.2)',
+              borderTop: '1px solid rgba(99, 102, 241, 0.1)',
               mt: 8,
               pt: 6,
               textAlign: 'center',
             }}
           >
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
-              © 2026 VETTCODE. All rights reserved. Built with ❤️ for developers.
+              © 2026 VettCode. Built for developers who build software that matters.
             </Typography>
           </Box>
         </Container>
