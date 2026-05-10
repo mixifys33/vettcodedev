@@ -54,6 +54,8 @@ const CreateApplication = () => {
   const [savingDraft, setSavingDraft] = useState(false)
   const [screenshots, setScreenshots] = useState([])
   const [appIcon, setAppIcon] = useState(null)
+  const [appFile, setAppFile] = useState(null)
+  const [uploadingFile, setUploadingFile] = useState(false)
   const [selectedTech, setSelectedTech] = useState([])
   const [selectedPlatforms, setSelectedPlatforms] = useState([])
   const [dependencies, setDependencies] = useState([])
@@ -75,7 +77,6 @@ const CreateApplication = () => {
       currency: 'USD',
       isFree: false,
       licenseType: '',
-      githubRepo: '',
       liveDemo: '',
       documentationUrl: '',
       videoDemo: '',
@@ -126,6 +127,72 @@ const CreateApplication = () => {
     }
   }
 
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.name.endsWith('.zip')) {
+      toast.error('Only ZIP files are allowed')
+      return
+    }
+
+    // Validate file size (100MB max)
+    const maxSize = 100 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast.error('File size must be less than 100MB')
+      return
+    }
+
+    setUploadingFile(true)
+    try {
+      // Convert file to base64
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        try {
+          const base64 = reader.result
+
+          // Upload to ImageKit
+          const response = await api.post('/imagekit/upload-application', {
+            file: base64,
+            fileName: file.name,
+          })
+
+          if (response.data.success) {
+            setAppFile({
+              url: response.data.url,
+              fileId: response.data.fileId,
+              fileName: response.data.fileName,
+              fileSize: response.data.fileSize,
+            })
+            toast.success('Application file uploaded successfully!')
+          }
+        } catch (error) {
+          console.error('Upload error:', error)
+          toast.error(error.response?.data?.message || 'Failed to upload file')
+        } finally {
+          setUploadingFile(false)
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('File read error:', error)
+      toast.error('Failed to read file')
+      setUploadingFile(false)
+    }
+  }
+
+  const removeAppFile = async () => {
+    if (appFile?.fileId) {
+      try {
+        await api.delete('/imagekit/delete', { data: { fileId: appFile.fileId } })
+      } catch (error) {
+        console.error('Failed to delete file from ImageKit:', error)
+      }
+    }
+    setAppFile(null)
+  }
+
   const removeScreenshot = (index) => {
     setScreenshots((prev) => prev.filter((_, i) => i !== index))
   }
@@ -153,6 +220,12 @@ const CreateApplication = () => {
         return
       }
 
+      // Validate application file for published apps
+      if (!isDraft && !appFile) {
+        toast.error('Application ZIP file is required')
+        return
+      }
+
       // Prepare form data - avoid circular references
       const formData = {
         appName: data.appName?.trim() || '',
@@ -164,7 +237,6 @@ const CreateApplication = () => {
         currency: data.currency || 'USD',
         isFree: Boolean(data.isFree),
         licenseType: data.licenseType || '',
-        githubRepo: data.githubRepo?.trim() || '',
         liveDemo: data.liveDemo?.trim() || '',
         documentationUrl: data.documentationUrl?.trim() || '',
         videoDemo: data.videoDemo?.trim() || '',
@@ -180,6 +252,7 @@ const CreateApplication = () => {
         dependencies: Array.isArray(dependencies) ? dependencies.filter(d => typeof d === 'string') : [],
         screenshots: Array.isArray(screenshots) ? screenshots.map((s) => s.preview).filter(Boolean) : [],
         appIcon: appIcon?.preview || null,
+        sourceCodeFile: appFile || null,
       }
 
       // Use different endpoint for drafts
@@ -437,6 +510,74 @@ const CreateApplication = () => {
                 ))}
               </Box>
             </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: 'white', fontWeight: 600 }}>
+                Application File (ZIP) *
+              </Typography>
+              <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
+                Upload your application source code as a ZIP file (max 100MB)
+              </Typography>
+              
+              {appFile ? (
+                <Box
+                  sx={{
+                    p: 2,
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    borderRadius: 2,
+                    bgcolor: 'rgba(99, 102, 241, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <CheckCircle sx={{ color: '#10b981' }} />
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'white', fontWeight: 600 }}>
+                        {appFile.fileName}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                        {(appFile.fileSize / 1024 / 1024).toFixed(2)} MB
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <IconButton
+                    onClick={removeAppFile}
+                    sx={{
+                      color: '#ef4444',
+                      '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' },
+                    }}
+                  >
+                    <Delete />
+                  </IconButton>
+                </Box>
+              ) : (
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={uploadingFile ? <CircularProgress size={16} /> : <CloudUpload />}
+                  disabled={uploadingFile}
+                  sx={{
+                    borderColor: 'rgba(99, 102, 241, 0.5)',
+                    color: '#6366f1',
+                    '&:hover': {
+                      borderColor: '#6366f1',
+                      bgcolor: 'rgba(99, 102, 241, 0.1)',
+                    },
+                  }}
+                >
+                  {uploadingFile ? 'Uploading...' : 'Upload ZIP File'}
+                  <input
+                    type="file"
+                    hidden
+                    accept=".zip"
+                    onChange={handleFileUpload}
+                    disabled={uploadingFile}
+                  />
+                </Button>
+              )}
+            </Grid>
           </Grid>
         )
 
@@ -511,15 +652,6 @@ const CreateApplication = () => {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="GitHub Repository URL"
-                {...register('githubRepo')}
-                placeholder="https://github.com/username/repo"
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
                 label="Live Demo URL"
                 {...register('liveDemo')}
                 placeholder="https://demo.example.com"
@@ -535,7 +667,7 @@ const CreateApplication = () => {
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Video Demo URL"
@@ -628,6 +760,14 @@ const CreateApplication = () => {
                       Screenshots
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'white' }}>{screenshots.length} uploaded</Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                      Application File
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'white' }}>
+                      {appFile ? `${appFile.fileName} (${(appFile.fileSize / 1024 / 1024).toFixed(2)} MB)` : 'Not uploaded'}
+                    </Typography>
                   </Grid>
                 </Grid>
               </CardContent>

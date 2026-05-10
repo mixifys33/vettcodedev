@@ -22,7 +22,6 @@ import SellerDrafts from './pages/seller/SellerDrafts'
 import BulkUpload from './pages/seller/BulkUpload'
 import BulkEdit from './pages/seller/BulkEdit'
 import BulkUploadHistory from './pages/seller/BulkUploadHistory'
-import DeliverySettings from './pages/seller/DeliverySettings'
 import SellerSettings from './pages/seller/SellerSettings'
 import ShopSettings from './pages/seller/ShopSettings'
 import ProfileSettings from './pages/seller/ProfileSettings'
@@ -68,7 +67,6 @@ function App() {
                   <Route path="applications/create" element={<CreateApplication />} />
                   <Route path="applications/edit/:id" element={<EditApplication />} />
                   <Route path="applications/preview/:id" element={<ApplicationPreview />} />
-                  <Route path="applications/:id/delivery" element={<DeliverySettings />} />
                   <Route path="orders" element={<SellerOrders />} />
                   <Route path="refunds" element={<SellerRefund />} />
                   <Route path="marketing" element={<SellerMarketing />} />

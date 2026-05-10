@@ -134,11 +134,6 @@ const AllApplications = () => {
     handleMenuClose()
   }
 
-  const handleDeliverySettings = (app) => {
-    navigate(`/seller/applications/${app._id}/delivery`)
-    handleMenuClose()
-  }
-
   const handleDeleteClick = (app) => {
     setSelectedApp(app)
     setDeleteDialog(true)
@@ -539,20 +534,6 @@ const AllApplications = () => {
                   <Typography variant="h6" sx={{ fontWeight: 700, color: '#6366f1' }}>
                     {formatCurrency(app.price, app.currency)}
                   </Typography>
-
-                  {!app.deliverySettings && (
-                    <Chip
-                      label="Setup Delivery"
-                      size="small"
-                      sx={{
-                        mt: 1,
-                        bgcolor: 'rgba(245, 158, 11, 0.15)',
-                        color: '#f59e0b',
-                        border: '1px solid rgba(245, 158, 11, 0.3)',
-                      }}
-                      onClick={() => handleDeliverySettings(app)}
-                    />
-                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -631,17 +612,6 @@ const AllApplications = () => {
                         border: `1px solid ${alpha(getStatusColor(app.verificationStatus), 0.3)}`,
                       }}
                     />
-                    {!app.deliverySettings && (
-                      <Chip
-                        label="Setup Delivery"
-                        size="small"
-                        sx={{
-                          bgcolor: 'rgba(245, 158, 11, 0.15)',
-                          color: '#f59e0b',
-                          border: '1px solid rgba(245, 158, 11, 0.3)',
-                        }}
-                      />
-                    )}
                   </Box>
                 </Box>
 
@@ -698,16 +668,6 @@ const AllApplications = () => {
         >
           <Edit sx={{ mr: 1.5, fontSize: 20 }} />
           Edit
-        </MenuItem>
-        <MenuItem
-          onClick={() => handleDeliverySettings(selectedApp)}
-          sx={{
-            color: 'white',
-            '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.15)' },
-          }}
-        >
-          <SettingsIcon sx={{ mr: 1.5, fontSize: 20 }} />
-          Delivery Settings
         </MenuItem>
         <MenuItem
           onClick={() => handleDeleteClick(selectedApp)}
