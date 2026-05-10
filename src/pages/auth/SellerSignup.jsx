@@ -419,7 +419,7 @@ const SellerSignup = () => {
                 <Box component="ul" sx={{ m: 0, pl: 2.5, listStyle: 'none' }}>
                   {[
                     'Your account will be reviewed by our team',
-                    'You'll receive an email notification once approved',
+                    'You will receive an email notification once approved',
                     'Start uploading your software products',
                     'Begin earning from your first sale',
                   ].map((item, idx) => (
