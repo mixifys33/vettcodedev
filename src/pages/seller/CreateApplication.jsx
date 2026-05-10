@@ -146,26 +146,47 @@ const CreateApplication = () => {
 
     setUploadingFile(true)
     try {
-      // Convert file to base64
+      // Read file as ArrayBuffer for compression
+      const arrayBuffer = await file.arrayBuffer()
+      const uint8Array = new Uint8Array(arrayBuffer)
+      
+      // Dynamically import pako for compression
+      const pako = await import('pako')
+      
+      // Compress the file using gzip (best compression)
+      const compressed = pako.gzip(uint8Array, { level: 9 })
+      
+      // Calculate compression ratio
+      const originalSize = file.size
+      const compressedSize = compressed.length
+      const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(1)
+      
+      console.log(`Compression: ${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedSize / 1024 / 1024).toFixed(2)}MB (${compressionRatio}% reduction)`)
+      
+      // Convert compressed data to base64
+      const blob = new Blob([compressed], { type: 'application/gzip' })
       const reader = new FileReader()
+      
       reader.onloadend = async () => {
         try {
           const base64 = reader.result
 
-          // Upload to ImageKit
+          // Upload to ImageKit with .gz extension
           const response = await api.post('/imagekit/upload-application', {
             file: base64,
-            fileName: file.name,
+            fileName: file.name + '.gz',
           })
 
           if (response.data.success) {
             setAppFile({
               url: response.data.url,
               fileId: response.data.fileId,
-              fileName: response.data.fileName,
-              fileSize: response.data.fileSize,
+              fileName: file.name, // Store original name without .gz
+              fileSize: originalSize, // Store original size
+              compressedSize: compressedSize,
+              compressionRatio: compressionRatio,
             })
-            toast.success('Application file uploaded successfully!')
+            toast.success(`File uploaded! Compressed by ${compressionRatio}% (saved ${((originalSize - compressedSize) / 1024 / 1024).toFixed(2)}MB)`)
           }
         } catch (error) {
           console.error('Upload error:', error)
@@ -174,10 +195,11 @@ const CreateApplication = () => {
           setUploadingFile(false)
         }
       }
-      reader.readAsDataURL(file)
+      
+      reader.readAsDataURL(blob)
     } catch (error) {
-      console.error('File read error:', error)
-      toast.error('Failed to read file')
+      console.error('Compression error:', error)
+      toast.error('Failed to compress file')
       setUploadingFile(false)
     }
   }

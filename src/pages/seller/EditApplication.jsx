@@ -53,6 +53,8 @@ const EditApplication = () => {
   const [saving, setSaving] = useState(false)
   const [screenshots, setScreenshots] = useState([])
   const [appIcon, setAppIcon] = useState(null)
+  const [appFile, setAppFile] = useState(null)
+  const [uploadingFile, setUploadingFile] = useState(false)
   const [selectedTech, setSelectedTech] = useState([])
   const [selectedPlatforms, setSelectedPlatforms] = useState([])
   const [dependencies, setDependencies] = useState([])
@@ -123,6 +125,17 @@ const EditApplication = () => {
             existing: true,
           })
         }
+
+        // Set application file
+        if (app.sourceCodeFile) {
+          setAppFile({
+            url: app.sourceCodeFile.url,
+            fileId: app.sourceCodeFile.fileId,
+            fileName: app.sourceCodeFile.fileName,
+            fileSize: app.sourceCodeFile.fileSize,
+            existing: true,
+          })
+        }
       }
     } catch (error) {
       toast.error('Failed to fetch application')
@@ -166,6 +179,104 @@ const EditApplication = () => {
       }
       reader.readAsDataURL(file)
     }
+  }
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.name.endsWith('.zip')) {
+      toast.error('Only ZIP files are allowed')
+      return
+    }
+
+    // Validate file size (100MB max)
+    const maxSize = 100 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast.error('File size must be less than 100MB')
+      return
+    }
+
+    setUploadingFile(true)
+    try {
+      // Read file as ArrayBuffer for compression
+      const arrayBuffer = await file.arrayBuffer()
+      const uint8Array = new Uint8Array(arrayBuffer)
+      
+      // Dynamically import pako for compression
+      const pako = await import('pako')
+      
+      // Compress the file using gzip (best compression)
+      const compressed = pako.gzip(uint8Array, { level: 9 })
+      
+      // Calculate compression ratio
+      const originalSize = file.size
+      const compressedSize = compressed.length
+      const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(1)
+      
+      console.log(`Compression: ${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedSize / 1024 / 1024).toFixed(2)}MB (${compressionRatio}% reduction)`)
+      
+      // Convert compressed data to base64
+      const blob = new Blob([compressed], { type: 'application/gzip' })
+      const reader = new FileReader()
+      
+      reader.onloadend = async () => {
+        try {
+          const base64 = reader.result
+
+          // Upload to ImageKit with .gz extension
+          const response = await api.post('/imagekit/upload-application', {
+            file: base64,
+            fileName: file.name + '.gz',
+          })
+
+          if (response.data.success) {
+            // Delete old file if exists
+            if (appFile?.fileId && !appFile.existing) {
+              try {
+                await api.delete('/imagekit/delete', { data: { fileId: appFile.fileId } })
+              } catch (error) {
+                console.error('Failed to delete old file:', error)
+              }
+            }
+
+            setAppFile({
+              url: response.data.url,
+              fileId: response.data.fileId,
+              fileName: file.name, // Store original name without .gz
+              fileSize: originalSize, // Store original size
+              compressedSize: compressedSize,
+              compressionRatio: compressionRatio,
+              existing: false,
+            })
+            toast.success(`File uploaded! Compressed by ${compressionRatio}% (saved ${((originalSize - compressedSize) / 1024 / 1024).toFixed(2)}MB). Application will be re-verified.`)
+          }
+        } catch (error) {
+          console.error('Upload error:', error)
+          toast.error(error.response?.data?.message || 'Failed to upload file')
+        } finally {
+          setUploadingFile(false)
+        }
+      }
+      
+      reader.readAsDataURL(blob)
+    } catch (error) {
+      console.error('Compression error:', error)
+      toast.error('Failed to compress file')
+      setUploadingFile(false)
+    }
+  }
+
+  const removeAppFile = async () => {
+    if (appFile?.fileId && !appFile.existing) {
+      try {
+        await api.delete('/imagekit/delete', { data: { fileId: appFile.fileId } })
+      } catch (error) {
+        console.error('Failed to delete file from ImageKit:', error)
+      }
+    }
+    setAppFile(null)
   }
 
   const removeScreenshot = (index) => {
@@ -213,12 +324,21 @@ const EditApplication = () => {
         dependencies,
         screenshots: screenshots.map((s) => s.preview),
         appIcon: appIcon?.preview,
+        sourceCodeFile: appFile || null,
+      }
+
+      // If a new file was uploaded, reset verification status
+      if (appFile && !appFile.existing) {
+        formData.verificationStatus = 'pending'
       }
 
       const response = await api.put(`/applications/${id}`, formData)
 
       if (response.data.success) {
-        toast.success('Application updated successfully!')
+        const message = appFile && !appFile.existing 
+          ? 'Application updated successfully! It will be re-verified by admin.'
+          : 'Application updated successfully!'
+        toast.success(message)
         navigate('/seller/applications')
       }
     } catch (error) {
@@ -451,6 +571,80 @@ const EditApplication = () => {
                   />
                 ))}
               </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: 'white', fontWeight: 600 }}>
+                Application File (ZIP) *
+              </Typography>
+              <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
+                Upload your application source code as a ZIP file (max 100MB). Uploading a new file will reset verification status.
+              </Typography>
+              
+              {appFile ? (
+                <Box
+                  sx={{
+                    p: 2,
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    borderRadius: 2,
+                    bgcolor: 'rgba(99, 102, 241, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    mb: 2,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <CheckCircle sx={{ color: '#10b981' }} />
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'white', fontWeight: 600 }}>
+                        {appFile.fileName}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                        {(appFile.fileSize / 1024 / 1024).toFixed(2)} MB
+                        {appFile.existing && ' (Current file)'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <IconButton
+                    onClick={removeAppFile}
+                    sx={{
+                      color: '#ef4444',
+                      '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' },
+                    }}
+                  >
+                    <Delete />
+                  </IconButton>
+                </Box>
+              ) : (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  No application file uploaded. Please upload a ZIP file to complete your application.
+                </Alert>
+              )}
+
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={uploadingFile ? <CircularProgress size={16} /> : <CloudUpload />}
+                disabled={uploadingFile}
+                sx={{
+                  borderColor: 'rgba(99, 102, 241, 0.5)',
+                  color: '#6366f1',
+                  '&:hover': {
+                    borderColor: '#6366f1',
+                    bgcolor: 'rgba(99, 102, 241, 0.1)',
+                  },
+                }}
+              >
+                {uploadingFile ? 'Uploading...' : appFile ? 'Replace ZIP File' : 'Upload ZIP File'}
+                <input
+                  type="file"
+                  hidden
+                  accept=".zip"
+                  onChange={handleFileUpload}
+                  disabled={uploadingFile}
+                />
+              </Button>
             </Grid>
           </Grid>
         )

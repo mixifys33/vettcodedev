@@ -179,6 +179,53 @@ const AllApplications = () => {
     return statusMeta.color
   }
 
+  const isIncomplete = (app) => {
+    // Check if application is missing the source code file
+    return !app.sourceCodeFile || !app.sourceCodeFile.url
+  }
+
+  const getApplicationStatus = (app) => {
+    if (isIncomplete(app)) {
+      return {
+        label: 'Incomplete',
+        color: '#f59e0b',
+        icon: <Schedule sx={{ fontSize: 16 }} />
+      }
+    }
+    
+    switch (app.verificationStatus) {
+      case 'verified':
+        return {
+          label: 'Verified',
+          color: '#10b981',
+          icon: <CheckCircle sx={{ fontSize: 16 }} />
+        }
+      case 'pending':
+        return {
+          label: 'Pending Review',
+          color: '#3b82f6',
+          icon: <Schedule sx={{ fontSize: 16 }} />
+        }
+      case 'rejected':
+        return {
+          label: 'Rejected',
+          color: '#ef4444',
+          icon: <Cancel sx={{ fontSize: 16 }} />
+        }
+      default:
+        return {
+          label: 'Pending Review',
+          color: '#3b82f6',
+          icon: <Schedule sx={{ fontSize: 16 }} />
+        }
+    }
+  }
+
+  const handleCompleteApplication = (app) => {
+    navigate(`/seller/applications/edit/${app._id}`)
+    handleMenuClose()
+  }
+
   if (loading) {
     return (
       <Box sx={{ p: 3 }}>
@@ -485,8 +532,8 @@ const AllApplications = () => {
                   </CardMedia>
 
                   <Chip
-                    icon={getStatusIcon(app.verificationStatus)}
-                    label={app.verificationStatus || 'pending'}
+                    icon={getApplicationStatus(app).icon}
+                    label={getApplicationStatus(app).label}
                     size="small"
                     sx={{
                       position: 'absolute',
@@ -494,10 +541,10 @@ const AllApplications = () => {
                       right: 8,
                       bgcolor: 'rgba(15, 23, 42, 0.9)',
                       backdropFilter: 'blur(10px)',
-                      color: getStatusColor(app.verificationStatus),
+                      color: getApplicationStatus(app).color,
                       fontWeight: 600,
                       textTransform: 'capitalize',
-                      border: `1px solid ${alpha(getStatusColor(app.verificationStatus), 0.3)}`,
+                      border: `1px solid ${alpha(getApplicationStatus(app).color, 0.3)}`,
                     }}
                   />
 
@@ -531,9 +578,29 @@ const AllApplications = () => {
                     {app.appCategory}
                   </Typography>
 
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#6366f1' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#6366f1', mb: 1 }}>
                     {formatCurrency(app.price, app.currency)}
                   </Typography>
+
+                  {isIncomplete(app) && (
+                    <Button
+                      fullWidth
+                      size="small"
+                      variant="outlined"
+                      onClick={() => handleCompleteApplication(app)}
+                      sx={{
+                        mt: 1,
+                        borderColor: '#f59e0b',
+                        color: '#f59e0b',
+                        '&:hover': {
+                          borderColor: '#f59e0b',
+                          bgcolor: 'rgba(245, 158, 11, 0.1)',
+                        },
+                      }}
+                    >
+                      Upload ZIP File
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -599,19 +666,39 @@ const AllApplications = () => {
                   <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 0.5 }}>
                     {app.appCategory}
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
                     <Chip
-                      icon={getStatusIcon(app.verificationStatus)}
-                      label={app.verificationStatus || 'pending'}
+                      icon={getApplicationStatus(app).icon}
+                      label={getApplicationStatus(app).label}
                       size="small"
                       sx={{
-                        color: getStatusColor(app.verificationStatus),
+                        color: getApplicationStatus(app).color,
                         fontWeight: 600,
                         textTransform: 'capitalize',
-                        bgcolor: alpha(getStatusColor(app.verificationStatus), 0.15),
-                        border: `1px solid ${alpha(getStatusColor(app.verificationStatus), 0.3)}`,
+                        bgcolor: alpha(getApplicationStatus(app).color, 0.15),
+                        border: `1px solid ${alpha(getApplicationStatus(app).color, 0.3)}`,
                       }}
                     />
+                    {isIncomplete(app) && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleCompleteApplication(app)}
+                        sx={{
+                          borderColor: '#f59e0b',
+                          color: '#f59e0b',
+                          fontSize: '0.75rem',
+                          py: 0.25,
+                          px: 1,
+                          '&:hover': {
+                            borderColor: '#f59e0b',
+                            bgcolor: 'rgba(245, 158, 11, 0.1)',
+                          },
+                        }}
+                      >
+                        Upload ZIP
+                      </Button>
+                    )}
                   </Box>
                 </Box>
 
@@ -667,7 +754,7 @@ const AllApplications = () => {
           }}
         >
           <Edit sx={{ mr: 1.5, fontSize: 20 }} />
-          Edit
+          {isIncomplete(selectedApp) ? 'Complete Application' : 'Edit'}
         </MenuItem>
         <MenuItem
           onClick={() => handleDeleteClick(selectedApp)}
