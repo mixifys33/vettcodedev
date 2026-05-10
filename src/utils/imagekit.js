@@ -23,7 +23,7 @@ export const uploadToImageKit = async (file, folder = 'applications') => {
         url: response.data.url,
         fileId: response.data.fileId,
         thumbnailUrl: response.data.thumbnailUrl,
-        fileName: response.data.name,
+        fileName: response.data.name || response.data.fileName,
       }
     } else {
       throw new Error(response.data.message || 'Upload failed')
