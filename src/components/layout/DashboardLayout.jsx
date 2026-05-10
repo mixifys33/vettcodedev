@@ -427,7 +427,7 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         PaperProps={{
-          sx={{
+          sx: {
             mt: 1.5,
             minWidth: 220,
             borderRadius: 2,
