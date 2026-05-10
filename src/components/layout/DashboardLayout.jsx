@@ -2,11 +2,8 @@ import { useState } from 'react'
 import {
   Box,
   Drawer,
-  AppBar,
-  Toolbar,
   List,
   Typography,
-  Divider,
   IconButton,
   ListItem,
   ListItemButton,
@@ -15,10 +12,11 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Badge,
   Tooltip,
   useTheme,
   useMediaQuery,
+  alpha,
+  Fade,
 } from '@mui/material'
 import {
   Menu as MenuIcon,
@@ -30,21 +28,20 @@ import {
   CloudUpload,
   Settings,
   Logout,
-  Notifications,
   Person,
   Store,
   People,
   PendingActions,
-  ManageAccounts,
   Inventory,
   Send,
   History,
-  ChevronLeft,
+  Close,
+  Code,
 } from '@mui/icons-material'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useAuthStore from '../../store/authStore'
 
-const drawerWidth = 260
+const drawerWidth = 280
 
 const sellerMenuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/seller/dashboard' },
@@ -102,52 +99,118 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
   }
 
   const drawer = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Animated Background Elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: -100,
+          right: -100,
+          width: 300,
+          height: 300,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)',
+          animation: 'pulse 4s ease-in-out infinite',
+          '@keyframes pulse': {
+            '0%, 100%': { transform: 'scale(1)', opacity: 0.5 },
+            '50%': { transform: 'scale(1.1)', opacity: 0.8 },
+          },
+        }}
+      />
+
       {/* Logo */}
       <Box
         sx={{
-          p: 2.5,
+          p: 3,
           display: 'flex',
           alignItems: 'center',
-          gap: 1.5,
-          background: 'linear-gradient(135deg, #0a1628 0%, #1a3a5c 100%)',
-          color: 'white',
+          gap: 2,
+          position: 'relative',
+          zIndex: 1,
         }}
       >
-        <Apps sx={{ fontSize: 32, color: '#f0a500' }} />
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: 2,
+            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4)',
+          }}
+        >
+          <Code sx={{ fontSize: 28, color: 'white' }} />
+        </Box>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 800,
+              lineHeight: 1.2,
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
             VettCode
           </Typography>
-          <Typography variant="caption" sx={{ opacity: 0.9 }}>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>
             {userType === 'admin' ? 'Admin Panel' : 'Seller Dashboard'}
           </Typography>
         </Box>
       </Box>
 
-      <Divider />
-
       {/* Navigation */}
-      <List sx={{ flex: 1, py: 2 }}>
+      <List sx={{ flex: 1, py: 2, px: 2, position: 'relative', zIndex: 1 }}>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path
           return (
-            <ListItem key={item.text} disablePadding sx={{ px: 1.5, mb: 0.5 }}>
+            <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
               <ListItemButton
                 onClick={() => handleNavigate(item.path)}
                 sx={{
                   borderRadius: 2,
-                  bgcolor: isActive ? 'primary.main' : 'transparent',
-                  color: isActive ? 'white' : 'text.primary',
+                  py: 1.5,
+                  px: 2,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  bgcolor: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                  border: isActive ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid transparent',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 3,
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    opacity: isActive ? 1 : 0,
+                    transition: 'opacity 0.3s',
+                  },
                   '&:hover': {
-                    bgcolor: isActive ? 'primary.dark' : 'action.hover',
+                    bgcolor: isActive ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(99, 102, 241, 0.2)',
+                    transform: 'translateX(4px)',
                   },
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    color: isActive ? 'white' : 'text.secondary',
+                    color: isActive ? '#6366f1' : 'rgba(255,255,255,0.6)',
                     minWidth: 40,
+                    transition: 'all 0.3s',
                   }}
                 >
                   {item.icon}
@@ -157,6 +220,7 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
                   primaryTypographyProps={{
                     fontSize: '0.95rem',
                     fontWeight: isActive ? 600 : 500,
+                    color: isActive ? 'white' : 'rgba(255,255,255,0.8)',
                   }}
                 />
               </ListItemButton>
@@ -165,39 +229,71 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
         })}
       </List>
 
-      <Divider />
-
       {/* User Info */}
-      <Box sx={{ p: 2 }}>
+      <Box
+        sx={{
+          p: 2,
+          position: 'relative',
+          zIndex: 1,
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 1.5,
-            p: 1.5,
+            gap: 2,
+            p: 2,
             borderRadius: 2,
-            bgcolor: 'background.default',
+            background: 'rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.08)',
             cursor: 'pointer',
-            '&:hover': { bgcolor: 'action.hover' },
+            transition: 'all 0.3s',
+            '&:hover': {
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(99, 102, 241, 0.3)',
+              transform: 'translateY(-2px)',
+            },
           }}
           onClick={handleMenuOpen}
         >
           <Avatar
             sx={{
-              width: 40,
-              height: 40,
-              bgcolor: 'secondary.main',
-              color: 'primary.main',
+              width: 44,
+              height: 44,
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              color: 'white',
               fontWeight: 700,
+              fontSize: '1.1rem',
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
             }}
           >
             {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, noWrap: true }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                color: 'white',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {user?.name || 'User'}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ noWrap: true }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'rgba(255,255,255,0.6)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                display: 'block',
+              }}
+            >
               {user?.email || ''}
             </Typography>
           </Box>
@@ -207,64 +303,71 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
   )
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* AppBar */}
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          bgcolor: 'white',
-          color: 'text.primary',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#0a0e27' }}>
+      {/* Mobile Header */}
+      {isMobile && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1200,
+            background: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(20px)',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              p: 2,
+            }}
           >
-            <MenuIcon />
-          </IconButton>
-
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            {menuItems.find((item) => item.path === location.pathname)?.text || 'Dashboard'}
-          </Typography>
-
-          <Tooltip title="Notifications">
-            <IconButton color="inherit">
-              <Badge badgeContent={0} color="error">
-                <Notifications />
-              </Badge>
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Account">
-            <IconButton onClick={handleMenuOpen} sx={{ ml: 1 }}>
-              <Avatar
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
                 sx={{
                   width: 36,
                   height: 36,
-                  bgcolor: 'secondary.main',
-                  color: 'primary.main',
-                  fontSize: '0.95rem',
-                  fontWeight: 700,
+                  borderRadius: 1.5,
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
-              </Avatar>
+                <Code sx={{ fontSize: 20, color: 'white' }} />
+              </Box>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 700,
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                VettCode
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={handleDrawerToggle}
+              sx={{
+                color: 'white',
+                bgcolor: 'rgba(255,255,255,0.05)',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+              }}
+            >
+              {mobileOpen ? <Close /> : <MenuIcon />}
             </IconButton>
-          </Tooltip>
-        </Toolbar>
-      </AppBar>
+          </Box>
+        </Box>
+      )}
 
       {/* Drawer */}
-      <Box
-        component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-      >
+      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
         {/* Mobile drawer */}
         <Drawer
           variant="temporary"
@@ -276,6 +379,7 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
+              border: 'none',
             },
           }}
         >
@@ -290,8 +394,8 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
-              borderRight: '1px solid',
-              borderColor: 'divider',
+              border: 'none',
+              borderRight: '1px solid rgba(255,255,255,0.08)',
             },
           }}
           open
@@ -305,13 +409,12 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
           width: { md: `calc(100% - ${drawerWidth}px)` },
           minHeight: '100vh',
-          bgcolor: 'background.default',
+          bgcolor: '#0a0e27',
+          pt: { xs: 8, md: 0 },
         }}
       >
-        <Toolbar />
         {children}
       </Box>
 
@@ -320,14 +423,18 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
+        TransitionComponent={Fade}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         PaperProps={{
-          sx: {
+          sx={{
             mt: 1.5,
-            minWidth: 200,
+            minWidth: 220,
             borderRadius: 2,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            background: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           },
         }}
       >
@@ -336,8 +443,16 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
             handleMenuClose()
             navigate(userType === 'admin' ? '/admin/dashboard' : '/seller/settings/profile')
           }}
+          sx={{
+            color: 'white',
+            py: 1.5,
+            px: 2,
+            '&:hover': {
+              bgcolor: 'rgba(99, 102, 241, 0.15)',
+            },
+          }}
         >
-          <ListItemIcon>
+          <ListItemIcon sx={{ color: '#6366f1' }}>
             <Person fontSize="small" />
           </ListItemIcon>
           <ListItemText>Profile</ListItemText>
@@ -347,22 +462,37 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
             handleMenuClose()
             navigate(userType === 'admin' ? '/admin/dashboard' : '/seller/settings')
           }}
+          sx={{
+            color: 'white',
+            py: 1.5,
+            px: 2,
+            '&:hover': {
+              bgcolor: 'rgba(99, 102, 241, 0.15)',
+            },
+          }}
         >
-          <ListItemIcon>
+          <ListItemIcon sx={{ color: '#6366f1' }}>
             <Settings fontSize="small" />
           </ListItemIcon>
           <ListItemText>Settings</ListItemText>
         </MenuItem>
-        <Divider />
+        <Box sx={{ my: 1, borderTop: '1px solid rgba(255,255,255,0.08)' }} />
         <MenuItem
           onClick={() => {
             handleMenuClose()
             handleLogout()
           }}
-          sx={{ color: 'error.main' }}
+          sx={{
+            color: '#ef4444',
+            py: 1.5,
+            px: 2,
+            '&:hover': {
+              bgcolor: 'rgba(239, 68, 68, 0.15)',
+            },
+          }}
         >
-          <ListItemIcon>
-            <Logout fontSize="small" color="error" />
+          <ListItemIcon sx={{ color: '#ef4444' }}>
+            <Logout fontSize="small" />
           </ListItemIcon>
           <ListItemText>Logout</ListItemText>
         </MenuItem>

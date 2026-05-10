@@ -23,6 +23,7 @@ import {
   Select,
   FormControl,
   InputLabel,
+  alpha,
 } from '@mui/material'
 import {
   Search,
@@ -33,7 +34,6 @@ import {
   Visibility,
   GridView,
   ViewList,
-  FilterList,
   Apps as AppsIcon,
   CheckCircle,
   Schedule,
@@ -81,7 +81,6 @@ const AllApplications = () => {
       }
     } catch (error) {
       if (error.response?.status === 404) {
-        // No applications found - this is okay
         setApplications([])
       } else {
         toast.error('Failed to fetch applications')
@@ -95,7 +94,6 @@ const AllApplications = () => {
   const filterApplications = () => {
     let filtered = [...applications]
 
-    // Search filter
     if (searchQuery) {
       filtered = filtered.filter(
         (app) =>
@@ -105,12 +103,10 @@ const AllApplications = () => {
       )
     }
 
-    // Category filter
     if (categoryFilter !== 'all') {
       filtered = filtered.filter((app) => app.appCategory === categoryFilter)
     }
 
-    // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter((app) => app.verificationStatus === statusFilter)
     }
@@ -190,21 +186,21 @@ const AllApplications = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress />
+      <Box sx={{ p: 3 }}>
+        <CircularProgress sx={{ color: '#6366f1' }} />
       </Box>
     )
   }
 
   return (
-    <Box>
+    <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: 'white', mb: 0.5 }}>
             My Applications
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
             Manage your application catalogue
           </Typography>
         </Box>
@@ -212,15 +208,33 @@ const AllApplications = () => {
           variant="contained"
           startIcon={<Add />}
           onClick={() => navigate('/seller/applications/create')}
-          size="large"
+          sx={{
+            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+            textTransform: 'none',
+            px: 3,
+            py: 1.5,
+            fontWeight: 600,
+            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+            '&:hover': {
+              boxShadow: '0 6px 20px rgba(99, 102, 241, 0.5)',
+            },
+          }}
         >
           Create Application
         </Button>
       </Box>
 
       {/* Filters */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
+      <Card
+        sx={{
+          mb: 3,
+          background: 'rgba(255,255,255,0.03)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 2,
+        }}
+      >
+        <CardContent sx={{ p: 2.5 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={4}>
               <TextField
@@ -231,20 +245,69 @@ const AllApplications = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search />
+                      <Search sx={{ color: 'rgba(255,255,255,0.5)' }} />
                     </InputAdornment>
                   ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'rgba(255,255,255,0.05)',
+                    color: 'white',
+                    '& fieldset': {
+                      borderColor: 'rgba(255,255,255,0.1)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#6366f1',
+                    },
+                  },
                 }}
               />
             </Grid>
 
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
+                <InputLabel sx={{ color: 'rgba(255,255,255,0.6)' }}>Category</InputLabel>
                 <Select
                   value={categoryFilter}
                   label="Category"
                   onChange={(e) => setCategoryFilter(e.target.value)}
+                  sx={{
+                    bgcolor: 'rgba(255,255,255,0.05)',
+                    color: 'white',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255,255,255,0.1)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#6366f1',
+                    },
+                    '& .MuiSvgIcon-root': {
+                      color: 'rgba(255,255,255,0.6)',
+                    },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        bgcolor: 'rgba(15, 23, 42, 0.95)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        '& .MuiMenuItem-root': {
+                          color: 'white',
+                          '&:hover': {
+                            bgcolor: 'rgba(99, 102, 241, 0.15)',
+                          },
+                          '&.Mui-selected': {
+                            bgcolor: 'rgba(99, 102, 241, 0.2)',
+                          },
+                        },
+                      },
+                    },
+                  }}
                 >
                   <MenuItem value="all">All Categories</MenuItem>
                   {APP_CATEGORIES.map((cat) => (
@@ -258,11 +321,45 @@ const AllApplications = () => {
 
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
+                <InputLabel sx={{ color: 'rgba(255,255,255,0.6)' }}>Status</InputLabel>
                 <Select
                   value={statusFilter}
                   label="Status"
                   onChange={(e) => setStatusFilter(e.target.value)}
+                  sx={{
+                    bgcolor: 'rgba(255,255,255,0.05)',
+                    color: 'white',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255,255,255,0.1)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#6366f1',
+                    },
+                    '& .MuiSvgIcon-root': {
+                      color: 'rgba(255,255,255,0.6)',
+                    },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        bgcolor: 'rgba(15, 23, 42, 0.95)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        '& .MuiMenuItem-root': {
+                          color: 'white',
+                          '&:hover': {
+                            bgcolor: 'rgba(99, 102, 241, 0.15)',
+                          },
+                          '&.Mui-selected': {
+                            bgcolor: 'rgba(99, 102, 241, 0.2)',
+                          },
+                        },
+                      },
+                    },
+                  }}
                 >
                   <MenuItem value="all">All Status</MenuItem>
                   <MenuItem value="verified">Verified</MenuItem>
@@ -278,6 +375,17 @@ const AllApplications = () => {
                 exclusive
                 onChange={(e, newMode) => newMode && setViewMode(newMode)}
                 fullWidth
+                sx={{
+                  '& .MuiToggleButton-root': {
+                    color: 'rgba(255,255,255,0.6)',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    '&.Mui-selected': {
+                      bgcolor: 'rgba(99, 102, 241, 0.2)',
+                      color: '#6366f1',
+                      borderColor: '#6366f1',
+                    },
+                  },
+                }}
               >
                 <ToggleButton value="grid">
                   <GridView />
@@ -293,18 +401,25 @@ const AllApplications = () => {
 
       {/* Results Count */}
       <Box sx={{ mb: 2 }}>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
           Showing {filteredApps.length} of {applications.length} applications
         </Typography>
       </Box>
 
       {/* Applications Grid/List */}
       {filteredApps.length === 0 ? (
-        <Card>
+        <Card
+          sx={{
+            background: 'rgba(255,255,255,0.03)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 2,
+          }}
+        >
           <CardContent>
             <Box sx={{ textAlign: 'center', py: 6 }}>
-              <AppsIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+              <AppsIcon sx={{ fontSize: 64, color: 'rgba(255,255,255,0.2)', mb: 2 }} />
+              <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.6)', mb: 2 }}>
                 {searchQuery || categoryFilter !== 'all' || statusFilter !== 'all'
                   ? 'No applications found'
                   : 'No applications yet'}
@@ -314,6 +429,14 @@ const AllApplications = () => {
                   variant="contained"
                   startIcon={<Add />}
                   onClick={() => navigate('/seller/applications/create')}
+                  sx={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    textTransform: 'none',
+                    px: 3,
+                    py: 1.5,
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+                  }}
                 >
                   Create Your First Application
                 </Button>
@@ -330,10 +453,15 @@ const AllApplications = () => {
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
+                  background: 'rgba(255,255,255,0.03)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 2,
                   transition: 'all 0.3s',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2)',
                   },
                 }}
               >
@@ -342,7 +470,7 @@ const AllApplications = () => {
                     component="div"
                     sx={{
                       height: 180,
-                      bgcolor: 'background.default',
+                      bgcolor: 'rgba(255,255,255,0.05)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -357,7 +485,7 @@ const AllApplications = () => {
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     ) : (
-                      <AppsIcon sx={{ fontSize: 48, color: 'text.disabled' }} />
+                      <AppsIcon sx={{ fontSize: 48, color: 'rgba(255,255,255,0.2)' }} />
                     )}
                   </CardMedia>
 
@@ -369,10 +497,12 @@ const AllApplications = () => {
                       position: 'absolute',
                       top: 8,
                       right: 8,
-                      bgcolor: 'white',
+                      bgcolor: 'rgba(15, 23, 42, 0.9)',
+                      backdropFilter: 'blur(10px)',
                       color: getStatusColor(app.verificationStatus),
                       fontWeight: 600,
                       textTransform: 'capitalize',
+                      border: `1px solid ${alpha(getStatusColor(app.verificationStatus), 0.3)}`,
                     }}
                   />
 
@@ -381,8 +511,10 @@ const AllApplications = () => {
                       position: 'absolute',
                       top: 8,
                       left: 8,
-                      bgcolor: 'white',
-                      '&:hover': { bgcolor: 'white' },
+                      bgcolor: 'rgba(15, 23, 42, 0.9)',
+                      backdropFilter: 'blur(10px)',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.9)' },
                     }}
                     onClick={(e) => handleMenuOpen(e, app)}
                   >
@@ -390,21 +522,21 @@ const AllApplications = () => {
                   </IconButton>
                 </Box>
 
-                <CardContent sx={{ flexGrow: 1 }}>
+                <CardContent sx={{ flexGrow: 1, p: 2 }}>
                   <Typography
                     variant="subtitle1"
-                    sx={{ fontWeight: 600, mb: 0.5, cursor: 'pointer' }}
+                    sx={{ fontWeight: 600, color: 'white', mb: 0.5, cursor: 'pointer' }}
                     onClick={() => handleView(app)}
                     noWrap
                   >
                     {app.appName}
                   </Typography>
 
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }} noWrap>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 1 }} noWrap>
                     {app.appCategory}
                   </Typography>
 
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#6366f1' }}>
                     {formatCurrency(app.price, app.currency)}
                   </Typography>
 
@@ -412,8 +544,12 @@ const AllApplications = () => {
                     <Chip
                       label="Setup Delivery"
                       size="small"
-                      color="warning"
-                      sx={{ mt: 1 }}
+                      sx={{
+                        mt: 1,
+                        bgcolor: 'rgba(245, 158, 11, 0.15)',
+                        color: '#f59e0b',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                      }}
                       onClick={() => handleDeliverySettings(app)}
                     />
                   )}
@@ -423,7 +559,14 @@ const AllApplications = () => {
           ))}
         </Grid>
       ) : (
-        <Card>
+        <Card
+          sx={{
+            background: 'rgba(255,255,255,0.03)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 2,
+          }}
+        >
           <CardContent sx={{ p: 0 }}>
             {filteredApps.map((app, index) => (
               <Box
@@ -433,9 +576,9 @@ const AllApplications = () => {
                   alignItems: 'center',
                   gap: 2,
                   p: 2,
-                  borderBottom: index < filteredApps.length - 1 ? 1 : 0,
-                  borderColor: 'divider',
-                  '&:hover': { bgcolor: 'action.hover' },
+                  borderBottom: index < filteredApps.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                  transition: 'all 0.2s',
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' },
                 }}
               >
                 <Box
@@ -443,7 +586,7 @@ const AllApplications = () => {
                     width: 80,
                     height: 80,
                     borderRadius: 2,
-                    bgcolor: 'background.default',
+                    bgcolor: 'rgba(255,255,255,0.05)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -460,19 +603,19 @@ const AllApplications = () => {
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (
-                    <AppsIcon sx={{ fontSize: 32, color: 'text.disabled' }} />
+                    <AppsIcon sx={{ fontSize: 32, color: 'rgba(255,255,255,0.2)' }} />
                   )}
                 </Box>
 
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                   <Typography
                     variant="subtitle1"
-                    sx={{ fontWeight: 600, mb: 0.5, cursor: 'pointer' }}
+                    sx={{ fontWeight: 600, color: 'white', mb: 0.5, cursor: 'pointer' }}
                     onClick={() => handleView(app)}
                   >
                     {app.appName}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 0.5 }}>
                     {app.appCategory}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -484,19 +627,35 @@ const AllApplications = () => {
                         color: getStatusColor(app.verificationStatus),
                         fontWeight: 600,
                         textTransform: 'capitalize',
+                        bgcolor: alpha(getStatusColor(app.verificationStatus), 0.15),
+                        border: `1px solid ${alpha(getStatusColor(app.verificationStatus), 0.3)}`,
                       }}
                     />
                     {!app.deliverySettings && (
-                      <Chip label="Setup Delivery" size="small" color="warning" />
+                      <Chip
+                        label="Setup Delivery"
+                        size="small"
+                        sx={{
+                          bgcolor: 'rgba(245, 158, 11, 0.15)',
+                          color: '#f59e0b',
+                          border: '1px solid rgba(245, 158, 11, 0.3)',
+                        }}
+                      />
                     )}
                   </Box>
                 </Box>
 
-                <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main', mr: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#6366f1', mr: 2 }}>
                   {formatCurrency(app.price, app.currency)}
                 </Typography>
 
-                <IconButton onClick={(e) => handleMenuOpen(e, app)}>
+                <IconButton
+                  onClick={(e) => handleMenuOpen(e, app)}
+                  sx={{
+                    color: 'rgba(255,255,255,0.6)',
+                    '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.05)' },
+                  }}
+                >
                   <MoreVert />
                 </IconButton>
               </Box>
@@ -506,45 +665,105 @@ const AllApplications = () => {
       )}
 
       {/* Context Menu */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => handleView(selectedApp)}>
-          <Visibility sx={{ mr: 1 }} fontSize="small" />
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 2,
+            minWidth: 180,
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => handleView(selectedApp)}
+          sx={{
+            color: 'white',
+            '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.15)' },
+          }}
+        >
+          <Visibility sx={{ mr: 1.5, fontSize: 20 }} />
           View
         </MenuItem>
-        <MenuItem onClick={() => handleEdit(selectedApp)}>
-          <Edit sx={{ mr: 1 }} fontSize="small" />
+        <MenuItem
+          onClick={() => handleEdit(selectedApp)}
+          sx={{
+            color: 'white',
+            '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.15)' },
+          }}
+        >
+          <Edit sx={{ mr: 1.5, fontSize: 20 }} />
           Edit
         </MenuItem>
-        <MenuItem onClick={() => handleDeliverySettings(selectedApp)}>
-          <SettingsIcon sx={{ mr: 1 }} fontSize="small" />
+        <MenuItem
+          onClick={() => handleDeliverySettings(selectedApp)}
+          sx={{
+            color: 'white',
+            '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.15)' },
+          }}
+        >
+          <SettingsIcon sx={{ mr: 1.5, fontSize: 20 }} />
           Delivery Settings
         </MenuItem>
-        <MenuItem onClick={() => handleDeleteClick(selectedApp)} sx={{ color: 'error.main' }}>
-          <Delete sx={{ mr: 1 }} fontSize="small" />
+        <MenuItem
+          onClick={() => handleDeleteClick(selectedApp)}
+          sx={{
+            color: '#ef4444',
+            '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.15)' },
+          }}
+        >
+          <Delete sx={{ mr: 1.5, fontSize: 20 }} />
           Delete
         </MenuItem>
       </Menu>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialog} onClose={() => !deleting && setDeleteDialog(false)}>
-        <DialogTitle>Delete Application?</DialogTitle>
+      <Dialog
+        open={deleteDialog}
+        onClose={() => !deleting && setDeleteDialog(false)}
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 2,
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: 'white' }}>Delete Application?</DialogTitle>
         <DialogContent>
-          <Typography>
+          <Typography sx={{ color: 'rgba(255,255,255,0.8)' }}>
             Are you sure you want to delete "{selectedApp?.appName}"? This action cannot be undone.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialog(false)} disabled={deleting}>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setDeleteDialog(false)}
+            disabled={deleting}
+            sx={{
+              color: 'rgba(255,255,255,0.6)',
+              textTransform: 'none',
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' },
+            }}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleDelete}
-            color="error"
-            variant="contained"
             disabled={deleting}
-            startIcon={deleting && <CircularProgress size={16} />}
+            sx={{
+              bgcolor: '#ef4444',
+              color: 'white',
+              textTransform: 'none',
+              '&:hover': { bgcolor: '#dc2626' },
+              '&:disabled': { bgcolor: 'rgba(239, 68, 68, 0.5)' },
+            }}
           >
-            {deleting ? 'Deleting...' : 'Delete'}
+            {deleting ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

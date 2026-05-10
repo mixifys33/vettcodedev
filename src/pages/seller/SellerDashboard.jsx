@@ -14,7 +14,6 @@ import {
   ListItemAvatar,
   Avatar,
   alpha,
-  useTheme,
 } from '@mui/material'
 import {
   Apps,
@@ -34,11 +33,9 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import api from '../../utils/api'
 import useAuthStore from '../../store/authStore'
 import { formatCurrency, formatRelativeTime } from '../../utils/helpers'
-import AnimatedCodeBackground from '../../components/AnimatedCodeBackground'
 
 const SellerDashboard = () => {
   const navigate = useNavigate()
-  const theme = useTheme()
   const { user } = useAuthStore()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState(null)
@@ -50,7 +47,6 @@ const SellerDashboard = () => {
     fetchDashboardData()
   }, [])
 
-  // Generate revenue chart data from orders
   const generateRevenueData = (orders) => {
     const last30Days = []
     const today = new Date()
@@ -76,11 +72,9 @@ const SellerDashboard = () => {
     return last30Days
   }
 
-  // Generate activity feed
   const generateActivityFeed = (orders, apps) => {
     const activities = []
     
-    // Recent orders
     orders.slice(0, 3).forEach(order => {
       activities.push({
         type: 'order',
@@ -88,11 +82,10 @@ const SellerDashboard = () => {
         description: `Order #${order._id.slice(-6)} - ${formatCurrency(order.total, order.currency)}`,
         time: order.createdAt,
         icon: <ShoppingCart />,
-        color: '#667eea',
+        color: '#6366f1',
       })
     })
     
-    // Recent apps
     apps.slice(0, 2).forEach(app => {
       activities.push({
         type: 'app',
@@ -100,7 +93,7 @@ const SellerDashboard = () => {
         description: app.appName,
         time: app.createdAt,
         icon: <CheckCircle />,
-        color: '#4facfe',
+        color: '#8b5cf6',
       })
     })
     
@@ -112,17 +105,14 @@ const SellerDashboard = () => {
       setLoading(true)
       const sellerId = user?.id || user?._id
 
-      // Fetch all orders and applications for accurate stats
       const [ordersRes, appsRes] = await Promise.all([
         api.get(`/orders?sellerId=${sellerId}`).catch(() => ({ data: { success: false, orders: [] } })),
         api.get(`/applications/seller/${sellerId}`).catch(() => ({ data: { success: false, applications: [] } })),
       ])
 
-      // Calculate stats from fetched data
       const orders = ordersRes.data.orders || []
       const apps = appsRes.data.applications || []
 
-      // Calculate previous month stats for comparison
       const now = new Date()
       const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -157,7 +147,6 @@ const SellerDashboard = () => {
       setRecentActivity(generateActivityFeed(orders, apps))
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error)
-      // Set default stats on error
       setStats({
         totalApplications: 0,
         totalOrders: 0,
@@ -177,177 +166,133 @@ const SellerDashboard = () => {
 
   if (loading) {
     return (
-      <Box sx={{ width: '100%', mt: 2 }}>
-        <LinearProgress />
+      <Box sx={{ p: 3 }}>
+        <LinearProgress sx={{ borderRadius: 1, bgcolor: 'rgba(255,255,255,0.05)', '& .MuiLinearProgress-bar': { bgcolor: '#6366f1' } }} />
       </Box>
     )
   }
 
   const statCards = [
     {
-      title: 'Total Projects',
+      title: 'Total Applications',
       value: stats?.totalApplications || 0,
       growth: '+2%',
       growthPositive: true,
-      subtitle: 'from last month',
-      icon: <Apps sx={{ fontSize: 28 }} />,
-      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      icon: <Apps sx={{ fontSize: 24 }} />,
+      gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
     },
     {
-      title: 'Active Users',
+      title: 'Total Orders',
       value: stats?.totalOrders || 0,
       growth: `${stats?.ordersGrowth > 0 ? '+' : ''}${stats?.ordersGrowth}%`,
       growthPositive: stats?.ordersGrowth >= 0,
-      subtitle: 'from last month',
-      icon: <Person sx={{ fontSize: 28 }} />,
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      icon: <ShoppingCart sx={{ fontSize: 24 }} />,
+      gradient: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)',
     },
     {
-      title: 'Revenue',
+      title: 'Total Revenue',
       value: formatCurrency(stats?.totalRevenue || 0, 'UGX'),
       growth: `${stats?.revenueGrowth > 0 ? '+' : ''}${stats?.revenueGrowth}%`,
       growthPositive: stats?.revenueGrowth >= 0,
-      subtitle: 'from last month',
-      icon: <AttachMoney sx={{ fontSize: 28 }} />,
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      icon: <AttachMoney sx={{ fontSize: 24 }} />,
+      gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
       isRevenue: true,
     },
     {
       title: 'Success Rate',
       value: `${stats?.successRate || 0}%`,
-      growth: `${stats?.successRate > 0 ? '+' : ''}2.1%`,
+      growth: '+2.1%',
       growthPositive: true,
-      subtitle: 'from last month',
-      icon: <CheckCircle sx={{ fontSize: 28 }} />,
-      gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+      icon: <CheckCircle sx={{ fontSize: 24 }} />,
+      gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
     },
   ]
 
   return (
-    <Box sx={{ 
-      position: 'relative',
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0a0e27 100%)',
-      overflow: 'hidden',
-    }}>
-      {/* Animated Code Background */}
-      <AnimatedCodeBackground />
-
-      {/* Main Content */}
-      <Box sx={{ position: 'relative', zIndex: 1, p: 3 }}>
-        {/* Welcome Header */}
-        <Box sx={{ mb: 4 }}>
-          <Typography 
-            variant="h4" 
-            sx={{ 
-              fontWeight: 800, 
-              mb: 0.5,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              textShadow: '0 0 30px rgba(102, 126, 234, 0.3)',
-            }}
-          >
-            Overview
-          </Typography>
-          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-            Welcome back, {user?.name || 'Founder'} 👋
-          </Typography>
-        </Box>
+    <Box sx={{ p: 3 }}>
+      {/* Welcome Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            fontWeight: 700, 
+            color: 'white',
+            mb: 0.5,
+          }}
+        >
+          Welcome back, {user?.name || 'Founder'}! 👋
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+          Here's what's happening with your applications today
+        </Typography>
+      </Box>
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statCards.map((card, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
+          <Grid item xs={12} sm={6} lg={3} key={index}>
             <Card
               sx={{
                 background: 'rgba(255,255,255,0.03)',
                 backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 3,
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '3px',
-                  background: card.gradient,
-                  opacity: 0,
-                  transition: 'opacity 0.4s',
-                },
+                borderRadius: 2,
+                transition: 'all 0.3s',
                 '&:hover': {
-                  transform: 'translateY(-8px)',
-                  boxShadow: `0 20px 60px ${alpha(card.gradient.match(/#[0-9a-f]{6}/i)?.[0] || '#667eea', 0.4)}`,
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  background: 'rgba(255,255,255,0.05)',
-                  '&::before': {
-                    opacity: 1,
-                  },
+                  transform: 'translateY(-4px)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2)',
                 },
               }}
             >
-              <CardContent sx={{ p: 3 }}>
+              <CardContent sx={{ p: 2.5 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', fontWeight: 500 }}>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem', fontWeight: 500 }}>
                     {card.title}
                   </Typography>
                   <Box
                     sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 2.5,
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1.5,
                       background: card.gradient,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: 'white',
-                      boxShadow: `0 8px 24px ${alpha(card.gradient.match(/#[0-9a-f]{6}/i)?.[0] || '#667eea', 0.4)}`,
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        transform: 'scale(1.1) rotate(5deg)',
-                      },
+                      boxShadow: `0 4px 12px ${alpha(card.gradient.match(/#[0-9a-f]{6}/i)?.[0] || '#6366f1', 0.4)}`,
                     }}
                   >
                     {card.icon}
                   </Box>
                 </Box>
                 <Typography 
-                  variant="h3" 
+                  variant="h4" 
                   sx={{ 
-                    fontWeight: 800, 
+                    fontWeight: 700, 
                     color: 'white', 
-                    mb: 1.5,
-                    fontSize: card.isRevenue ? '1.8rem' : '2.5rem',
-                    textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                    mb: 1,
+                    fontSize: card.isRevenue ? '1.5rem' : '2rem',
                   }}
                 >
                   {card.value}
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Chip
-                    label={card.growth}
-                    size="small"
-                    icon={card.growthPositive ? <ArrowUpward sx={{ fontSize: 14 }} /> : <ArrowDownward sx={{ fontSize: 14 }} />}
-                    sx={{
-                      bgcolor: card.growthPositive ? 'rgba(67, 233, 123, 0.15)' : 'rgba(245, 87, 108, 0.15)',
-                      color: card.growthPositive ? '#43e97b' : '#f5576c',
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                      height: 26,
-                      border: `1px solid ${card.growthPositive ? 'rgba(67, 233, 123, 0.3)' : 'rgba(245, 87, 108, 0.3)'}`,
-                      '& .MuiChip-icon': {
-                        color: card.growthPositive ? '#43e97b' : '#f5576c',
-                      },
-                    }}
-                  />
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem' }}>
-                    {card.subtitle}
-                  </Typography>
-                </Box>
+                <Chip
+                  label={card.growth}
+                  size="small"
+                  icon={card.growthPositive ? <ArrowUpward sx={{ fontSize: 14 }} /> : <ArrowDownward sx={{ fontSize: 14 }} />}
+                  sx={{
+                    bgcolor: card.growthPositive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                    color: card.growthPositive ? '#10b981' : '#ef4444',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    height: 24,
+                    border: `1px solid ${card.growthPositive ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                    '& .MuiChip-icon': {
+                      color: card.growthPositive ? '#10b981' : '#ef4444',
+                    },
+                  }}
+                />
               </CardContent>
             </Card>
           </Grid>
@@ -356,82 +301,72 @@ const SellerDashboard = () => {
 
       <Grid container spacing={3}>
         {/* Revenue Chart */}
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} lg={8}>
           <Card
             sx={{
               background: 'rgba(255,255,255,0.03)',
               backdropFilter: 'blur(20px)',
               border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 3,
-              height: '100%',
-              transition: 'all 0.3s',
-              '&:hover': {
-                border: '1px solid rgba(255,255,255,0.15)',
-                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.15)',
-              },
+              borderRadius: 2,
             }}
           >
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'white', mb: 0.5 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'white', mb: 0.5 }}>
                     Revenue Overview
                   </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: 'white', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
-                    {formatCurrency(stats?.totalRevenue || 0, 'UGX')}
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                    Last 30 days performance
                   </Typography>
-                  <Chip
-                    label={`${stats?.revenueGrowth > 0 ? '+' : ''}${stats?.revenueGrowth}% from last month`}
-                    size="small"
-                    sx={{
-                      mt: 1,
-                      bgcolor: 'rgba(67, 233, 123, 0.15)',
-                      color: '#43e97b',
-                      fontWeight: 700,
-                      border: '1px solid rgba(67, 233, 123, 0.3)',
-                    }}
-                  />
                 </Box>
+                <Chip
+                  label={`${stats?.revenueGrowth > 0 ? '+' : ''}${stats?.revenueGrowth}%`}
+                  size="small"
+                  sx={{
+                    bgcolor: 'rgba(16, 185, 129, 0.15)',
+                    color: '#10b981',
+                    fontWeight: 600,
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                  }}
+                />
               </Box>
 
               <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={revenueData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#667eea" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#667eea" stopOpacity={0.1}/>
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <XAxis 
                     dataKey="date" 
-                    stroke="rgba(255,255,255,0.3)"
+                    stroke="rgba(255,255,255,0.2)"
                     style={{ fontSize: '0.75rem' }}
-                    tick={{ fill: 'rgba(255,255,255,0.6)' }}
+                    tick={{ fill: 'rgba(255,255,255,0.5)' }}
                   />
                   <YAxis 
-                    stroke="rgba(255,255,255,0.3)"
+                    stroke="rgba(255,255,255,0.2)"
                     style={{ fontSize: '0.75rem' }}
-                    tick={{ fill: 'rgba(255,255,255,0.6)' }}
+                    tick={{ fill: 'rgba(255,255,255,0.5)' }}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: 'rgba(10, 14, 39, 0.95)',
+                      background: 'rgba(15, 23, 42, 0.95)',
                       border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: 12,
+                      borderRadius: 8,
                       color: 'white',
                       backdropFilter: 'blur(10px)',
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                     }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="revenue" 
-                    stroke="#667eea" 
-                    strokeWidth={3}
+                    stroke="#6366f1" 
+                    strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorRevenue)"
-                    dot={{ fill: '#667eea', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, strokeWidth: 2 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -439,35 +374,31 @@ const SellerDashboard = () => {
           </Card>
         </Grid>
 
-        {/* Top Projects */}
-        <Grid item xs={12} md={4}>
+        {/* Top Applications */}
+        <Grid item xs={12} lg={4}>
           <Card
             sx={{
               background: 'rgba(255,255,255,0.03)',
               backdropFilter: 'blur(20px)',
               border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 3,
+              borderRadius: 2,
               height: '100%',
-              transition: 'all 0.3s',
-              '&:hover': {
-                border: '1px solid rgba(255,255,255,0.15)',
-                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.15)',
-              },
             }}
           >
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>
-                  Top Projects
+                <Typography variant="h6" sx={{ fontWeight: 600, color: 'white' }}>
+                  Top Applications
                 </Typography>
                 <Button
                   size="small"
                   endIcon={<ArrowForward />}
                   onClick={() => navigate('/seller/applications')}
                   sx={{ 
-                    color: '#667eea',
+                    color: '#6366f1',
+                    textTransform: 'none',
                     '&:hover': {
-                      background: 'rgba(102, 126, 234, 0.1)',
+                      background: 'rgba(99, 102, 241, 0.1)',
                     },
                   }}
                 >
@@ -480,21 +411,19 @@ const SellerDashboard = () => {
                   <Box sx={{ textAlign: 'center', py: 4 }}>
                     <Apps sx={{ fontSize: 48, color: 'rgba(255,255,255,0.2)', mb: 2 }} />
                     <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mb: 2 }}>
-                      No projects yet
+                      No applications yet
                     </Typography>
                     <Button
                       variant="contained"
                       startIcon={<Add />}
                       onClick={() => navigate('/seller/applications/create')}
                       sx={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
-                        '&:hover': {
-                          boxShadow: '0 12px 32px rgba(102, 126, 234, 0.5)',
-                        },
+                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                        textTransform: 'none',
+                        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
                       }}
                     >
-                      Create Project
+                      Create Application
                     </Button>
                   </Box>
                 ) : (
@@ -506,11 +435,11 @@ const SellerDashboard = () => {
                         py: 1.5,
                         borderBottom: index < topApplications.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
                         cursor: 'pointer',
-                        borderRadius: 2,
+                        borderRadius: 1,
                         transition: 'all 0.2s',
                         '&:hover': {
                           bgcolor: 'rgba(255,255,255,0.05)',
-                          px: 2,
+                          px: 1.5,
                         },
                       }}
                       onClick={() => navigate(`/seller/applications/preview/${app._id}`)}
@@ -518,9 +447,9 @@ const SellerDashboard = () => {
                       <ListItemAvatar>
                         <Avatar
                           sx={{
-                            bgcolor: 'rgba(102, 126, 234, 0.2)',
-                            color: '#667eea',
-                            border: '2px solid rgba(102, 126, 234, 0.3)',
+                            bgcolor: 'rgba(99, 102, 241, 0.2)',
+                            color: '#6366f1',
+                            border: '1px solid rgba(99, 102, 241, 0.3)',
                           }}
                         >
                           <Code />
@@ -538,7 +467,7 @@ const SellerDashboard = () => {
                           </Typography>
                         }
                       />
-                      <Typography variant="body2" sx={{ color: '#667eea', fontWeight: 700 }}>
+                      <Typography variant="body2" sx={{ color: '#6366f1', fontWeight: 600 }}>
                         {formatCurrency(app.price, app.currency)}
                       </Typography>
                     </ListItem>
@@ -550,22 +479,17 @@ const SellerDashboard = () => {
         </Grid>
 
         {/* Recent Activity */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12}>
           <Card
             sx={{
               background: 'rgba(255,255,255,0.03)',
               backdropFilter: 'blur(20px)',
               border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 3,
-              transition: 'all 0.3s',
-              '&:hover': {
-                border: '1px solid rgba(255,255,255,0.15)',
-                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.15)',
-              },
+              borderRadius: 2,
             }}
           >
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'white', mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'white', mb: 3 }}>
                 Recent Activity
               </Typography>
 
@@ -591,7 +515,7 @@ const SellerDashboard = () => {
                           sx={{
                             bgcolor: alpha(activity.color, 0.2),
                             color: activity.color,
-                            border: `2px solid ${alpha(activity.color, 0.3)}`,
+                            border: `1px solid ${alpha(activity.color, 0.3)}`,
                           }}
                         >
                           {activity.icon}
@@ -619,121 +543,7 @@ const SellerDashboard = () => {
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Quick Actions */}
-        <Grid item xs={12} md={6}>
-          <Card
-            sx={{
-              background: 'rgba(255,255,255,0.03)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 3,
-              transition: 'all 0.3s',
-              '&:hover': {
-                border: '1px solid rgba(255,255,255,0.15)',
-                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.15)',
-              },
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'white', mb: 3 }}>
-                Quick Actions
-              </Typography>
-
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    startIcon={<Add />}
-                    onClick={() => navigate('/seller/applications/create')}
-                    sx={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      py: 2,
-                      justifyContent: 'flex-start',
-                      boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 12px 32px rgba(102, 126, 234, 0.5)',
-                      },
-                    }}
-                  >
-                    New Project
-                  </Button>
-                </Grid>
-                <Grid item xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<ShoppingCart />}
-                    onClick={() => navigate('/seller/orders')}
-                    sx={{
-                      borderColor: 'rgba(255,255,255,0.2)',
-                      color: 'white',
-                      py: 2,
-                      justifyContent: 'flex-start',
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        borderColor: '#667eea',
-                        bgcolor: 'rgba(102, 126, 234, 0.1)',
-                        transform: 'translateY(-2px)',
-                      },
-                    }}
-                  >
-                    Orders
-                  </Button>
-                </Grid>
-                <Grid item xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<TrendingUp />}
-                    onClick={() => navigate('/seller/marketing')}
-                    sx={{
-                      borderColor: 'rgba(255,255,255,0.2)',
-                      color: 'white',
-                      py: 2,
-                      justifyContent: 'flex-start',
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        borderColor: '#667eea',
-                        bgcolor: 'rgba(102, 126, 234, 0.1)',
-                        transform: 'translateY(-2px)',
-                      },
-                    }}
-                  >
-                    Marketing
-                  </Button>
-                </Grid>
-                <Grid item xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<Apps />}
-                    onClick={() => navigate('/seller/applications')}
-                    sx={{
-                      borderColor: 'rgba(255,255,255,0.2)',
-                      color: 'white',
-                      py: 2,
-                      justifyContent: 'flex-start',
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        borderColor: '#667eea',
-                        bgcolor: 'rgba(102, 126, 234, 0.1)',
-                        transform: 'translateY(-2px)',
-                      },
-                    }}
-                  >
-                    All Projects
-                  </Button>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
       </Grid>
-      </Box>
     </Box>
   )
 }
