@@ -439,11 +439,20 @@ const EditApplication = () => {
       const response = await api.put(`/applications/${id}`, formData)
 
       if (response.data.success) {
-        const message = appFile && !appFile.existing 
-          ? 'Application updated successfully! It will be re-verified by admin.'
-          : 'Application updated successfully!'
+        const isDraft = response.data.application?.isDraft
+        const message = isDraft 
+          ? 'Draft saved successfully!'
+          : appFile && !appFile.existing 
+            ? 'Application updated successfully! It will be re-verified by admin.'
+            : 'Application updated successfully!'
         toast.success(message)
-        navigate('/seller/applications')
+        
+        // Navigate based on draft status
+        if (isDraft) {
+          navigate('/seller/drafts')
+        } else {
+          navigate('/seller/applications')
+        }
       }
     } catch (error) {
       console.error('Error updating application:', error)
