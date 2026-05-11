@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Box,
   Card,
@@ -39,6 +40,7 @@ const FILTERS = [
 ]
 
 const AdminApplicationManagement = () => {
+  const navigate = useNavigate()
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
@@ -178,7 +180,12 @@ const AdminApplicationManagement = () => {
                 </Button>
               </>
             )}
-            <Button size="small" variant="outlined" sx={{ ml: 'auto' }}>
+            <Button 
+              size="small" 
+              variant="outlined" 
+              sx={{ ml: 'auto' }}
+              onClick={() => navigate(`/admin/applications/${app._id}`)}
+            >
               Full Review
             </Button>
           </Box>

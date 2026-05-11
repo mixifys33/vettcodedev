@@ -36,6 +36,7 @@ import AdminPendingSellers from './pages/admin/AdminPendingSellers'
 import AdminUserManagement from './pages/admin/AdminUserManagement'
 import AdminUserDetail from './pages/admin/AdminUserDetail'
 import AdminApplicationManagement from './pages/admin/AdminApplicationManagement'
+import AdminApplicationDetail from './pages/admin/AdminApplicationDetail'
 import AdminPushNotifications from './pages/admin/AdminPushNotifications'
 import AdminNotificationHistory from './pages/admin/AdminNotificationHistory'
 
@@ -98,6 +99,7 @@ function App() {
                   <Route path="users" element={<AdminUserManagement />} />
                   <Route path="users/:id" element={<AdminUserDetail />} />
                   <Route path="applications" element={<AdminApplicationManagement />} />
+                  <Route path="applications/:id" element={<AdminApplicationDetail />} />
                   <Route path="notifications" element={<AdminPushNotifications />} />
                   <Route path="notifications/history" element={<AdminNotificationHistory />} />
                 </Routes>
