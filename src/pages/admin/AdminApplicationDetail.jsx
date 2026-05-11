@@ -49,6 +49,9 @@ import {
   Security,
   Speed,
   Verified,
+  Download,
+  FolderZip,
+  Warning,
 } from '@mui/icons-material'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
@@ -330,6 +333,116 @@ const AdminApplicationDetail = () => {
             </Card>
           )}
 
+          {/* Application ZIP File - CRITICAL FOR REVIEW */}
+          {application.sourceCodeFile && (
+            <Card sx={{ mb: 3, borderColor: 'primary.main', borderWidth: 2, borderStyle: 'solid' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <FolderZip sx={{ fontSize: 32, color: 'primary.main' }} />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      Application Source Code / ZIP File
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Download and test the application before approval
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">
+                      File Name
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: 'break-all' }}>
+                      {application.sourceCodeFile.fileName || 'application.zip'}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">
+                      File Size
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {application.sourceCodeFile.fileSize 
+                        ? `${(application.sourceCodeFile.fileSize / (1024 * 1024)).toFixed(2)} MB`
+                        : 'Unknown'}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">
+                      Upload Status
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {application.sourceCodeFile.uploaded ? (
+                        <>
+                          <CheckCircle sx={{ fontSize: 16, color: 'success.main' }} />
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
+                            Uploaded
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <Warning sx={{ fontSize: 16, color: 'warning.main' }} />
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'warning.main' }}>
+                            Pending
+                          </Typography>
+                        </>
+                      )}
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ mt: 3, p: 2, bgcolor: 'info.lighter', borderRadius: 1 }}>
+                  <Typography variant="caption" color="info.dark" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Security sx={{ fontSize: 16 }} />
+                    <strong>Review Checklist:</strong>
+                  </Typography>
+                  <Typography variant="caption" color="info.dark" component="div">
+                    • Verify the ZIP contains actual source code/application files<br />
+                    • Check for malicious code or suspicious files<br />
+                    • Test the application functionality matches description<br />
+                    • Ensure all dependencies are documented<br />
+                    • Verify the code quality and completeness
+                  </Typography>
+                </Box>
+
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  startIcon={<Download />}
+                  href={application.sourceCodeFile.url}
+                  download
+                  target="_blank"
+                  sx={{ mt: 2 }}
+                >
+                  Download Application ZIP
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Warning if no ZIP file */}
+          {!application.sourceCodeFile && (
+            <Card sx={{ mb: 3, borderColor: 'error.main', borderWidth: 2, borderStyle: 'solid', bgcolor: 'error.lighter' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Warning sx={{ fontSize: 32, color: 'error.main' }} />
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: 'error.main' }}>
+                      No Application File Uploaded
+                    </Typography>
+                    <Typography variant="body2" color="error.dark">
+                      This application does not have a source code/ZIP file. Consider rejecting until the seller uploads the application file.
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Screenshots */}
           {application.screenshots && application.screenshots.length > 0 && (
             <Card sx={{ mb: 3 }}>
@@ -470,6 +583,52 @@ const AdminApplicationDetail = () => {
 
         {/* Right Column - Review & Stats */}
         <Grid item xs={12} md={4}>
+          {/* Source Code Status - IMPORTANT */}
+          <Card sx={{ mb: 3, borderColor: application.sourceCodeFile ? 'success.main' : 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                <FolderZip sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Source Code Status
+              </Typography>
+              {application.sourceCodeFile ? (
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <CheckCircle sx={{ color: 'success.main' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
+                      ZIP File Uploaded
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                    {application.sourceCodeFile.fileName}
+                  </Typography>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Download />}
+                    href={application.sourceCodeFile.url}
+                    download
+                    target="_blank"
+                  >
+                    Download ZIP
+                  </Button>
+                </Box>
+              ) : (
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Warning sx={{ color: 'error.main' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>
+                      No File Uploaded
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Seller has not uploaded the application file yet.
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Quality Scores */}
           <Card sx={{ mb: 3 }}>
             <CardContent>
