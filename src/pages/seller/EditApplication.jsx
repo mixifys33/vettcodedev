@@ -20,6 +20,7 @@ import {
   Alert,
   Autocomplete,
   Dialog,
+  DialogTitle,
   DialogContent,
   DialogActions,
   Tooltip,
@@ -68,6 +69,7 @@ const EditApplication = () => {
   const [dependencies, setDependencies] = useState([])
   const [newDependency, setNewDependency] = useState('')
   const [imagePreview, setImagePreview] = useState({ open: false, image: null, title: '' })
+  const [fileUploadDialog, setFileUploadDialog] = useState(false)
 
   const {
     register,
@@ -765,9 +767,8 @@ const EditApplication = () => {
 
               <Button
                 variant="outlined"
-                component="label"
-                startIcon={uploadingFile ? <CircularProgress size={16} /> : <CloudUpload />}
-                disabled={uploadingFile}
+                startIcon={<CloudUpload />}
+                onClick={() => setFileUploadDialog(true)}
                 sx={{
                   borderColor: 'rgba(99, 102, 241, 0.5)',
                   color: '#6366f1',
@@ -777,14 +778,7 @@ const EditApplication = () => {
                   },
                 }}
               >
-                {uploadingFile ? 'Uploading...' : appFile ? 'Replace ZIP File' : 'Upload ZIP File'}
-                <input
-                  type="file"
-                  hidden
-                  accept=".zip"
-                  onChange={handleFileUpload}
-                  disabled={uploadingFile}
-                />
+                {appFile ? 'Update ZIP File' : 'Upload ZIP File'}
               </Button>
             </Grid>
           </Grid>
@@ -1235,6 +1229,76 @@ const EditApplication = () => {
           </Typography>
           <Button onClick={closeImagePreview} sx={{ color: '#6366f1' }}>
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* File Upload Modal */}
+      <Dialog 
+        open={fileUploadDialog} 
+        onClose={() => !uploadingFile && setFileUploadDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {appFile ? 'Update Application File' : 'Upload Application File'}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            {appFile && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Current file: <strong>{appFile.fileName}</strong> ({(appFile.fileSize / 1024 / 1024).toFixed(2)} MB)
+                <br />
+                Uploading a new file will replace the current one and reset verification status.
+              </Alert>
+            )}
+            
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Upload your application source code as a ZIP file (max 100MB). The file will be compressed automatically.
+            </Typography>
+
+            <Button
+              variant="contained"
+              component="label"
+              fullWidth
+              startIcon={uploadingFile ? <CircularProgress size={20} color="inherit" /> : <CloudUpload />}
+              disabled={uploadingFile}
+              sx={{
+                py: 2,
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5558e3 0%, #7c4de8 100%)',
+                },
+              }}
+            >
+              {uploadingFile ? 'Uploading...' : 'Choose ZIP File'}
+              <input
+                type="file"
+                hidden
+                accept=".zip"
+                onChange={(e) => {
+                  handleFileUpload(e)
+                  // Close dialog after successful upload
+                  if (!uploadingFile) {
+                    setTimeout(() => setFileUploadDialog(false), 1000)
+                  }
+                }}
+                disabled={uploadingFile}
+              />
+            </Button>
+
+            {uploadingFile && (
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Typography variant="caption" color="text.secondary">
+                  Compressing and uploading file...
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setFileUploadDialog(false)} disabled={uploadingFile}>
+            Cancel
           </Button>
         </DialogActions>
       </Dialog>
