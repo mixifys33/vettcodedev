@@ -39,6 +39,7 @@ const SellerDrafts = () => {
   const [selectedDraft, setSelectedDraft] = useState(null)
   const [deleteDialog, setDeleteDialog] = useState(false)
   const [publishDialog, setPublishDialog] = useState(false)
+  const [publishDraftId, setPublishDraftId] = useState(null) // Store draft ID for publishing
   const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
@@ -78,17 +79,20 @@ const SellerDrafts = () => {
   }
 
   const handlePublishClick = (draft) => {
+    console.log('handlePublishClick called with draft:', draft)
     setSelectedDraft(draft)
+    setPublishDraftId(draft._id) // Store the draft ID
     setPublishDialog(true)
     handleMenuClose()
   }
 
   const handlePublish = async () => {
     console.log('=== PUBLISH BUTTON CLICKED ===')
+    console.log('publishDraftId:', publishDraftId)
     console.log('selectedDraft:', selectedDraft)
     
-    if (!selectedDraft) {
-      console.error('No draft selected!')
+    if (!publishDraftId) {
+      console.error('No draft ID!')
       toast.error('No draft selected')
       return
     }
@@ -96,10 +100,10 @@ const SellerDrafts = () => {
     try {
       setActionLoading(true)
       
-      console.log('Publishing draft:', selectedDraft._id)
+      console.log('Publishing draft:', publishDraftId)
       
       // Fetch the full draft data first
-      const draftResponse = await api.get(`/applications/${selectedDraft._id}`)
+      const draftResponse = await api.get(`/applications/${publishDraftId}`)
       
       console.log('Draft response:', draftResponse.data)
       
@@ -137,9 +141,10 @@ const SellerDrafts = () => {
         toast.error('Please complete all required fields before publishing')
         validationErrors.forEach(err => toast.error(err))
         setPublishDialog(false)
+        setPublishDraftId(null)
         setActionLoading(false)
         // Navigate to edit page
-        navigate(`/seller/applications/edit/${selectedDraft._id}`)
+        navigate(`/seller/applications/edit/${publishDraftId}`)
         return
       }
       
@@ -177,14 +182,15 @@ const SellerDrafts = () => {
       console.log('Sending update data:', updateData)
       
       // Update the draft to published status
-      const response = await api.put(`/applications/${selectedDraft._id}`, updateData)
+      const response = await api.put(`/applications/${publishDraftId}`, updateData)
       
       console.log('Publish response:', response.data)
 
       if (response.data.success) {
         toast.success('Draft published successfully! It will be reviewed by admin.')
-        setDrafts(drafts.filter((d) => d._id !== selectedDraft._id))
+        setDrafts(drafts.filter((d) => d._id !== publishDraftId))
         setPublishDialog(false)
+        setPublishDraftId(null)
         setSelectedDraft(null)
       }
     } catch (error) {
