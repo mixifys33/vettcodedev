@@ -89,15 +89,22 @@ const SellerDrafts = () => {
     try {
       setActionLoading(true)
       
+      console.log('Publishing draft:', selectedDraft._id)
+      
       // Fetch the full draft data first
       const draftResponse = await api.get(`/applications/${selectedDraft._id}`)
       
+      console.log('Draft response:', draftResponse.data)
+      
       if (!draftResponse.data.success) {
         toast.error('Failed to load draft data')
+        setActionLoading(false)
         return
       }
       
       const draftData = draftResponse.data.application
+      
+      console.log('Draft data:', draftData)
       
       // Validate required fields before publishing
       const validationErrors = []
@@ -112,24 +119,59 @@ const SellerDrafts = () => {
       if (!draftData.screenshots || draftData.screenshots.length === 0) {
         validationErrors.push('At least one screenshot is required')
       }
-      if (!draftData.appIcon) validationErrors.push('App icon is required')
+      if (!draftData.appIcon || (!draftData.appIcon.url && typeof draftData.appIcon !== 'string')) {
+        validationErrors.push('App icon is required')
+      }
+      
+      console.log('Validation errors:', validationErrors)
       
       if (validationErrors.length > 0) {
         toast.error('Please complete all required fields before publishing')
         validationErrors.forEach(err => toast.error(err))
         setPublishDialog(false)
+        setActionLoading(false)
         // Navigate to edit page
         navigate(`/seller/applications/edit/${selectedDraft._id}`)
         return
       }
       
-      // Update the draft to published status
-      const response = await api.put(`/applications/${selectedDraft._id}`, {
-        ...draftData,
+      // Prepare clean data for update
+      const updateData = {
+        appName: draftData.appName,
+        shortDescription: draftData.shortDescription,
+        detailedDescription: draftData.detailedDescription,
+        appCategory: draftData.appCategory,
+        tags: draftData.tags,
+        price: draftData.price,
+        currency: draftData.currency,
+        isFree: draftData.isFree,
+        licenseType: draftData.licenseType,
+        liveDemo: draftData.liveDemo,
+        documentationUrl: draftData.documentationUrl,
+        videoDemo: draftData.videoDemo,
+        commercialUse: draftData.commercialUse,
+        resaleRights: draftData.resaleRights,
+        supportLevel: draftData.supportLevel,
+        updateFrequency: draftData.updateFrequency,
+        warranty: draftData.warranty,
+        installationSupport: draftData.installationSupport,
+        technologyStack: draftData.technologyStack,
+        supportedPlatforms: draftData.supportedPlatforms,
+        dependencies: draftData.dependencies,
+        screenshots: draftData.screenshots,
+        appIcon: draftData.appIcon,
+        sourceCodeFile: draftData.sourceCodeFile,
         isDraft: false,
         verificationStatus: 'pending',
         publishedAt: new Date().toISOString(),
-      })
+      }
+      
+      console.log('Sending update data:', updateData)
+      
+      // Update the draft to published status
+      const response = await api.put(`/applications/${selectedDraft._id}`, updateData)
+      
+      console.log('Publish response:', response.data)
 
       if (response.data.success) {
         toast.success('Draft published successfully! It will be reviewed by admin.')
@@ -139,6 +181,7 @@ const SellerDrafts = () => {
       }
     } catch (error) {
       console.error('Publish error:', error)
+      console.error('Error response:', error.response?.data)
       
       // Show detailed error messages
       if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
