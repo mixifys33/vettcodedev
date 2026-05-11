@@ -84,7 +84,14 @@ const SellerDrafts = () => {
   }
 
   const handlePublish = async () => {
-    if (!selectedDraft) return
+    console.log('=== PUBLISH BUTTON CLICKED ===')
+    console.log('selectedDraft:', selectedDraft)
+    
+    if (!selectedDraft) {
+      console.error('No draft selected!')
+      toast.error('No draft selected')
+      return
+    }
 
     try {
       setActionLoading(true)
@@ -126,6 +133,7 @@ const SellerDrafts = () => {
       console.log('Validation errors:', validationErrors)
       
       if (validationErrors.length > 0) {
+        console.log('Validation failed, showing errors')
         toast.error('Please complete all required fields before publishing')
         validationErrors.forEach(err => toast.error(err))
         setPublishDialog(false)
@@ -180,7 +188,9 @@ const SellerDrafts = () => {
         setSelectedDraft(null)
       }
     } catch (error) {
-      console.error('Publish error:', error)
+      console.error('=== PUBLISH ERROR ===')
+      console.error('Error:', error)
+      console.error('Error message:', error.message)
       console.error('Error response:', error.response?.data)
       
       // Show detailed error messages
@@ -189,9 +199,10 @@ const SellerDrafts = () => {
       } else if (error.response?.data?.message) {
         toast.error(error.response.data.message)
       } else {
-        toast.error('Failed to publish draft. Please ensure all required fields are filled.')
+        toast.error(`Failed to publish: ${error.message}`)
       }
     } finally {
+      console.log('=== PUBLISH COMPLETE ===')
       setActionLoading(false)
     }
   }
