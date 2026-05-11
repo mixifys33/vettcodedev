@@ -73,11 +73,34 @@ const AdminApplicationDetail = () => {
     rating: 0,
     reason: '',
     notes: '',
+    completionScore: 0,
+    badges: [],
   })
+  const [sellerApplications, setSellerApplications] = useState([])
+
+  // Available badges
+  const AVAILABLE_BADGES = [
+    'Featured',
+    'Trending',
+    'Best Seller',
+    'New Release',
+    'Editor\'s Choice',
+    'Premium Quality',
+    'Well Documented',
+    'Active Support',
+    'Regular Updates',
+    'Verified Code',
+  ]
 
   useEffect(() => {
     fetchApplicationDetail()
   }, [id])
+
+  useEffect(() => {
+    if (application?.sellerId?._id) {
+      fetchSellerApplications()
+    }
+  }, [application])
 
   const getToken = () => localStorage.getItem('adminToken')
 
@@ -93,6 +116,8 @@ const AdminApplicationDetail = () => {
           rating: response.data.application.adminRating || 0,
           reason: response.data.application.verificationNotes || '',
           notes: response.data.application.adminNotes || '',
+          completionScore: response.data.application.completionScore || 0,
+          badges: response.data.application.badges || [],
         })
       }
     } catch (error) {
@@ -100,6 +125,22 @@ const AdminApplicationDetail = () => {
       toast.error('Failed to load application details')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchSellerApplications = async () => {
+    try {
+      const token = getToken()
+      const response = await api.get(`/admin/applications?sellerId=${application.sellerId._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (response.data.success) {
+        // Filter out current application
+        const otherApps = response.data.applications.filter(app => app._id !== id)
+        setSellerApplications(otherApps)
+      }
+    } catch (error) {
+      console.error('Failed to fetch seller applications:', error)
     }
   }
 
@@ -124,6 +165,8 @@ const AdminApplicationDetail = () => {
         status: action,
         adminRating: reviewData.rating,
         adminNotes: reviewData.notes,
+        completionScore: reviewData.completionScore,
+        badges: reviewData.badges,
       }
 
       if (action === 'rejected') {
@@ -264,6 +307,19 @@ const AdminApplicationDetail = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Code sx={{ color: 'text.secondary' }} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Application Name
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                        {application.appName}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                     <Category sx={{ color: 'text.secondary' }} />
                     <Box>
                       <Typography variant="caption" color="text.secondary">
@@ -283,20 +339,7 @@ const AdminApplicationDetail = () => {
                         Price
                       </Typography>
                       <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                        ${application.price || 0}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Person sx={{ color: 'text.secondary' }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Seller
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                        {application.sellerId?.name || 'Unknown'}
+                        {application.isFree ? 'FREE' : `$${application.price || 0}`}
                       </Typography>
                     </Box>
                   </Box>
@@ -318,16 +361,78 @@ const AdminApplicationDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Description */}
-          {application.description && (
+          {/* Seller Information */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                <Person sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Seller Information
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" color="text.secondary">
+                    Seller Name
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {application.sellerId?.name || 'Unknown'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" color="text.secondary">
+                    Email
+                  </Typography>
+                  <Typography variant="body2">
+                    {application.sellerId?.email || 'N/A'}
+                  </Typography>
+                </Grid>
+                {application.sellerId?.shop?.shopName && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">
+                      Shop Name
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      {application.sellerId.shop.shopName}
+                    </Typography>
+                  </Grid>
+                )}
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" color="text.secondary">
+                    Seller Status
+                  </Typography>
+                  <Chip 
+                    label={application.sellerId?.status || 'Unknown'} 
+                    size="small" 
+                    color={application.sellerId?.status === 'active' ? 'success' : 'default'}
+                  />
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Short Description */}
+          {application.shortDescription && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  Short Description
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {application.shortDescription}
+                </Typography>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Detailed Description */}
+          {application.detailedDescription && (
             <Card sx={{ mb: 3 }}>
               <CardContent>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                   <Description sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Description
+                  Detailed Description
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {application.description}
+                  {application.detailedDescription}
                 </Typography>
               </CardContent>
             </Card>
@@ -740,6 +845,59 @@ const AdminApplicationDetail = () => {
         </Grid>
       </Grid>
 
+      {/* Other Applications by This Seller */}
+      {sellerApplications.length > 0 && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 2 }}>
+            Other Applications by {application.sellerId?.name || 'This Seller'}
+          </Typography>
+          <Grid container spacing={2}>
+            {sellerApplications.map((app) => (
+              <Grid item xs={12} sm={6} md={4} key={app._id}>
+                <Card 
+                  sx={{ 
+                    cursor: 'pointer',
+                    '&:hover': { boxShadow: 4 },
+                    transition: 'box-shadow 0.3s'
+                  }}
+                  onClick={() => navigate(`/admin/applications/${app._id}`)}
+                >
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <Avatar
+                        src={app.screenshots?.[0]?.url || app.appIcon?.url}
+                        variant="rounded"
+                        sx={{ width: 48, height: 48 }}
+                      >
+                        <Code />
+                      </Avatar>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }} noWrap>
+                          {app.appName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>
+                          {app.appCategory}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
+                      <Chip
+                        label={STATUS_CONFIG[app.verificationStatus]?.label || 'Pending'}
+                        size="small"
+                        color={STATUS_CONFIG[app.verificationStatus]?.color || 'default'}
+                      />
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        ${app.price || 0}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
       {/* Review Dialog */}
       <Dialog
         open={reviewDialog.open}
@@ -763,6 +921,51 @@ const AdminApplicationDetail = () => {
                 size="large"
                 precision={0.5}
               />
+            </Box>
+
+            {/* Completion Score */}
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Completion Score (0-100%)
+              </Typography>
+              <TextField
+                type="number"
+                fullWidth
+                value={reviewData.completionScore}
+                onChange={(e) => {
+                  const value = Math.min(100, Math.max(0, Number(e.target.value)))
+                  setReviewData({ ...reviewData, completionScore: value })
+                }}
+                inputProps={{ min: 0, max: 100, step: 5 }}
+                helperText="How complete is this application? (0-100%)"
+              />
+            </Box>
+
+            {/* Badges Selection */}
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Assign Badges
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {AVAILABLE_BADGES.map((badge) => (
+                  <Chip
+                    key={badge}
+                    label={badge}
+                    size="small"
+                    color={reviewData.badges.includes(badge) ? 'primary' : 'default'}
+                    onClick={() => {
+                      const newBadges = reviewData.badges.includes(badge)
+                        ? reviewData.badges.filter(b => b !== badge)
+                        : [...reviewData.badges, badge]
+                      setReviewData({ ...reviewData, badges: newBadges })
+                    }}
+                    sx={{ cursor: 'pointer' }}
+                  />
+                ))}
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Click badges to select/deselect. Selected: {reviewData.badges.length}
+              </Typography>
             </Box>
 
             {/* Rejection Reason (only for reject) */}
