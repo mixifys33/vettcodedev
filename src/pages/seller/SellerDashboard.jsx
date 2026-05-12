@@ -11,9 +11,14 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemAvatar,
-  Avatar,
-  alpha,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Breadcrumbs,
+  Link,
 } from '@mui/material'
 import {
   Apps,
@@ -28,9 +33,10 @@ import {
   Person,
   Add,
   Drafts,
+  NavigateNext,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import api from '../../utils/api'
 import useAuthStore from '../../store/authStore'
 import { formatCurrency, formatRelativeTime } from '../../utils/helpers'
@@ -167,8 +173,8 @@ const SellerDashboard = () => {
 
   if (loading) {
     return (
-      <Box sx={{ p: 3 }}>
-        <LinearProgress sx={{ borderRadius: 1, bgcolor: 'rgba(255,255,255,0.05)', '& .MuiLinearProgress-bar': { bgcolor: '#6366f1' } }} />
+      <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', p: 3 }}>
+        <LinearProgress sx={{ borderRadius: 0.5, bgcolor: '#E2E8F0', '& .MuiLinearProgress-bar': { bgcolor: '#4F46E5' } }} />
       </Box>
     )
   }
@@ -179,24 +185,27 @@ const SellerDashboard = () => {
       value: stats?.totalApplications || 0,
       growth: '+2%',
       growthPositive: true,
-      icon: <Apps sx={{ fontSize: 24 }} />,
-      gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+      icon: <Apps sx={{ fontSize: 20 }} />,
+      color: '#4F46E5',
+      bgColor: 'rgba(79, 70, 229, 0.08)',
     },
     {
       title: 'Total Orders',
       value: stats?.totalOrders || 0,
       growth: `${stats?.ordersGrowth > 0 ? '+' : ''}${stats?.ordersGrowth}%`,
       growthPositive: stats?.ordersGrowth >= 0,
-      icon: <ShoppingCart sx={{ fontSize: 24 }} />,
-      gradient: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)',
+      icon: <ShoppingCart sx={{ fontSize: 20 }} />,
+      color: '#7C3AED',
+      bgColor: 'rgba(124, 58, 237, 0.08)',
     },
     {
       title: 'Total Revenue',
       value: formatCurrency(stats?.totalRevenue || 0, 'UGX'),
       growth: `${stats?.revenueGrowth > 0 ? '+' : ''}${stats?.revenueGrowth}%`,
       growthPositive: stats?.revenueGrowth >= 0,
-      icon: <AttachMoney sx={{ fontSize: 24 }} />,
-      gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+      icon: <AttachMoney sx={{ fontSize: 20 }} />,
+      color: '#059669',
+      bgColor: 'rgba(5, 150, 105, 0.08)',
       isRevenue: true,
     },
     {
@@ -204,96 +213,143 @@ const SellerDashboard = () => {
       value: `${stats?.successRate || 0}%`,
       growth: '+2.1%',
       growthPositive: true,
-      icon: <CheckCircle sx={{ fontSize: 24 }} />,
-      gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+      icon: <CheckCircle sx={{ fontSize: 20 }} />,
+      color: '#2563EB',
+      bgColor: 'rgba(37, 99, 235, 0.08)',
     },
   ]
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Welcome Header */}
-      <Box sx={{ mb: 4 }}>
+    <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh' }}>
+      {/* Top Navigation Bar */}
+      <Box 
+        sx={{ 
+          bgcolor: '#FFFFFF',
+          borderBottom: '1px solid #E2E8F0',
+          px: 3,
+          py: 2,
+          mb: 3,
+        }}
+      >
+        <Breadcrumbs 
+          separator={<NavigateNext fontSize="small" sx={{ color: '#94A3B8' }} />}
+          sx={{ mb: 1 }}
+        >
+          <Link 
+            underline="hover" 
+            color="inherit" 
+            href="/seller"
+            sx={{ 
+              color: '#64748B',
+              fontSize: '14px',
+              fontWeight: 500,
+              '&:hover': { color: '#4F46E5' },
+            }}
+          >
+            Dashboard
+          </Link>
+          <Typography sx={{ color: '#0F172A', fontSize: '14px', fontWeight: 600 }}>
+            Overview
+          </Typography>
+        </Breadcrumbs>
         <Typography 
-          variant="h4" 
+          variant="h5" 
           sx={{ 
-            fontWeight: 700, 
-            color: 'white',
-            mb: 0.5,
+            fontWeight: 600, 
+            color: '#0F172A',
+            fontSize: '24px',
+            letterSpacing: '-0.01em',
           }}
         >
-          Welcome back, {user?.name || 'Founder'}! 👋
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-          Here's what's happening with your applications today
+          Welcome back, {user?.name || 'Founder'}
         </Typography>
       </Box>
 
+      <Box sx={{ px: 3, pb: 3 }}>
+
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         {statCards.map((card, index) => (
           <Grid item xs={12} sm={6} lg={3} key={index}>
             <Card
               sx={{
-                background: 'rgba(255,255,255,0.03)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 2,
-                transition: 'all 0.3s',
+                bgcolor: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: '8px',
+                boxShadow: 'none',
+                transition: 'all 0.2s ease',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                  boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2)',
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                  borderColor: '#CBD5E1',
                 },
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem', fontWeight: 500 }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#64748B', 
+                      fontSize: '14px', 
+                      fontWeight: 500,
+                      letterSpacing: '0.01em',
+                    }}
+                  >
                     {card.title}
                   </Typography>
                   <Box
                     sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 1.5,
-                      background: card.gradient,
+                      width: 32,
+                      height: 32,
+                      borderRadius: '6px',
+                      bgcolor: card.bgColor,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: 'white',
-                      boxShadow: `0 4px 12px ${alpha(card.gradient.match(/#[0-9a-f]{6}/i)?.[0] || '#6366f1', 0.4)}`,
+                      color: card.color,
                     }}
                   >
                     {card.icon}
                   </Box>
                 </Box>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
+                  <Typography 
+                    variant="h4" 
+                    sx={{ 
+                      fontWeight: 600, 
+                      color: '#0F172A', 
+                      fontSize: card.isRevenue ? '20px' : '28px',
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    {card.value}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: card.growthPositive ? '#059669' : '#DC2626',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.25,
+                    }}
+                  >
+                    {card.growthPositive ? <ArrowUpward sx={{ fontSize: 12 }} /> : <ArrowDownward sx={{ fontSize: 12 }} />}
+                    {card.growth}
+                  </Typography>
+                </Box>
                 <Typography 
-                  variant="h4" 
+                  variant="caption" 
                   sx={{ 
-                    fontWeight: 700, 
-                    color: 'white', 
-                    mb: 1,
-                    fontSize: card.isRevenue ? '1.5rem' : '2rem',
+                    color: '#94A3B8', 
+                    fontSize: '12px',
+                    mt: 0.5,
+                    display: 'block',
                   }}
                 >
-                  {card.value}
+                  vs last month
                 </Typography>
-                <Chip
-                  label={card.growth}
-                  size="small"
-                  icon={card.growthPositive ? <ArrowUpward sx={{ fontSize: 14 }} /> : <ArrowDownward sx={{ fontSize: 14 }} />}
-                  sx={{
-                    bgcolor: card.growthPositive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                    color: card.growthPositive ? '#10b981' : '#ef4444',
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                    height: 24,
-                    border: `1px solid ${card.growthPositive ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                    '& .MuiChip-icon': {
-                      color: card.growthPositive ? '#10b981' : '#ef4444',
-                    },
-                  }}
-                />
               </CardContent>
             </Card>
           </Grid>
@@ -301,53 +357,28 @@ const SellerDashboard = () => {
       </Grid>
 
       {/* Quick Actions */}
-      <Box sx={{ mb: 4 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                background: 'rgba(255,255,255,0.03)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 2,
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                  boxShadow: '0 8px 24px rgba(99, 102, 241, 0.2)',
-                },
-              }}
-              onClick={() => navigate('/seller/drafts')}
-            >
-              <CardContent sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1.5,
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
-                  }}
-                >
-                  <Drafts sx={{ fontSize: 24 }} />
-                </Box>
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>
-                    View
-                  </Typography>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'white' }}>
-                    Drafts
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+      <Box sx={{ mb: 3 }}>
+        <Button
+          variant="outlined"
+          startIcon={<Drafts sx={{ fontSize: 18 }} />}
+          onClick={() => navigate('/seller/drafts')}
+          sx={{
+            textTransform: 'none',
+            color: '#4F46E5',
+            borderColor: '#E2E8F0',
+            bgcolor: '#FFFFFF',
+            fontSize: '14px',
+            fontWeight: 500,
+            px: 2,
+            py: 1,
+            '&:hover': {
+              borderColor: '#4F46E5',
+              bgcolor: 'rgba(79, 70, 229, 0.04)',
+            },
+          }}
+        >
+          View Drafts
+        </Button>
       </Box>
 
       <Grid container spacing={3}>
@@ -355,199 +386,129 @@ const SellerDashboard = () => {
         <Grid item xs={12} lg={8}>
           <Card
             sx={{
-              background: 'rgba(255,255,255,0.03)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 2,
+              bgcolor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              boxShadow: 'none',
             }}
           >
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'white', mb: 0.5 }}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontWeight: 600, 
+                      color: '#0F172A', 
+                      mb: 0.5,
+                      fontSize: '18px',
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
                     Revenue Overview
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#64748B',
+                      fontSize: '14px',
+                    }}
+                  >
                     Last 30 days performance
                   </Typography>
                 </Box>
-                <Chip
-                  label={`${stats?.revenueGrowth > 0 ? '+' : ''}${stats?.revenueGrowth}%`}
-                  size="small"
+                <Typography
+                  variant="body2"
                   sx={{
-                    bgcolor: 'rgba(16, 185, 129, 0.15)',
-                    color: '#10b981',
+                    color: stats?.revenueGrowth >= 0 ? '#059669' : '#DC2626',
+                    fontSize: '14px',
                     fontWeight: 600,
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
                   }}
-                />
+                >
+                  {stats?.revenueGrowth >= 0 ? <ArrowUpward sx={{ fontSize: 16 }} /> : <ArrowDownward sx={{ fontSize: 16 }} />}
+                  {`${stats?.revenueGrowth > 0 ? '+' : ''}${stats?.revenueGrowth}%`}
+                </Typography>
               </Box>
 
               <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={revenueData}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
+                <LineChart data={revenueData}>
+                  <CartesianGrid 
+                    strokeDasharray="3 3" 
+                    stroke="#E2E8F0" 
+                    vertical={false}
+                  />
                   <XAxis 
                     dataKey="date" 
-                    stroke="rgba(255,255,255,0.2)"
-                    style={{ fontSize: '0.75rem' }}
-                    tick={{ fill: 'rgba(255,255,255,0.5)' }}
+                    stroke="#94A3B8"
+                    style={{ fontSize: '12px' }}
+                    tick={{ fill: '#64748B' }}
+                    axisLine={{ stroke: '#E2E8F0' }}
+                    tickLine={false}
                   />
                   <YAxis 
-                    stroke="rgba(255,255,255,0.2)"
-                    style={{ fontSize: '0.75rem' }}
-                    tick={{ fill: 'rgba(255,255,255,0.5)' }}
+                    stroke="#94A3B8"
+                    style={{ fontSize: '12px' }}
+                    tick={{ fill: '#64748B' }}
+                    axisLine={{ stroke: '#E2E8F0' }}
+                    tickLine={false}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: 'rgba(15, 23, 42, 0.95)',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
                       borderRadius: 8,
-                      color: 'white',
-                      backdropFilter: 'blur(10px)',
+                      color: '#0F172A',
+                      fontSize: '14px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                     }}
                   />
-                  <Area 
+                  <Line 
                     type="monotone" 
                     dataKey="revenue" 
-                    stroke="#6366f1" 
+                    stroke="#4F46E5" 
                     strokeWidth={2}
-                    fillOpacity={1} 
-                    fill="url(#colorRevenue)"
+                    dot={false}
+                    activeDot={{ r: 4, fill: '#4F46E5' }}
                   />
-                </AreaChart>
+                </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Top Applications */}
+        {/* Recent Activity */}
         <Grid item xs={12} lg={4}>
           <Card
             sx={{
-              background: 'rgba(255,255,255,0.03)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 2,
+              bgcolor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              boxShadow: 'none',
               height: '100%',
             }}
           >
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: 'white' }}>
-                  Top Applications
-                </Typography>
-                <Button
-                  size="small"
-                  endIcon={<ArrowForward />}
-                  onClick={() => navigate('/seller/applications')}
+                <Typography 
+                  variant="h6" 
                   sx={{ 
-                    color: '#6366f1',
-                    textTransform: 'none',
-                    '&:hover': {
-                      background: 'rgba(99, 102, 241, 0.1)',
-                    },
+                    fontWeight: 600, 
+                    color: '#0F172A',
+                    fontSize: '18px',
+                    letterSpacing: '-0.01em',
                   }}
                 >
-                  View all
-                </Button>
+                  Recent Activity
+                </Typography>
               </Box>
-
-              <List sx={{ p: 0 }}>
-                {topApplications.length === 0 ? (
-                  <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <Apps sx={{ fontSize: 48, color: 'rgba(255,255,255,0.2)', mb: 2 }} />
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mb: 2 }}>
-                      No applications yet
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<Add />}
-                      onClick={() => navigate('/seller/applications/create')}
-                      sx={{
-                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                        textTransform: 'none',
-                        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-                      }}
-                    >
-                      Create Application
-                    </Button>
-                  </Box>
-                ) : (
-                  topApplications.map((app, index) => (
-                    <ListItem
-                      key={app._id}
-                      sx={{
-                        px: 0,
-                        py: 1.5,
-                        borderBottom: index < topApplications.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                        cursor: 'pointer',
-                        borderRadius: 1,
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          bgcolor: 'rgba(255,255,255,0.05)',
-                          px: 1.5,
-                        },
-                      }}
-                      onClick={() => navigate(`/seller/applications/preview/${app._id}`)}
-                    >
-                      <ListItemAvatar>
-                        <Avatar
-                          sx={{
-                            bgcolor: 'rgba(99, 102, 241, 0.2)',
-                            color: '#6366f1',
-                            border: '1px solid rgba(99, 102, 241, 0.3)',
-                          }}
-                        >
-                          <Code />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Typography variant="body2" sx={{ color: 'white', fontWeight: 600 }}>
-                            {app.appName}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                            {app.appCategory}
-                          </Typography>
-                        }
-                      />
-                      <Typography variant="body2" sx={{ color: '#6366f1', fontWeight: 600 }}>
-                        {formatCurrency(app.price, app.currency)}
-                      </Typography>
-                    </ListItem>
-                  ))
-                )}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Recent Activity */}
-        <Grid item xs={12}>
-          <Card
-            sx={{
-              background: 'rgba(255,255,255,0.03)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 2,
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: 'white', mb: 3 }}>
-                Recent Activity
-              </Typography>
 
               <List sx={{ p: 0 }}>
                 {recentActivity.length === 0 ? (
                   <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                    <Typography variant="body2" sx={{ color: '#94A3B8', fontSize: '14px' }}>
                       No recent activity
                     </Typography>
                   </Box>
@@ -557,36 +518,67 @@ const SellerDashboard = () => {
                       key={index}
                       sx={{
                         px: 0,
-                        py: 1.5,
-                        borderBottom: index < recentActivity.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                        py: 2,
+                        borderBottom: index < recentActivity.length - 1 ? '1px solid #F1F5F9' : 'none',
+                        alignItems: 'flex-start',
                       }}
                     >
-                      <ListItemAvatar>
-                        <Avatar
-                          sx={{
-                            bgcolor: alpha(activity.color, 0.2),
-                            color: activity.color,
-                            border: `1px solid ${alpha(activity.color, 0.3)}`,
-                          }}
-                        >
-                          {activity.icon}
-                        </Avatar>
-                      </ListItemAvatar>
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: '6px',
+                          bgcolor: `${activity.color}14`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: activity.color,
+                          mr: 2,
+                          flexShrink: 0,
+                          '& svg': { fontSize: 18 },
+                        }}
+                      >
+                        {activity.icon}
+                      </Box>
                       <ListItemText
                         primary={
-                          <Typography variant="body2" sx={{ color: 'white', fontWeight: 600 }}>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: '#0F172A', 
+                              fontWeight: 600,
+                              fontSize: '14px',
+                              mb: 0.25,
+                            }}
+                          >
                             {activity.title}
                           </Typography>
                         }
                         secondary={
-                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                            {activity.description}
-                          </Typography>
+                          <>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: '#64748B',
+                                fontSize: '13px',
+                                display: 'block',
+                                mb: 0.5,
+                              }}
+                            >
+                              {activity.description}
+                            </Typography>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: '#94A3B8',
+                                fontSize: '12px',
+                              }}
+                            >
+                              {formatRelativeTime(activity.time)}
+                            </Typography>
+                          </>
                         }
                       />
-                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)' }}>
-                        {formatRelativeTime(activity.time)}
-                      </Typography>
                     </ListItem>
                   ))
                 )}
@@ -594,7 +586,235 @@ const SellerDashboard = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Top Applications Table */}
+        <Grid item xs={12}>
+          <Card
+            sx={{
+              bgcolor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    color: '#0F172A',
+                    fontSize: '18px',
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  Top Applications
+                </Typography>
+                <Button
+                  size="small"
+                  endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
+                  onClick={() => navigate('/seller/applications')}
+                  sx={{ 
+                    color: '#4F46E5',
+                    textTransform: 'none',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    '&:hover': {
+                      bgcolor: 'rgba(79, 70, 229, 0.04)',
+                    },
+                  }}
+                >
+                  View all
+                </Button>
+              </Box>
+
+              {topApplications.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 6 }}>
+                  <Apps sx={{ fontSize: 48, color: '#CBD5E1', mb: 2 }} />
+                  <Typography variant="body2" sx={{ color: '#64748B', mb: 3, fontSize: '14px' }}>
+                    No applications yet
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => navigate('/seller/applications/create')}
+                    sx={{
+                      bgcolor: '#4F46E5',
+                      textTransform: 'none',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      px: 3,
+                      py: 1,
+                      boxShadow: 'none',
+                      '&:hover': {
+                        bgcolor: '#4338CA',
+                        boxShadow: 'none',
+                      },
+                    }}
+                  >
+                    Create Application
+                  </Button>
+                </Box>
+              ) : (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell 
+                          sx={{ 
+                            color: '#64748B', 
+                            fontWeight: 600, 
+                            fontSize: '12px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            borderBottom: '1px solid #E2E8F0',
+                            py: 1.5,
+                          }}
+                        >
+                          Application
+                        </TableCell>
+                        <TableCell 
+                          sx={{ 
+                            color: '#64748B', 
+                            fontWeight: 600, 
+                            fontSize: '12px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            borderBottom: '1px solid #E2E8F0',
+                            py: 1.5,
+                          }}
+                        >
+                          Category
+                        </TableCell>
+                        <TableCell 
+                          sx={{ 
+                            color: '#64748B', 
+                            fontWeight: 600, 
+                            fontSize: '12px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            borderBottom: '1px solid #E2E8F0',
+                            py: 1.5,
+                          }}
+                        >
+                          Status
+                        </TableCell>
+                        <TableCell 
+                          align="right"
+                          sx={{ 
+                            color: '#64748B', 
+                            fontWeight: 600, 
+                            fontSize: '12px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            borderBottom: '1px solid #E2E8F0',
+                            py: 1.5,
+                          }}
+                        >
+                          Price
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {topApplications.map((app) => (
+                        <TableRow
+                          key={app._id}
+                          sx={{
+                            cursor: 'pointer',
+                            '&:hover': {
+                              bgcolor: '#F8FAFC',
+                            },
+                            '&:last-child td': {
+                              borderBottom: 0,
+                            },
+                          }}
+                          onClick={() => navigate(`/seller/applications/preview/${app._id}`)}
+                        >
+                          <TableCell 
+                            sx={{ 
+                              borderBottom: '1px solid #F1F5F9',
+                              py: 2,
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Box
+                                sx={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: '6px',
+                                  bgcolor: 'rgba(79, 70, 229, 0.08)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#4F46E5',
+                                }}
+                              >
+                                <Code sx={{ fontSize: 16 }} />
+                              </Box>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  color: '#0F172A', 
+                                  fontWeight: 500,
+                                  fontSize: '14px',
+                                }}
+                              >
+                                {app.appName}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell 
+                            sx={{ 
+                              color: '#64748B',
+                              fontSize: '14px',
+                              borderBottom: '1px solid #F1F5F9',
+                              py: 2,
+                            }}
+                          >
+                            {app.appCategory}
+                          </TableCell>
+                          <TableCell 
+                            sx={{ 
+                              borderBottom: '1px solid #F1F5F9',
+                              py: 2,
+                            }}
+                          >
+                            <Chip
+                              label={app.verificationStatus === 'verified' ? 'Verified' : 'Pending'}
+                              size="small"
+                              sx={{
+                                bgcolor: app.verificationStatus === 'verified' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                                color: app.verificationStatus === 'verified' ? '#059669' : '#D97706',
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                height: 24,
+                                border: `1px solid ${app.verificationStatus === 'verified' ? 'rgba(5, 150, 105, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell 
+                            align="right"
+                            sx={{ 
+                              color: '#0F172A',
+                              fontWeight: 600,
+                              fontSize: '14px',
+                              borderBottom: '1px solid #F1F5F9',
+                              py: 2,
+                            }}
+                          >
+                            {formatCurrency(app.price, app.currency)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
+      </Box>
     </Box>
   )
 }
