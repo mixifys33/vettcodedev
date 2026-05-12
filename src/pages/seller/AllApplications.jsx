@@ -98,6 +98,7 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import api from '../../utils/api'
 import useAuthStore from '../../store/authStore'
+import { colors } from '../../theme/tokens'
 import { formatCurrency } from '../../utils/helpers'
 import { APP_CATEGORIES, VERIFICATION_STATUS } from '../../utils/constants'
 
@@ -1653,11 +1654,11 @@ const AllApplications = () => {
             disabled={deleting}
             variant="contained"
             sx={{
-              bgcolor: '#ef4444',
+              bgcolor: colors.error,
               color: 'white',
               textTransform: 'none',
-              '&:hover': { bgcolor: '#dc2626' },
-              '&:disabled': { bgcolor: 'rgba(239, 68, 68, 0.5)' },
+              '&:hover': { bgcolor: colors.errorText },
+              '&:disabled': { bgcolor: alpha(colors.error, 0.5) },
             }}
           >
             {deleting ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'Delete Application'}
@@ -1717,13 +1718,13 @@ const AllApplications = () => {
             disabled={processingBatch}
             variant="contained"
             sx={{
-              bgcolor: batchActionDialog.action === 'delete' ? '#ef4444' : '#4F46E5',
+              bgcolor: batchActionDialog.action === 'delete' ? colors.error : colors.primary,
               color: 'white',
               textTransform: 'none',
               '&:hover': { 
-                bgcolor: batchActionDialog.action === 'delete' ? '#dc2626' : '#4338CA' 
+                bgcolor: batchActionDialog.action === 'delete' ? colors.errorText : colors.primaryDark 
               },
-              '&:disabled': { bgcolor: 'rgba(79, 70, 229, 0.5)' },
+              '&:disabled': { bgcolor: alpha(colors.primary, 0.5) },
             }}
           >
             {processingBatch ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'Confirm'}
@@ -1796,7 +1797,7 @@ const AllApplications = () => {
                     borderColor: 'rgba(255,255,255,0.2)',
                     textTransform: 'none',
                     justifyContent: 'flex-start',
-                    '&:hover': { bgcolor: 'rgba(79, 70, 229, 0.1)', borderColor: '#4F46E5' },
+                    '&:hover': { bgcolor: colors.primaryBg, borderColor: colors.primary },
                   }}
                 >
                   Full Edit
@@ -1814,7 +1815,7 @@ const AllApplications = () => {
                     borderColor: 'rgba(255,255,255,0.2)',
                     textTransform: 'none',
                     justifyContent: 'flex-start',
-                    '&:hover': { bgcolor: 'rgba(79, 70, 229, 0.1)', borderColor: '#4F46E5' },
+                    '&:hover': { bgcolor: colors.primaryBg, borderColor: colors.primary },
                   }}
                 >
                   View Details
@@ -1829,11 +1830,11 @@ const AllApplications = () => {
                       closeSlideOver()
                     }}
                     sx={{
-                      bgcolor: '#f59e0b',
+                      bgcolor: colors.warning,
                       color: 'white',
                       textTransform: 'none',
                       justifyContent: 'flex-start',
-                      '&:hover': { bgcolor: '#d97706' },
+                      '&:hover': { bgcolor: colors.warningText },
                     }}
                   >
                     Upload Source Code

@@ -23,14 +23,12 @@ import {
 import {
   Apps,
   ShoppingCart,
-  TrendingUp,
   ArrowUpward,
   ArrowDownward,
   ArrowForward,
   CheckCircle,
   Code,
   AttachMoney,
-  Person,
   Add,
   Drafts,
   NavigateNext,
@@ -40,6 +38,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import api from '../../utils/api'
 import useAuthStore from '../../store/authStore'
 import { formatCurrency, formatRelativeTime } from '../../utils/helpers'
+import { colors } from '../../theme/tokens'
 
 const SellerDashboard = () => {
   const navigate = useNavigate()
@@ -173,8 +172,8 @@ const SellerDashboard = () => {
 
   if (loading) {
     return (
-      <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', p: 3 }}>
-        <LinearProgress sx={{ borderRadius: 0.5, bgcolor: '#E2E8F0', '& .MuiLinearProgress-bar': { bgcolor: '#4F46E5' } }} />
+      <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh', p: 3 }}>
+        <LinearProgress sx={{ borderRadius: 0.5, bgcolor: colors.border, '& .MuiLinearProgress-bar': { bgcolor: colors.primary } }} />
       </Box>
     )
   }
@@ -186,8 +185,8 @@ const SellerDashboard = () => {
       growth: '+2%',
       growthPositive: true,
       icon: <Apps sx={{ fontSize: 20 }} />,
-      color: '#4F46E5',
-      bgColor: 'rgba(79, 70, 229, 0.08)',
+      color: colors.primary,
+      bgColor: colors.primaryBg,
     },
     {
       title: 'Total Orders',
@@ -204,8 +203,8 @@ const SellerDashboard = () => {
       growth: `${stats?.revenueGrowth > 0 ? '+' : ''}${stats?.revenueGrowth}%`,
       growthPositive: stats?.revenueGrowth >= 0,
       icon: <AttachMoney sx={{ fontSize: 20 }} />,
-      color: '#059669',
-      bgColor: 'rgba(5, 150, 105, 0.08)',
+      color: colors.success,
+      bgColor: colors.successBg,
       isRevenue: true,
     },
     {
@@ -214,25 +213,25 @@ const SellerDashboard = () => {
       growth: '+2.1%',
       growthPositive: true,
       icon: <CheckCircle sx={{ fontSize: 20 }} />,
-      color: '#2563EB',
-      bgColor: 'rgba(37, 99, 235, 0.08)',
+      color: colors.info,
+      bgColor: colors.infoBg,
     },
   ]
 
   return (
-    <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh' }}>
+    <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh' }}>
       {/* Top Navigation Bar */}
       <Box 
         sx={{ 
-          bgcolor: '#FFFFFF',
-          borderBottom: '1px solid #E2E8F0',
+          bgcolor: colors.cardBackground,
+          borderBottom: `1px solid ${colors.border}`,
           px: 3,
           py: 2,
           mb: 3,
         }}
       >
         <Breadcrumbs 
-          separator={<NavigateNext fontSize="small" sx={{ color: '#94A3B8' }} />}
+          separator={<NavigateNext fontSize="small" sx={{ color: colors.slate400 }} />}
           sx={{ mb: 1 }}
         >
           <Link 
@@ -240,15 +239,15 @@ const SellerDashboard = () => {
             color="inherit" 
             href="/seller"
             sx={{ 
-              color: '#64748B',
+              color: colors.textSecondary,
               fontSize: '14px',
               fontWeight: 500,
-              '&:hover': { color: '#4F46E5' },
+              '&:hover': { color: colors.primary },
             }}
           >
             Dashboard
           </Link>
-          <Typography sx={{ color: '#0F172A', fontSize: '14px', fontWeight: 600 }}>
+          <Typography sx={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 600 }}>
             Overview
           </Typography>
         </Breadcrumbs>
@@ -256,7 +255,7 @@ const SellerDashboard = () => {
           variant="h5" 
           sx={{ 
             fontWeight: 600, 
-            color: '#0F172A',
+            color: colors.textPrimary,
             fontSize: '24px',
             letterSpacing: '-0.01em',
           }}
@@ -273,14 +272,14 @@ const SellerDashboard = () => {
           <Grid item xs={12} sm={6} lg={3} key={index}>
             <Card
               sx={{
-                bgcolor: '#FFFFFF',
-                border: '1px solid #E2E8F0',
+                bgcolor: colors.cardBackground,
+                border: `1px solid ${colors.border}`,
                 borderRadius: '8px',
                 boxShadow: 'none',
                 transition: 'all 0.2s ease',
                 '&:hover': {
                   boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-                  borderColor: '#CBD5E1',
+                  borderColor: colors.slate300,
                 },
               }}
             >
@@ -289,7 +288,7 @@ const SellerDashboard = () => {
                   <Typography 
                     variant="body2" 
                     sx={{ 
-                      color: '#64748B', 
+                      color: colors.textSecondary, 
                       fontSize: '14px', 
                       fontWeight: 500,
                       letterSpacing: '0.01em',
@@ -317,7 +316,7 @@ const SellerDashboard = () => {
                     variant="h4" 
                     sx={{ 
                       fontWeight: 600, 
-                      color: '#0F172A', 
+                      color: colors.textPrimary, 
                       fontSize: card.isRevenue ? '20px' : '28px',
                       letterSpacing: '-0.02em',
                     }}
@@ -327,7 +326,7 @@ const SellerDashboard = () => {
                   <Typography
                     variant="caption"
                     sx={{
-                      color: card.growthPositive ? '#059669' : '#DC2626',
+                      color: card.growthPositive ? colors.success : colors.error,
                       fontSize: '12px',
                       fontWeight: 500,
                       display: 'flex',
@@ -342,7 +341,7 @@ const SellerDashboard = () => {
                 <Typography 
                   variant="caption" 
                   sx={{ 
-                    color: '#94A3B8', 
+                    color: colors.slate400, 
                     fontSize: '12px',
                     mt: 0.5,
                     display: 'block',
@@ -364,16 +363,16 @@ const SellerDashboard = () => {
           onClick={() => navigate('/seller/drafts')}
           sx={{
             textTransform: 'none',
-            color: '#4F46E5',
-            borderColor: '#E2E8F0',
-            bgcolor: '#FFFFFF',
+            color: colors.primary,
+            borderColor: colors.border,
+            bgcolor: colors.cardBackground,
             fontSize: '14px',
             fontWeight: 500,
             px: 2,
             py: 1,
             '&:hover': {
-              borderColor: '#4F46E5',
-              bgcolor: 'rgba(79, 70, 229, 0.04)',
+              borderColor: colors.primary,
+              bgcolor: colors.primaryBg,
             },
           }}
         >
