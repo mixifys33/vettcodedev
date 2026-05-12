@@ -138,10 +138,10 @@ const AllApplications = () => {
   // User role (for demo - replace with actual role from auth)
   const userRole = user?.role || 'Owner' // Owner, Manager, Analyst
   
-  // Role-based permissions
+  // Role-based permissions - Sellers can delete their own applications
   const permissions = useMemo(() => ({
-    canEdit: userRole === 'Owner' || userRole === 'Manager',
-    canDelete: userRole === 'Owner',
+    canEdit: true, // Sellers can edit their own applications
+    canDelete: true, // Sellers can delete their own applications
     canViewFinancials: userRole === 'Owner' || userRole === 'Manager',
     canBatchEdit: userRole === 'Owner' || userRole === 'Manager',
     canArchive: userRole === 'Owner' || userRole === 'Manager',
@@ -1629,7 +1629,7 @@ const AllApplications = () => {
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ color: 'rgba(255,255,255,0.8)' }}>
-            Are you sure you want to delete <strong>"{selectedApp?.appName}"</strong>? This action cannot be undone and all associated data will be permanently removed.
+            Are you sure you want to delete <strong style={{ color: '#fff' }}>"{selectedApp?.appName || 'this application'}"</strong>? This action cannot be undone and all associated data will be permanently removed.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2, gap: 1 }}>
