@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Box,
   Drawer,
@@ -17,6 +17,8 @@ import {
   useMediaQuery,
   alpha,
   Fade,
+  Badge,
+  Divider,
 } from '@mui/material'
 import {
   Menu as MenuIcon,
@@ -37,45 +39,124 @@ import {
   History,
   Close,
   Code,
+  ChevronLeft,
+  ChevronRight,
+  Analytics,
+  HelpOutline,
+  Notifications,
+  TrendingUp,
 } from '@mui/icons-material'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useAuthStore from '../../store/authStore'
 
-const drawerWidth = 280
+const drawerWidthExpanded = 280
+const drawerWidthCollapsed = 70
 
-const sellerMenuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/seller/dashboard' },
-  { text: 'Applications', icon: <Apps />, path: '/seller/applications' },
-  { text: 'Orders', icon: <ShoppingCart />, path: '/seller/orders' },
-  { text: 'Marketing', icon: <Campaign />, path: '/seller/marketing' },
-  { text: 'Drafts', icon: <Drafts />, path: '/seller/drafts' },
-  { text: 'Bulk Upload', icon: <CloudUpload />, path: '/seller/bulk-upload' },
-  { text: 'Settings', icon: <Settings />, path: '/seller/settings' },
+// Menu structure with grouping and role-based permissions
+const sellerMenuGroups = [
+  {
+    label: 'OVERVIEW',
+    items: [
+      { text: 'Dashboard', icon: <Dashboard />, path: '/seller/dashboard', roles: ['owner', 'manager', 'support'] },
+      { text: 'Analytics', icon: <Analytics />, path: '/seller/analytics', roles: ['owner', 'manager'] },
+    ],
+  },
+  {
+    label: 'MANAGEMENT',
+    items: [
+      { text: 'Applications', icon: <Apps />, path: '/seller/applications', roles: ['owner', 'manager'], badge: 0 },
+      { text: 'Orders', icon: <ShoppingCart />, path: '/seller/orders', roles: ['owner', 'manager', 'support'], badge: 'new' },
+      { text: 'Drafts', icon: <Drafts />, path: '/seller/drafts', roles: ['owner', 'manager'] },
+    ],
+  },
+  {
+    label: 'GROWTH',
+    items: [
+      { text: 'Marketing', icon: <Campaign />, path: '/seller/marketing', roles: ['owner', 'manager'] },
+      { text: 'Bulk Upload', icon: <CloudUpload />, path: '/seller/bulk-upload', roles: ['owner'] },
+    ],
+  },
+  {
+    label: 'ACCOUNT',
+    items: [
+      { text: 'Settings', icon: <Settings />, path: '/seller/settings', roles: ['owner', 'manager'] },
+      { text: 'Help & Support', icon: <HelpOutline />, path: '/seller/support', roles: ['owner', 'manager', 'support'] },
+    ],
+  },
 ]
 
-const adminMenuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
-  { text: 'Sellers', icon: <Store />, path: '/admin/sellers' },
-  { text: 'Pending Sellers', icon: <PendingActions />, path: '/admin/sellers/pending' },
-  { text: 'Users', icon: <People />, path: '/admin/users' },
-  { text: 'Applications', icon: <Inventory />, path: '/admin/applications' },
-  { text: 'Notifications', icon: <Send />, path: '/admin/notifications' },
-  { text: 'History', icon: <History />, path: '/admin/notifications/history' },
+const adminMenuGroups = [
+  {
+    label: 'OVERVIEW',
+    items: [
+      { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard', roles: ['admin'] },
+      { text: 'Analytics', icon: <TrendingUp />, path: '/admin/analytics', roles: ['admin'] },
+    ],
+  },
+  {
+    label: 'MANAGEMENT',
+    items: [
+      { text: 'Sellers', icon: <Store />, path: '/admin/sellers', roles: ['admin'] },
+      { text: 'Pending Sellers', icon: <PendingActions />, path: '/admin/sellers/pending', roles: ['admin'], badge: 'pending' },
+      { text: 'Users', icon: <People />, path: '/admin/users', roles: ['admin'] },
+      { text: 'Applications', icon: <Inventory />, path: '/admin/applications', roles: ['admin'] },
+    ],
+  },
+  {
+    label: 'COMMUNICATION',
+    items: [
+      { text: 'Notifications', icon: <Send />, path: '/admin/notifications', roles: ['admin'] },
+      { text: 'History', icon: <History />, path: '/admin/notifications/history', roles: ['admin'] },
+    ],
+  },
+  {
+    label: 'ACCOUNT',
+    items: [
+      { text: 'Settings', icon: <Settings />, path: '/admin/settings', roles: ['admin'] },
+      { text: 'Help & Support', icon: <HelpOutline />, path: '/admin/support', roles: ['admin'] },
+    ],
+  },
 ]
 
 const DashboardLayout = ({ children, userType = 'seller' }) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   const [anchorEl, setAnchorEl] = useState(null)
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuthStore()
 
-  const menuItems = userType === 'admin' ? adminMenuItems : sellerMenuItems
+  // Mock role - replace with actual user role from your auth system
+  const userRole = user?.role || 'owner' // Can be: 'owner', 'manager', 'support', 'admin'
+
+  // Mock notification counts - replace with actual data
+  const notificationCounts = {
+    new: 3, // New orders
+    pending: 5, // Pending sellers (admin)
+  }
+
+  const menuGroups = userType === 'admin' ? adminMenuGroups : sellerMenuGroups
+
+  // Filter menu items based on user role
+  const filteredMenuGroups = useMemo(() => {
+    return menuGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => item.roles.includes(userRole)),
+      }))
+      .filter((group) => group.items.length > 0)
+  }, [menuGroups, userRole])
+
+  const drawerWidth = collapsed ? drawerWidthCollapsed : drawerWidthExpanded
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
+  }
+
+  const handleCollapseToggle = () => {
+    setCollapsed(!collapsed)
   }
 
   const handleMenuOpen = (event) => {
@@ -98,6 +179,14 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
     }
   }
 
+  // Check if current path matches or is a sub-route
+  const isActiveRoute = (itemPath) => {
+    if (location.pathname === itemPath) return true
+    // Check if current path is a sub-route (e.g., /seller/applications/edit)
+    if (location.pathname.startsWith(itemPath + '/')) return true
+    return false
+  }
+
   const drawer = (
     <Box
       sx={{
@@ -107,6 +196,7 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
         background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
         position: 'relative',
         overflow: 'hidden',
+        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
       {/* Animated Background Elements */}
@@ -127,107 +217,238 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
         }}
       />
 
-      {/* Logo */}
+      {/* Logo & Collapse Toggle */}
       <Box
         sx={{
-          p: 3,
+          p: collapsed ? 2 : 3,
           display: 'flex',
           alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'space-between',
           gap: 2,
           position: 'relative',
           zIndex: 1,
+          transition: 'all 0.3s',
         }}
       >
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 2,
-            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4)',
-          }}
-        >
-          <Code sx={{ fontSize: 28, color: 'white' }} />
-        </Box>
-        <Box>
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 800,
-              lineHeight: 1.2,
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            VettCode
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>
-            {userType === 'admin' ? 'Admin Panel' : 'Seller Dashboard'}
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* Navigation */}
-      <List sx={{ flex: 1, py: 2, px: 2, position: 'relative', zIndex: 1 }}>
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path
-          return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
-              <ListItemButton
-                onClick={() => handleNavigate(item.path)}
+        {!collapsed && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4)',
+              }}
+            >
+              <Code sx={{ fontSize: 28, color: 'white' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="h6"
                 sx={{
-                  borderRadius: 2,
-                  py: 1.5,
-                  px: 2,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  bgcolor: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                  border: isActive ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid transparent',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: 3,
-                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                    opacity: isActive ? 1 : 0,
-                    transition: 'opacity 0.3s',
-                  },
-                  '&:hover': {
-                    bgcolor: isActive ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(99, 102, 241, 0.2)',
-                    transform: 'translateX(4px)',
-                  },
+                  fontWeight: 800,
+                  lineHeight: 1.2,
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
                 }}
               >
-                <ListItemIcon
-                  sx={{
-                    color: isActive ? '#6366f1' : 'rgba(255,255,255,0.6)',
-                    minWidth: 40,
-                    transition: 'all 0.3s',
-                  }}
-                >
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontSize: '0.95rem',
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? 'white' : 'rgba(255,255,255,0.8)',
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          )
-        })}
-      </List>
+                VettCode
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>
+                {userType === 'admin' ? 'Admin Panel' : 'Seller Dashboard'}
+              </Typography>
+            </Box>
+          </Box>
+        )}
+
+        {collapsed && (
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 1.5,
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4)',
+            }}
+          >
+            <Code sx={{ fontSize: 24, color: 'white' }} />
+          </Box>
+        )}
+
+        {!isMobile && !collapsed && (
+          <Tooltip title="Collapse sidebar" placement="right">
+            <IconButton
+              onClick={handleCollapseToggle}
+              sx={{
+                color: 'rgba(255,255,255,0.6)',
+                bgcolor: 'rgba(255,255,255,0.05)',
+                width: 32,
+                height: 32,
+                '&:hover': {
+                  bgcolor: 'rgba(99, 102, 241, 0.2)',
+                  color: '#6366f1',
+                },
+              }}
+            >
+              <ChevronLeft fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+
+      {/* Expand Button (when collapsed) */}
+      {!isMobile && collapsed && (
+        <Box sx={{ px: 2, pb: 2, position: 'relative', zIndex: 1 }}>
+          <Tooltip title="Expand sidebar" placement="right">
+            <IconButton
+              onClick={handleCollapseToggle}
+              sx={{
+                color: 'rgba(255,255,255,0.6)',
+                bgcolor: 'rgba(255,255,255,0.05)',
+                width: '100%',
+                height: 40,
+                borderRadius: 2,
+                '&:hover': {
+                  bgcolor: 'rgba(99, 102, 241, 0.2)',
+                  color: '#6366f1',
+                },
+              }}
+            >
+              <ChevronRight fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
+
+      {/* Navigation with Groups */}
+      <Box sx={{ flex: 1, py: 2, px: 2, position: 'relative', zIndex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        {filteredMenuGroups.map((group, groupIndex) => (
+          <Box key={group.label} sx={{ mb: 3 }}>
+            {/* Group Label */}
+            {!collapsed && (
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 2,
+                  py: 1,
+                  display: 'block',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontWeight: 700,
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {group.label}
+              </Typography>
+            )}
+
+            {collapsed && groupIndex > 0 && (
+              <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.08)' }} />
+            )}
+
+            {/* Group Items */}
+            <List sx={{ py: 0 }}>
+              {group.items.map((item) => {
+                const isActive = isActiveRoute(item.path)
+                const badgeCount = item.badge ? notificationCounts[item.badge] : 0
+
+                const menuButton = (
+                  <ListItemButton
+                    onClick={() => handleNavigate(item.path)}
+                    sx={{
+                      borderRadius: 2,
+                      py: 1.5,
+                      px: collapsed ? 1.5 : 2,
+                      mb: 0.5,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      justifyContent: collapsed ? 'center' : 'flex-start',
+                      bgcolor: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                      border: isActive ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid transparent',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 3,
+                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                        opacity: isActive ? 1 : 0,
+                        transition: 'opacity 0.3s',
+                      },
+                      '&:hover': {
+                        bgcolor: isActive ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                        transform: collapsed ? 'scale(1.05)' : 'translateX(4px)',
+                      },
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        color: isActive ? '#6366f1' : 'rgba(255,255,255,0.6)',
+                        minWidth: collapsed ? 'auto' : 40,
+                        justifyContent: 'center',
+                        transition: 'all 0.3s',
+                      }}
+                    >
+                      {badgeCount > 0 ? (
+                        <Badge
+                          badgeContent={badgeCount}
+                          color="error"
+                          sx={{
+                            '& .MuiBadge-badge': {
+                              fontSize: '0.65rem',
+                              height: 16,
+                              minWidth: 16,
+                              padding: '0 4px',
+                            },
+                          }}
+                        >
+                          {item.icon}
+                        </Badge>
+                      ) : (
+                        item.icon
+                      )}
+                    </ListItemIcon>
+                    {!collapsed && (
+                      <ListItemText
+                        primary={item.text}
+                        primaryTypographyProps={{
+                          fontSize: '0.95rem',
+                          fontWeight: isActive ? 600 : 500,
+                          color: isActive ? 'white' : 'rgba(255,255,255,0.8)',
+                        }}
+                      />
+                    )}
+                  </ListItemButton>
+                )
+
+                return (
+                  <ListItem key={item.text} disablePadding>
+                    {collapsed ? (
+                      <Tooltip title={item.text} placement="right" arrow>
+                        {menuButton}
+                      </Tooltip>
+                    ) : (
+                      menuButton
+                    )}
+                  </ListItem>
+                )
+              })}
+            </List>
+          </Box>
+        ))}
+      </Box>
 
       {/* User Info */}
       <Box
@@ -238,66 +459,71 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
           borderTop: '1px solid rgba(255,255,255,0.08)',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            p: 2,
-            borderRadius: 2,
-            background: 'rgba(255,255,255,0.05)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            cursor: 'pointer',
-            transition: 'all 0.3s',
-            '&:hover': {
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
-              transform: 'translateY(-2px)',
-            },
-          }}
-          onClick={handleMenuOpen}
-        >
-          <Avatar
+        <Tooltip title={collapsed ? user?.name || 'User' : ''} placement="right" arrow>
+          <Box
             sx={{
-              width: 44,
-              height: 44,
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              color: 'white',
-              fontWeight: 700,
-              fontSize: '1.1rem',
-              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              gap: collapsed ? 0 : 2,
+              p: collapsed ? 1.5 : 2,
+              borderRadius: 2,
+              background: 'rgba(255,255,255,0.05)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              '&:hover': {
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(99, 102, 241, 0.3)',
+                transform: 'translateY(-2px)',
+              },
             }}
+            onClick={handleMenuOpen}
           >
-            {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
-          </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="body2"
+            <Avatar
               sx={{
-                fontWeight: 600,
+                width: collapsed ? 36 : 44,
+                height: collapsed ? 36 : 44,
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                 color: 'white',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                fontWeight: 700,
+                fontSize: collapsed ? '0.9rem' : '1.1rem',
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
               }}
             >
-              {user?.name || 'User'}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'rgba(255,255,255,0.6)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                display: 'block',
-              }}
-            >
-              {user?.email || ''}
-            </Typography>
+              {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+            </Avatar>
+            {!collapsed && (
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    color: 'white',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {user?.name || 'User'}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'rgba(255,255,255,0.6)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'block',
+                  }}
+                >
+                  {user?.email || ''}
+                </Typography>
+              </Box>
+            )}
           </Box>
-        </Box>
+        </Tooltip>
       </Box>
     </Box>
   )
@@ -378,7 +604,7 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
             display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
-              width: drawerWidth,
+              width: drawerWidthExpanded,
               border: 'none',
             },
           }}
@@ -396,6 +622,7 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
               width: drawerWidth,
               border: 'none',
               borderRight: '1px solid rgba(255,255,255,0.08)',
+              transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             },
           }}
           open
@@ -413,6 +640,7 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
           minHeight: '100vh',
           bgcolor: '#0a0e27',
           pt: { xs: 8, md: 0 },
+          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         {children}
@@ -460,7 +688,7 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
         <MenuItem
           onClick={() => {
             handleMenuClose()
-            navigate(userType === 'admin' ? '/admin/dashboard' : '/seller/settings')
+            navigate(userType === 'admin' ? '/admin/settings' : '/seller/settings')
           }}
           sx={{
             color: 'white',
