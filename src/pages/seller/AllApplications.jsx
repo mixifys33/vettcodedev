@@ -400,9 +400,13 @@ const AllApplications = () => {
   }
 
   const handleDeleteClick = (app) => {
+    console.log('Delete clicked for app:', app) // Debug log
     setSelectedApp(app)
     setDeleteDialog(true)
-    handleMenuClose()
+    // Close menu if it's open (when delete is clicked from menu)
+    if (anchorEl) {
+      handleMenuClose()
+    }
   }
 
   const handleDelete = async () => {
@@ -1631,6 +1635,12 @@ const AllApplications = () => {
           <Typography sx={{ color: 'rgba(255,255,255,0.8)' }}>
             Are you sure you want to delete <strong style={{ color: '#fff' }}>"{selectedApp?.appName || 'this application'}"</strong>? This action cannot be undone and all associated data will be permanently removed.
           </Typography>
+          {/* Debug info - remove after testing */}
+          {process.env.NODE_ENV === 'development' && (
+            <Typography sx={{ color: 'rgba(255,255,0,0.6)', fontSize: '0.75rem', mt: 1 }}>
+              Debug: {selectedApp ? `App ID: ${selectedApp._id}, Name: ${selectedApp.appName}` : 'No app selected'}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 2, gap: 1 }}>
           <Button
