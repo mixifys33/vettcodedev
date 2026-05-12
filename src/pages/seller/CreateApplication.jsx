@@ -1,402 +1,4 @@
-import { useState } from 'react'
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Typography,
-  Grid,
-  MenuItem,
-  Chip,
-  IconButton,
-  InputAdornment,
-  FormControlLabel,
-  Switch,
-  Stepper,
-  Step,
-  StepLabel,
-  CircularProgress,
-  Alert,
-  Autocomplete,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  Tooltip,
-} from '@mui/material'
-import {
-  Add,
-  Delete,
-  CloudUpload,
-  Save,
-  ArrowBack,
-  ArrowForward,
-  CheckCircle,
-  ZoomIn,
-  Close,
-  Image as ImageIcon,
-} from '@mui/icons-material'
-import { useNavigate } from 'react-router-dom'
-import { useForm, Controller } from 'react-hook-form'
-import toast from 'react-hot-toast'
-import ReactQuill from 'react-quill'
-import 'react-quill/dist/quill.snow.css'
-import api from '../../utils/api'
-import useAuthStore from '../../store/authStore'
-import { uploadToImageKit, uploadMultipleToImageKit } from '../../utils/imagekit'
-import {
-  APP_CATEGORIES,
-  TECHNOLOGY_STACK,
-  PLATFORMS,
-  LICENSE_TYPES,
-  CURRENCIES,
-} from '../../utils/constants'
 
-const steps = ['Basic Info', 'Details & Pricing', 'Media & Links', 'Review']
-
-const CreateApplication = () => {
-  const navigate = useNavigate()
-  const { user } = useAuthStore()
-  const [activeStep, setActiveStep] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [savingDraft, setSavingDraft] = useState(false)
-  const [screenshots, setScreenshots] = useState([])
-  const [appIcon, setAppIcon] = useState(null)
-  const [appFile, setAppFile] = useState(null)
-  const [uploadingFile, setUploadingFile] = useState(false)
-  const [selectedTech, setSelectedTech] = useState([])
-  const [selectedPlatforms, setSelectedPlatforms] = useState([])
-  const [dependencies, setDependencies] = useState([])
-  const [newDependency, setNewDependency] = useState('')
-  const [imagePreview, setImagePreview] = useState({ open: false, image: null, title: '' })
-
-  const {
-    register,
-    handleSubmit,
-    control,
-    watch,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      appName: '',
-      shortDescription: '',
-      detailedDescription: '',
-      appCategory: '',
-      price: '',
-      currency: 'USD',
-      isFree: false,
-      licenseType: '',
-      liveDemo: '',
-      documentationUrl: '',
-      videoDemo: '',
-      tags: '',
-      commercialUse: 'Yes',
-      resaleRights: 'No',
-      supportLevel: 'Community',
-      updateFrequency: 'Active',
-      warranty: '30 days',
-      installationSupport: 'Yes',
-    },
-  })
-
-  const isFree = watch('isFree')
-
-  const handleNext = () => {
-    setActiveStep((prev) => Math.min(prev + 1, steps.length - 1))
-  }
-
-  const handleBack = () => {
-    setActiveStep((prev) => Math.max(prev - 1, 0))
-  }
-
-  const handleScreenshotUpload = async (event) => {
-    const files = Array.from(event.target.files)
-    if (screenshots.length + files.length > 5) {
-      toast.error('Maximum 5 screenshots allowed')
-      return
-    }
-
-    // Show loading toast
-    const uploadToast = toast.loading(`Uploading ${files.length} screenshot(s)...`)
-
-    try {
-      const uploadResults = await uploadMultipleToImageKit(files, 'applications/screenshots')
-      
-      // Add uploaded images to screenshots
-      const newScreenshots = uploadResults.map(result => ({
-        preview: result.url,
-        fileId: result.fileId,
-        fileName: result.fileName,
-        uploaded: true
-      }))
-      
-      setScreenshots((prev) => [...prev, ...newScreenshots])
-      toast.success(`${files.length} screenshot(s) uploaded successfully`, { id: uploadToast })
-    } catch (error) {
-      console.error('Screenshot upload error:', error)
-      toast.error('Failed to upload screenshots. Please try again.', { id: uploadToast })
-    }
-  }
-
-  const handleIconUpload = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-
-    // Show loading toast
-    const uploadToast = toast.loading('Uploading app icon...')
-
-    try {
-      const uploadResult = await uploadToImageKit(file, 'applications/icons')
-      
-      setAppIcon({
-        preview: uploadResult.url,
-        fileId: uploadResult.fileId,
-        fileName: uploadResult.fileName,
-        uploaded: true
-      })
-      
-      toast.success('App icon uploaded successfully', { id: uploadToast })
-    } catch (error) {
-      console.error('Icon upload error:', error)
-      toast.error('Failed to upload app icon. Please try again.', { id: uploadToast })
-    }
-  }
-
-  const removeIcon = () => {
-    setAppIcon(null)
-  }
-
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.name.endsWith('.zip')) {
-      toast.error('Only ZIP files are allowed')
-      return
-    }
-
-    // Validate file size (100MB max)
-    const maxSize = 100 * 1024 * 1024
-    if (file.size > maxSize) {
-      toast.error('File size must be less than 100MB')
-      return
-    }
-
-    setUploadingFile(true)
-    try {
-      // Read file as ArrayBuffer for compression
-      const arrayBuffer = await file.arrayBuffer()
-      const uint8Array = new Uint8Array(arrayBuffer)
-      
-      // Dynamically import pako for compression
-      const pako = await import('pako')
-      
-      // Compress the file using gzip (best compression)
-      const compressed = pako.gzip(uint8Array, { level: 9 })
-      
-      // Calculate compression ratio
-      const originalSize = file.size
-      const compressedSize = compressed.length
-      const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(1)
-      
-      console.log(`Compression: ${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedSize / 1024 / 1024).toFixed(2)}MB (${compressionRatio}% reduction)`)
-      
-      // Convert compressed data to base64
-      const blob = new Blob([compressed], { type: 'application/gzip' })
-      const reader = new FileReader()
-      
-      reader.onloadend = async () => {
-        try {
-          const base64 = reader.result
-
-          // Upload to ImageKit with .gz extension
-          const response = await api.post('/imagekit/upload-application', {
-            file: base64,
-            fileName: file.name + '.gz',
-          })
-
-          if (response.data.success) {
-            setAppFile({
-              url: response.data.url,
-              fileId: response.data.fileId,
-              fileName: file.name, // Store original name without .gz
-              fileSize: originalSize, // Store original size
-              compressedSize: compressedSize,
-              compressionRatio: compressionRatio,
-            })
-            toast.success(`File uploaded! Compressed by ${compressionRatio}% (saved ${((originalSize - compressedSize) / 1024 / 1024).toFixed(2)}MB)`)
-          }
-        } catch (error) {
-          console.error('Upload error:', error)
-          toast.error(error.response?.data?.message || 'Failed to upload file')
-        } finally {
-          setUploadingFile(false)
-        }
-      }
-      
-      reader.readAsDataURL(blob)
-    } catch (error) {
-      console.error('Compression error:', error)
-      toast.error('Failed to compress file')
-      setUploadingFile(false)
-    }
-  }
-
-  const removeAppFile = async () => {
-    if (appFile?.fileId) {
-      try {
-        await api.delete('/imagekit/delete', { data: { fileId: appFile.fileId } })
-      } catch (error) {
-        console.error('Failed to delete file from ImageKit:', error)
-      }
-    }
-    setAppFile(null)
-  }
-
-  const removeScreenshot = (index) => {
-    setScreenshots((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const addDependency = () => {
-    if (newDependency.trim()) {
-      // Parse multiple dependencies from pasted text
-      const lines = newDependency.split('\n').map(line => line.trim()).filter(Boolean)
-      
-      const parsedDeps = []
-      
-      lines.forEach(line => {
-        // Remove common prefixes and clean up
-        let cleaned = line
-          .replace(/^[-*•]\s*/, '') // Remove bullet points
-          .replace(/^\d+\.\s*/, '') // Remove numbered lists
-          .replace(/^[•·]\s*/, '') // Remove other bullets
-          .trim()
-        
-        // Split by common separators if multiple deps in one line
-        const parts = cleaned.split(/[,;]/).map(p => p.trim()).filter(Boolean)
-        
-        parts.forEach(part => {
-          // Clean up common patterns
-          let dep = part
-            .replace(/^["']|["']$/g, '') // Remove quotes
-            .replace(/\s+/g, ' ') // Normalize spaces
-            .trim()
-          
-          if (dep && !dependencies.includes(dep) && !parsedDeps.includes(dep)) {
-            parsedDeps.push(dep)
-          }
-        })
-      })
-      
-      if (parsedDeps.length > 0) {
-        setDependencies((prev) => [...prev, ...parsedDeps])
-        setNewDependency('')
-        toast.success(`Added ${parsedDeps.length} ${parsedDeps.length === 1 ? 'dependency' : 'dependencies'}`)
-      } else {
-        toast.error('No valid dependencies found')
-      }
-    }
-  }
-
-  const removeDependency = (index) => {
-    setDependencies((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const openImagePreview = (image, title) => {
-    setImagePreview({ open: true, image, title })
-  }
-
-  const closeImagePreview = () => {
-    setImagePreview({ open: false, image: null, title: '' })
-  }
-
-  const onSubmit = async (data, isDraft = false) => {
-    try {
-      isDraft ? setSavingDraft(true) : setLoading(true)
-
-      const sellerId = user?.id || user?._id
-
-      // Validate required fields for draft
-      if (isDraft && !data.appName?.trim()) {
-        toast.error('Application name is required to save as draft')
-        return
-      }
-
-      // Validate application file for published apps
-      if (!isDraft && !appFile) {
-        toast.error('Application ZIP file is required')
-        return
-      }
-
-      // Prepare form data - images are already uploaded to ImageKit
-      const formData = {
-        appName: data.appName?.trim() || '',
-        shortDescription: data.shortDescription?.trim() || '',
-        detailedDescription: data.detailedDescription?.trim() || '',
-        appCategory: data.appCategory || '',
-        tags: data.tags?.trim() || '',
-        price: data.isFree ? 0 : parseFloat(data.price) || 0,
-        currency: data.currency || 'USD',
-        isFree: Boolean(data.isFree),
-        licenseType: data.licenseType || '',
-        liveDemo: data.liveDemo?.trim() || '',
-        documentationUrl: data.documentationUrl?.trim() || '',
-        videoDemo: data.videoDemo?.trim() || '',
-        commercialUse: data.commercialUse || 'Yes',
-        resaleRights: data.resaleRights || 'No',
-        supportLevel: data.supportLevel || 'Community',
-        updateFrequency: data.updateFrequency || 'Active',
-        warranty: data.warranty || '30 days',
-        installationSupport: data.installationSupport || 'Yes',
-        sellerId,
-        technologyStack: Array.isArray(selectedTech) ? selectedTech : [],
-        supportedPlatforms: Array.isArray(selectedPlatforms) ? selectedPlatforms : [],
-        dependencies: Array.isArray(dependencies) ? dependencies.filter(d => typeof d === 'string') : [],
-        screenshots: Array.isArray(screenshots) ? screenshots.map((s) => ({
-          url: s.preview,
-          fileId: s.fileId || null,
-          thumbnailUrl: s.thumbnailUrl || s.preview,
-          fileName: s.fileName || null,
-          uploaded: s.uploaded || false
-        })).filter(s => s.url) : [],
-        appIcon: appIcon ? {
-          url: appIcon.preview,
-          fileId: appIcon.fileId || null,
-          thumbnailUrl: appIcon.thumbnailUrl || appIcon.preview,
-          fileName: appIcon.fileName || null,
-          uploaded: appIcon.uploaded || false
-        } : null,
-        sourceCodeFile: appFile || null,
-      }
-
-      // Use different endpoint for drafts
-      const endpoint = isDraft ? '/applications/draft' : '/applications'
-      const response = await api.post(endpoint, formData)
-
-      if (response.data.success) {
-        toast.success(isDraft ? 'Draft saved successfully!' : 'Application created successfully!')
-        navigate(isDraft ? '/seller/drafts' : '/seller/applications')
-      }
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to create application'
-      const errors = error.response?.data?.errors
-      
-      if (errors && errors.length > 0) {
-        toast.error(`${errorMessage}: ${errors.join(', ')}`)
-      } else {
-        toast.error(errorMessage)
-      }
-      console.error(error)
-    } finally {
-      setLoading(false)
-      setSavingDraft(false)
-    }
-  }
-
-  const handleSaveDraft = () => {
-    handleSubmit((data) => onSubmit(data, true))()
-  }
 
   const renderStepContent = () => {
     switch (activeStep) {
@@ -723,315 +325,8 @@ const CreateApplication = () => {
         )
 
       case 2:
-        return (
-          <Grid container spacing={3}>
-            {/* App Icon Section */}
-            <Grid item xs={12}>
-              <Card
-                sx={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 2,
-                  p: 2,
-                }}
-              >
-                <Typography variant="subtitle1" sx={{ mb: 2, color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ImageIcon /> App Icon *
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
-                  Upload a square icon (recommended: 512x512px, PNG or JPG)
-                </Typography>
-                
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                  {appIcon && (
-                    <Box sx={{ position: 'relative' }}>
-                      <Box
-                        component="img"
-                        src={appIcon.preview}
-                        sx={{ 
-                          width: 120, 
-                          height: 120, 
-                          borderRadius: 2, 
-                          objectFit: 'cover',
-                          border: '2px solid rgba(99, 102, 241, 0.3)',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s',
-                          '&:hover': {
-                            transform: 'scale(1.05)',
-                            border: '2px solid rgba(99, 102, 241, 0.6)',
-                          }
-                        }}
-                        onClick={() => openImagePreview(appIcon.preview, 'App Icon')}
-                      />
-                      <Tooltip title="Preview">
-                        <IconButton
-                          size="small"
-                          sx={{
-                            position: 'absolute',
-                            top: 4,
-                            right: 4,
-                            bgcolor: 'rgba(99, 102, 241, 0.9)',
-                            color: 'white',
-                            '&:hover': { bgcolor: '#6366f1' },
-                          }}
-                          onClick={() => openImagePreview(appIcon.preview, 'App Icon')}
-                        >
-                          <ZoomIn fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <IconButton
-                        size="small"
-                        sx={{
-                          position: 'absolute',
-                          bottom: 4,
-                          right: 4,
-                          bgcolor: 'rgba(239, 68, 68, 0.9)',
-                          color: 'white',
-                          '&:hover': { bgcolor: '#ef4444' },
-                        }}
-                        onClick={removeIcon}
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  )}
-                  
-                  <Button 
-                    variant="contained" 
-                    component="label" 
-                    startIcon={<CloudUpload />}
-                    sx={{
-                      background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #5558e3 0%, #7c4de8 100%)',
-                      }
-                    }}
-                  >
-                    {appIcon ? 'Change Icon' : 'Upload Icon'}
-                    <input type="file" hidden accept="image/*" onChange={handleIconUpload} />
-                  </Button>
-                </Box>
-              </Card>
-            </Grid>
-
-            {/* Screenshots Section */}
-            <Grid item xs={12}>
-              <Card
-                sx={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 2,
-                  p: 2,
-                }}
-              >
-                <Typography variant="subtitle1" sx={{ mb: 2, color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ImageIcon /> Screenshots (Max 5) *
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
-                  Upload high-quality screenshots of your application (recommended: 1920x1080px)
-                </Typography>
-                
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-                  {screenshots.map((screenshot, index) => (
-                    <Box key={index} sx={{ position: 'relative' }}>
-                      <Box
-                        component="img"
-                        src={screenshot.preview}
-                        sx={{ 
-                          width: 200, 
-                          height: 120, 
-                          borderRadius: 2, 
-                          objectFit: 'cover',
-                          border: '2px solid rgba(99, 102, 241, 0.3)',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s',
-                          '&:hover': {
-                            transform: 'scale(1.05)',
-                            border: '2px solid rgba(99, 102, 241, 0.6)',
-                          }
-                        }}
-                        onClick={() => openImagePreview(screenshot.preview, `Screenshot ${index + 1}`)}
-                      />
-                      <Chip
-                        label={`#${index + 1}`}
-                        size="small"
-                        sx={{
-                          position: 'absolute',
-                          top: 4,
-                          left: 4,
-                          bgcolor: 'rgba(99, 102, 241, 0.9)',
-                          color: 'white',
-                          fontWeight: 600,
-                        }}
-                      />
-                      <Tooltip title="Preview">
-                        <IconButton
-                          size="small"
-                          sx={{
-                            position: 'absolute',
-                            top: 4,
-                            right: 4,
-                            bgcolor: 'rgba(99, 102, 241, 0.9)',
-                            color: 'white',
-                            '&:hover': { bgcolor: '#6366f1' },
-                          }}
-                          onClick={() => openImagePreview(screenshot.preview, `Screenshot ${index + 1}`)}
-                        >
-                          <ZoomIn fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <IconButton
-                        size="small"
-                        sx={{
-                          position: 'absolute',
-                          bottom: 4,
-                          right: 4,
-                          bgcolor: 'rgba(239, 68, 68, 0.9)',
-                          color: 'white',
-                          '&:hover': { bgcolor: '#ef4444' },
-                        }}
-                        onClick={() => removeScreenshot(index)}
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  ))}
-                </Box>
-                
-                <Button
-                  variant="contained"
-                  component="label"
-                  startIcon={<CloudUpload />}
-                  disabled={screenshots.length >= 5}
-                  sx={{
-                    background: screenshots.length >= 5 
-                      ? 'rgba(255,255,255,0.1)' 
-                      : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                    '&:hover': {
-                      background: screenshots.length >= 5 
-                        ? 'rgba(255,255,255,0.1)' 
-                        : 'linear-gradient(135deg, #5558e3 0%, #7c4de8 100%)',
-                    }
-                  }}
-                >
-                  {screenshots.length >= 5 ? 'Maximum Reached' : 'Upload Screenshots'}
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    multiple
-                    onChange={handleScreenshotUpload}
-                    disabled={screenshots.length >= 5}
-                  />
-                </Button>
-                {screenshots.length > 0 && (
-                  <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'rgba(255,255,255,0.5)' }}>
-                    {screenshots.length} of 5 screenshots uploaded
-                  </Typography>
-                )}
-              </Card>
-            </Grid>
-
-            {/* Optional Links Section */}
-            <Grid item xs={12}>
-              <Card
-                sx={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 2,
-                  p: 2,
-                }}
-              >
-                <Typography variant="subtitle1" sx={{ mb: 2, color: 'white', fontWeight: 600 }}>
-                  Additional Resources (Optional)
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
-                  Provide links to help users understand and use your application
-                </Typography>
-                
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Live Demo URL"
-                      {...register('liveDemo')}
-                      placeholder="https://demo.example.com"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          color: 'white',
-                          '& fieldset': {
-                            borderColor: 'rgba(255,255,255,0.2)',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: 'rgba(99, 102, 241, 0.5)',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#6366f1',
-                          },
-                        },
-                        '& .MuiInputLabel-root': {
-                          color: 'rgba(255,255,255,0.6)',
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Documentation URL"
-                      {...register('documentationUrl')}
-                      placeholder="https://docs.example.com"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          color: 'white',
-                          '& fieldset': {
-                            borderColor: 'rgba(255,255,255,0.2)',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: 'rgba(99, 102, 241, 0.5)',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#6366f1',
-                          },
-                        },
-                        '& .MuiInputLabel-root': {
-                          color: 'rgba(255,255,255,0.6)',
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Video Demo URL (YouTube, Vimeo, etc.)"
-                      {...register('videoDemo')}
-                      placeholder="https://youtube.com/watch?v=..."
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          color: 'white',
-                          '& fieldset': {
-                            borderColor: 'rgba(255,255,255,0.2)',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: 'rgba(99, 102, 241, 0.5)',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#6366f1',
-                          },
-                        },
-                        '& .MuiInputLabel-root': {
-                          color: 'rgba(255,255,255,0.6)',
-                        },
-                      }}
-                    />
-                  </Grid>
-                </Grid>
-              </Card>
-            </Grid>
-          </Grid>
-        )
+        // TWO-COLUMN LAYOUT: Rendered in main return statement
+        return null
 
       case 3:
         return (
@@ -1211,150 +506,562 @@ const CreateApplication = () => {
         </CardContent>
       </Card>
 
-      {/* Form */}
-      <Card
-        sx={{
-          background: 'rgba(255,255,255,0.03)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 2,
-        }}
-      >
-        <CardContent sx={{ p: 3 }}>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Box
+      {/* TWO-COLUMN LAYOUT FOR MEDIA & LINKS STEP (Step 2) */}
+      {activeStep === 2 ? (
+        <Grid container spacing={3}>
+          {/* LEFT COLUMN - Image Preview (Sticky) */}
+          <Grid item xs={12} lg={5}>
+            <Card
               sx={{
-                '& .MuiTextField-root': {
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: 'rgba(255,255,255,0.05)',
-                    color: 'white',
-                    '& fieldset': {
-                      borderColor: 'rgba(255,255,255,0.1)',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'rgba(99, 102, 241, 0.5)',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#6366f1',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: 'rgba(255,255,255,0.6)',
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#6366f1',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    color: 'rgba(255,255,255,0.5)',
-                  },
+                background: 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 2,
+                position: 'sticky',
+                top: 20,
+                maxHeight: 'calc(100vh - 40px)',
+                overflow: 'auto',
+                '&::-webkit-scrollbar': {
+                  width: '8px',
                 },
-                '& .MuiAutocomplete-root': {
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: 'rgba(255,255,255,0.05)',
-                    color: 'white',
-                  },
+                '&::-webkit-scrollbar-track': {
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '4px',
                 },
-                '& .MuiChip-root': {
-                  bgcolor: 'rgba(99, 102, 241, 0.2)',
-                  color: '#6366f1',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                },
-                '& .MuiSwitch-root': {
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#6366f1',
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    bgcolor: '#6366f1',
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'rgba(99, 102, 241, 0.5)',
+                  borderRadius: '4px',
+                  '&:hover': {
+                    background: 'rgba(99, 102, 241, 0.7)',
                   },
                 },
               }}
             >
-              {renderStepContent()}
-            </Box>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" sx={{ color: 'white', fontWeight: 600, mb: 3 }}>
+                  Media Preview
+                </Typography>
 
-            {/* Navigation */}
-            <Box sx={{ display: 'flex', gap: 2, mt: 4, pt: 3, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-              {activeStep > 0 && (
-                <Button 
-                  variant="outlined" 
-                  onClick={handleBack} 
-                  startIcon={<ArrowBack />}
+                {/* App Icon Preview */}
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 2, fontSize: '0.875rem' }}>
+                    App Icon
+                  </Typography>
+                  <Box
+                    sx={{
+                      width: '100%',
+                      aspectRatio: '1',
+                      maxWidth: 300,
+                      mx: 'auto',
+                      border: '2px dashed rgba(99, 102, 241, 0.3)',
+                      borderRadius: 3,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'rgba(0,0,0,0.2)',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      cursor: appIcon ? 'pointer' : 'default',
+                      transition: 'all 0.3s',
+                      '&:hover': appIcon ? {
+                        transform: 'scale(1.02)',
+                        border: '2px dashed rgba(99, 102, 241, 0.6)',
+                      } : {},
+                    }}
+                    onClick={() => appIcon && openImagePreview(appIcon.preview, 'App Icon')}
+                  >
+                    {appIcon ? (
+                      <>
+                        <Box
+                          component="img"
+                          src={appIcon.preview}
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                        <IconButton
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            bgcolor: 'rgba(239, 68, 68, 0.9)',
+                            color: 'white',
+                            '&:hover': { bgcolor: '#ef4444' },
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeIcon()
+                          }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </>
+                    ) : (
+                      <Box sx={{ textAlign: 'center', p: 3 }}>
+                        <ImageIcon sx={{ fontSize: 64, color: 'rgba(255,255,255,0.2)', mb: 2 }} />
+                        <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.4)', mb: 0.5 }}>
+                          512 × 512
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.3)' }}>
+                          Please select an image to upload
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+
+                {/* Screenshots Preview */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 2, fontSize: '0.875rem' }}>
+                    Screenshots ({screenshots.length}/5)
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {screenshots.map((screenshot, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          position: 'relative',
+                          width: '100%',
+                          aspectRatio: '16/9',
+                          border: '1px solid rgba(99, 102, 241, 0.3)',
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s',
+                          '&:hover': {
+                            transform: 'scale(1.02)',
+                            border: '1px solid rgba(99, 102, 241, 0.6)',
+                          },
+                        }}
+                        onClick={() => openImagePreview(screenshot.preview, `Screenshot ${index + 1}`)}
+                      >
+                        <Box
+                          component="img"
+                          src={screenshot.preview}
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                        <Chip
+                          label={`#${index + 1}`}
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            left: 8,
+                            bgcolor: 'rgba(99, 102, 241, 0.9)',
+                            color: 'white',
+                            fontWeight: 600,
+                          }}
+                        />
+                        <IconButton
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            bgcolor: 'rgba(239, 68, 68, 0.9)',
+                            color: 'white',
+                            '&:hover': { bgcolor: '#ef4444' },
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeScreenshot(index)
+                          }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                    {screenshots.length === 0 && (
+                      <Box
+                        sx={{
+                          width: '100%',
+                          aspectRatio: '16/9',
+                          border: '2px dashed rgba(99, 102, 241, 0.3)',
+                          borderRadius: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: 'rgba(0,0,0,0.2)',
+                        }}
+                      >
+                        <Box sx={{ textAlign: 'center', p: 3 }}>
+                          <ImageIcon sx={{ fontSize: 48, color: 'rgba(255,255,255,0.2)', mb: 1 }} />
+                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.3)' }}>
+                            No screenshots uploaded
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* RIGHT COLUMN - Upload Controls & Form Fields */}
+          <Grid item xs={12} lg={7}>
+            <Card
+              sx={{
+                background: 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 2,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                  <Box
+                    sx={{
+                      '& .MuiTextField-root': {
+                        '& .MuiOutlinedInput-root': {
+                          bgcolor: 'rgba(255,255,255,0.05)',
+                          color: 'white',
+                          '& fieldset': {
+                            borderColor: 'rgba(255,255,255,0.1)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: 'rgba(99, 102, 241, 0.5)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#6366f1',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: 'rgba(255,255,255,0.6)',
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#6366f1',
+                        },
+                        '& .MuiFormHelperText-root': {
+                          color: 'rgba(255,255,255,0.5)',
+                        },
+                      },
+                    }}
+                  >
+                    <Grid container spacing={3}>
+                      {/* App Icon Upload Section */}
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle1" sx={{ mb: 2, color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <ImageIcon /> App Icon *
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
+                          Upload a square icon (recommended: 512x512px, PNG or JPG)
+                        </Typography>
+                        
+                        <Button 
+                          variant="contained" 
+                          component="label" 
+                          startIcon={<CloudUpload />}
+                          fullWidth
+                          sx={{
+                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                            py: 1.5,
+                            '&:hover': {
+                              background: 'linear-gradient(135deg, #5558e3 0%, #7c4de8 100%)',
+                            }
+                          }}
+                        >
+                          {appIcon ? 'Change App Icon' : 'Upload App Icon'}
+                          <input type="file" hidden accept="image/*" onChange={handleIconUpload} />
+                        </Button>
+                      </Grid>
+
+                      {/* Screenshots Upload Section */}
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle1" sx={{ mb: 2, color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <ImageIcon /> Screenshots (Max 5) *
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
+                          Upload high-quality screenshots of your application (recommended: 1920x1080px)
+                        </Typography>
+                        
+                        <Button
+                          variant="contained"
+                          component="label"
+                          startIcon={<CloudUpload />}
+                          disabled={screenshots.length >= 5}
+                          fullWidth
+                          sx={{
+                            py: 1.5,
+                            background: screenshots.length >= 5 
+                              ? 'rgba(255,255,255,0.1)' 
+                              : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                            '&:hover': {
+                              background: screenshots.length >= 5 
+                                ? 'rgba(255,255,255,0.1)' 
+                                : 'linear-gradient(135deg, #5558e3 0%, #7c4de8 100%)',
+                            },
+                            '&:disabled': {
+                              background: 'rgba(255,255,255,0.1)',
+                              color: 'rgba(255,255,255,0.3)',
+                            }
+                          }}
+                        >
+                          {screenshots.length >= 5 ? 'Maximum Reached (5/5)' : `Upload Screenshots (${screenshots.length}/5)`}
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*"
+                            multiple
+                            onChange={handleScreenshotUpload}
+                            disabled={screenshots.length >= 5}
+                          />
+                        </Button>
+                      </Grid>
+
+                      {/* Optional Links Section */}
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle1" sx={{ mb: 2, color: 'white', fontWeight: 600 }}>
+                          Additional Resources (Optional)
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
+                          Provide links to help users understand and use your application
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="Live Demo URL"
+                          {...register('liveDemo')}
+                          placeholder="https://demo.example.com"
+                        />
+                      </Grid>
+
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="Documentation URL"
+                          {...register('documentationUrl')}
+                          placeholder="https://docs.example.com"
+                        />
+                      </Grid>
+
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="Video Demo URL (YouTube, Vimeo, etc.)"
+                          {...register('videoDemo')}
+                          placeholder="https://youtube.com/watch?v=..."
+                        />
+                      </Grid>
+                    </Grid>
+                  </Box>
+
+                  {/* Navigation */}
+                  <Box sx={{ display: 'flex', gap: 2, mt: 4, pt: 3, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    <Button 
+                      variant="outlined" 
+                      onClick={handleBack} 
+                      startIcon={<ArrowBack />}
+                      sx={{
+                        borderColor: 'rgba(255,255,255,0.2)',
+                        color: 'white',
+                        '&:hover': {
+                          borderColor: '#6366f1',
+                          bgcolor: 'rgba(99, 102, 241, 0.1)',
+                        },
+                      }}
+                    >
+                      Back
+                    </Button>
+
+                    <Box sx={{ flex: 1 }} />
+
+                    <Button
+                      variant="outlined"
+                      onClick={handleSaveDraft}
+                      disabled={savingDraft || loading}
+                      startIcon={savingDraft ? <CircularProgress size={16} /> : <Save />}
+                      sx={{
+                        borderColor: 'rgba(255,255,255,0.2)',
+                        color: 'white',
+                        '&:hover': {
+                          borderColor: '#8b5cf6',
+                          bgcolor: 'rgba(139, 92, 246, 0.1)',
+                        },
+                        '&:disabled': {
+                          borderColor: 'rgba(255,255,255,0.1)',
+                          color: 'rgba(255,255,255,0.3)',
+                        },
+                      }}
+                    >
+                      {savingDraft ? 'Saving...' : 'Save Draft'}
+                    </Button>
+
+                    <Button 
+                      variant="contained" 
+                      onClick={handleNext} 
+                      endIcon={<ArrowForward />}
+                      sx={{
+                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+                        '&:hover': {
+                          boxShadow: '0 6px 16px rgba(99, 102, 241, 0.5)',
+                        },
+                      }}
+                    >
+                      Next
+                    </Button>
+                  </Box>
+                </form>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      ) : (
+        /* SINGLE COLUMN LAYOUT FOR OTHER STEPS */
+        <Card
+          sx={{
+            background: 'rgba(255,255,255,0.03)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 2,
+          }}
+        >
+          <CardContent sx={{ p: 3 }}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <Box
+                sx={{
+                  '& .MuiTextField-root': {
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: 'rgba(255,255,255,0.05)',
+                      color: 'white',
+                      '& fieldset': {
+                        borderColor: 'rgba(255,255,255,0.1)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(99, 102, 241, 0.5)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#6366f1',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: 'rgba(255,255,255,0.6)',
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#6366f1',
+                    },
+                    '& .MuiFormHelperText-root': {
+                      color: 'rgba(255,255,255,0.5)',
+                    },
+                  },
+                  '& .MuiAutocomplete-root': {
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: 'rgba(255,255,255,0.05)',
+                      color: 'white',
+                    },
+                  },
+                  '& .MuiChip-root': {
+                    bgcolor: 'rgba(99, 102, 241, 0.2)',
+                    color: '#6366f1',
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                  },
+                  '& .MuiSwitch-root': {
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#6366f1',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      bgcolor: '#6366f1',
+                    },
+                  },
+                }}
+              >
+                {renderStepContent()}
+              </Box>
+
+              {/* Navigation */}
+              <Box sx={{ display: 'flex', gap: 2, mt: 4, pt: 3, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                {activeStep > 0 && (
+                  <Button 
+                    variant="outlined" 
+                    onClick={handleBack} 
+                    startIcon={<ArrowBack />}
+                    sx={{
+                      borderColor: 'rgba(255,255,255,0.2)',
+                      color: 'white',
+                      '&:hover': {
+                        borderColor: '#6366f1',
+                        bgcolor: 'rgba(99, 102, 241, 0.1)',
+                      },
+                    }}
+                  >
+                    Back
+                  </Button>
+                )}
+
+                <Box sx={{ flex: 1 }} />
+
+                <Button
+                  variant="outlined"
+                  onClick={handleSaveDraft}
+                  disabled={savingDraft || loading}
+                  startIcon={savingDraft ? <CircularProgress size={16} /> : <Save />}
                   sx={{
                     borderColor: 'rgba(255,255,255,0.2)',
                     color: 'white',
                     '&:hover': {
-                      borderColor: '#6366f1',
-                      bgcolor: 'rgba(99, 102, 241, 0.1)',
-                    },
-                  }}
-                >
-                  Back
-                </Button>
-              )}
-
-              <Box sx={{ flex: 1 }} />
-
-              <Button
-                variant="outlined"
-                onClick={handleSaveDraft}
-                disabled={savingDraft || loading}
-                startIcon={savingDraft ? <CircularProgress size={16} /> : <Save />}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.2)',
-                  color: 'white',
-                  '&:hover': {
-                    borderColor: '#8b5cf6',
-                    bgcolor: 'rgba(139, 92, 246, 0.1)',
-                  },
-                  '&:disabled': {
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    color: 'rgba(255,255,255,0.3)',
-                  },
-                }}
-              >
-                {savingDraft ? 'Saving...' : 'Save Draft'}
-              </Button>
-
-              {activeStep < steps.length - 1 ? (
-                <Button 
-                  variant="contained" 
-                  onClick={handleNext} 
-                  endIcon={<ArrowForward />}
-                  sx={{
-                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-                    '&:hover': {
-                      boxShadow: '0 6px 16px rgba(99, 102, 241, 0.5)',
-                    },
-                  }}
-                >
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={loading || savingDraft}
-                  startIcon={loading ? <CircularProgress size={16} /> : <CheckCircle />}
-                  sx={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
-                    '&:hover': {
-                      boxShadow: '0 6px 16px rgba(16, 185, 129, 0.5)',
+                      borderColor: '#8b5cf6',
+                      bgcolor: 'rgba(139, 92, 246, 0.1)',
                     },
                     '&:disabled': {
-                      background: 'rgba(255,255,255,0.1)',
+                      borderColor: 'rgba(255,255,255,0.1)',
                       color: 'rgba(255,255,255,0.3)',
                     },
                   }}
                 >
-                  {loading ? 'Creating...' : 'Create Application'}
+                  {savingDraft ? 'Saving...' : 'Save Draft'}
                 </Button>
-              )}
-            </Box>
-          </form>
-        </CardContent>
-      </Card>
+
+                {activeStep < steps.length - 1 ? (
+                  <Button 
+                    variant="contained" 
+                    onClick={handleNext} 
+                    endIcon={<ArrowForward />}
+                    sx={{
+                      background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+                      '&:hover': {
+                        boxShadow: '0 6px 16px rgba(99, 102, 241, 0.5)',
+                      },
+                    }}
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={loading || savingDraft}
+                    startIcon={loading ? <CircularProgress size={16} /> : <CheckCircle />}
+                    sx={{
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+                      '&:hover': {
+                        boxShadow: '0 6px 16px rgba(16, 185, 129, 0.5)',
+                      },
+                      '&:disabled': {
+                        background: 'rgba(255,255,255,0.1)',
+                        color: 'rgba(255,255,255,0.3)',
+                      },
+                    }}
+                  >
+                    {loading ? 'Creating...' : 'Create Application'}
+                  </Button>
+                )}
+              </Box>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Image Preview Modal */}
       <Dialog
