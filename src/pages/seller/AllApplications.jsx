@@ -1892,4 +1892,4 @@ const AllApplications = () => {
   )
 }
 
-export default AllApplicationsefault AllApplications
+export default AllApplications
