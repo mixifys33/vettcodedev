@@ -170,62 +170,36 @@ const CreateApplication = () => {
     const file = event.target.files[0]
     if (!file) return
 
-    // Validate file type
-    if (!file.name.endsWith('.zip')) {
-      toast.error('Only ZIP files are allowed')
-      return
-    }
-
-    // Validate file size (100MB max)
-    const maxSize = 100 * 1024 * 1024
+    // Validate file size (50MB max)
+    const maxSize = 50 * 1024 * 1024
     if (file.size > maxSize) {
-      toast.error('File size must be less than 100MB')
+      toast.error('File size must be less than 50MB')
       return
     }
 
     setUploadingFile(true)
     try {
-      // Read file as ArrayBuffer for compression
-      const arrayBuffer = await file.arrayBuffer()
-      const uint8Array = new Uint8Array(arrayBuffer)
-      
-      // Dynamically import pako for compression
-      const pako = await import('pako')
-      
-      // Compress the file using gzip (best compression)
-      const compressed = pako.gzip(uint8Array, { level: 9 })
-      
-      // Calculate compression ratio
-      const originalSize = file.size
-      const compressedSize = compressed.length
-      const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(1)
-      
-      console.log(`Compression: ${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedSize / 1024 / 1024).toFixed(2)}MB (${compressionRatio}% reduction)`)
-      
-      // Convert compressed data to base64
-      const blob = new Blob([compressed], { type: 'application/gzip' })
+      // Read file as base64 directly without any compression
       const reader = new FileReader()
       
       reader.onloadend = async () => {
         try {
           const base64 = reader.result
 
-          // Upload to ImageKit with .gz extension
+          // Upload to ImageKit as-is
           const response = await api.post('/imagekit/upload-application', {
             file: base64,
-            fileName: file.name + '.gz',
+            fileName: file.name,
           })
 
           if (response.data.success) {
             setAppFile({
               url: response.data.url,
               fileId: response.data.fileId,
-              fileName: file.name, // Store original name without .gz
-              fileSize: originalSize, // Store original size
-              compressedSize: compressedSize,
-              compressionRatio: compressionRatio,
+              fileName: file.name,
+              fileSize: file.size,
             })
-            toast.success(`File uploaded! Compressed by ${compressionRatio}% (saved ${((originalSize - compressedSize) / 1024 / 1024).toFixed(2)}MB)`)
+            toast.success(`File uploaded successfully! (${(file.size / 1024 / 1024).toFixed(2)}MB)`)
           }
         } catch (error) {
           console.error('Upload error:', error)
@@ -235,10 +209,112 @@ const CreateApplication = () => {
         }
       }
       
-      reader.readAsDataURL(blob)
+      reader.onerror = () => {
+        toast.error('Failed to read file')
+        setUploadingFile(false)
+      }
+      
+      reader.readAsDataURL(file)
     } catch (error) {
-      console.error('Compression error:', error)
-      toast.error('Failed to compress file')
+      console.error('Upload error:', error)
+      toast.error('Failed to upload file')
+      setUploadingFile(false)
+    }
+  }
+
+  // Handle folder upload - creates ZIP maintaining folder structure
+  const handleFolderUpload = async (event) => {
+    const files = Array.from(event.target.files)
+    if (files.length === 0) return
+
+    // Calculate total size
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0)
+    const maxSize = 50 * 1024 * 1024
+    
+    if (totalSize > maxSize) {
+      toast.error(`Total folder size (${(totalSize / 1024 / 1024).toFixed(2)}MB) exceeds 50MB limit`)
+      return
+    }
+
+    setUploadingFile(true)
+    const loadingToast = toast.loading(`Processing ${files.length} files...`)
+
+    try {
+      // Dynamically import JSZip
+      const JSZip = (await import('jszip')).default
+      const zip = new JSZip()
+
+      // Add all files to ZIP maintaining folder structure
+      for (const file of files) {
+        // Get relative path from webkitRelativePath
+        const relativePath = file.webkitRelativePath || file.name
+        
+        // Read file content
+        const content = await file.arrayBuffer()
+        
+        // Add to ZIP with full path to maintain folder structure
+        zip.file(relativePath, content)
+      }
+
+      // Generate ZIP file without compression to preserve structure
+      toast.loading('Creating ZIP file...', { id: loadingToast })
+      const zipBlob = await zip.generateAsync({ 
+        type: 'blob',
+        compression: 'STORE', // No compression - just store files as-is
+      })
+
+      // Check if ZIP exceeds size limit
+      if (zipBlob.size > maxSize) {
+        toast.error(`ZIP file (${(zipBlob.size / 1024 / 1024).toFixed(2)}MB) exceeds 50MB limit`, { id: loadingToast })
+        setUploadingFile(false)
+        return
+      }
+
+      // Get folder name from first file's path
+      const folderName = files[0].webkitRelativePath?.split('/')[0] || 'application'
+      const zipFileName = `${folderName}.zip`
+
+      console.log(`Created ZIP: ${files.length} files, ${(zipBlob.size / 1024 / 1024).toFixed(2)}MB`)
+
+      // Convert to base64 and upload
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        try {
+          const base64 = reader.result
+
+          toast.loading('Uploading to cloud...', { id: loadingToast })
+          const response = await api.post('/imagekit/upload-application', {
+            file: base64,
+            fileName: zipFileName,
+          })
+
+          if (response.data.success) {
+            setAppFile({
+              url: response.data.url,
+              fileId: response.data.fileId,
+              fileName: zipFileName,
+              fileSize: zipBlob.size,
+              originalFileCount: files.length,
+            })
+            toast.success(`Folder uploaded! ${files.length} files (${(zipBlob.size / 1024 / 1024).toFixed(2)}MB)`, { id: loadingToast })
+          }
+        } catch (error) {
+          console.error('Upload error:', error)
+          toast.error(error.response?.data?.message || 'Failed to upload folder', { id: loadingToast })
+        } finally {
+          setUploadingFile(false)
+        }
+      }
+
+      reader.onerror = () => {
+        toast.error('Failed to process ZIP file', { id: loadingToast })
+        setUploadingFile(false)
+      }
+
+      reader.readAsDataURL(zipBlob)
+    } catch (error) {
+      console.error('ZIP creation error:', error)
+      toast.error('Failed to create ZIP from folder', { id: loadingToast })
       setUploadingFile(false)
     }
   }
@@ -654,10 +730,10 @@ const CreateApplication = () => {
 
             <Grid item xs={12}>
               <Typography variant="subtitle2" sx={{ mb: 1, color: 'white', fontWeight: 600 }}>
-                Application File (ZIP) *
+                Application Source Code *
               </Typography>
               <Typography variant="caption" sx={{ display: 'block', mb: 2, color: 'rgba(255,255,255,0.5)' }}>
-                Upload your application source code as a ZIP file (max 100MB)
+                Upload your application source code as a file or folder (max 50MB, any format)
               </Typography>
               
               {appFile ? (
@@ -680,6 +756,7 @@ const CreateApplication = () => {
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
                         {(appFile.fileSize / 1024 / 1024).toFixed(2)} MB
+                        {appFile.originalFileCount && ` • ${appFile.originalFileCount} files`}
                       </Typography>
                     </Box>
                   </Box>
@@ -694,29 +771,58 @@ const CreateApplication = () => {
                   </IconButton>
                 </Box>
               ) : (
-                <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={uploadingFile ? <CircularProgress size={16} /> : <CloudUpload />}
-                  disabled={uploadingFile}
-                  sx={{
-                    borderColor: 'rgba(99, 102, 241, 0.5)',
-                    color: '#6366f1',
-                    '&:hover': {
-                      borderColor: '#6366f1',
-                      bgcolor: 'rgba(99, 102, 241, 0.1)',
-                    },
-                  }}
-                >
-                  {uploadingFile ? 'Uploading...' : 'Upload ZIP File'}
-                  <input
-                    type="file"
-                    hidden
-                    accept=".zip"
-                    onChange={handleFileUpload}
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={uploadingFile ? <CircularProgress size={16} /> : <CloudUpload />}
                     disabled={uploadingFile}
-                  />
-                </Button>
+                    sx={{
+                      flex: 1,
+                      minWidth: '200px',
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                      color: '#6366f1',
+                      '&:hover': {
+                        borderColor: '#6366f1',
+                        bgcolor: 'rgba(99, 102, 241, 0.1)',
+                      },
+                    }}
+                  >
+                    {uploadingFile ? 'Uploading...' : 'Upload File'}
+                    <input
+                      type="file"
+                      hidden
+                      onChange={handleFileUpload}
+                      disabled={uploadingFile}
+                    />
+                  </Button>
+                  
+                  <Button
+                    variant="contained"
+                    component="label"
+                    startIcon={uploadingFile ? <CircularProgress size={16} /> : <CloudUpload />}
+                    disabled={uploadingFile}
+                    sx={{
+                      flex: 1,
+                      minWidth: '200px',
+                      background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #5558e3 0%, #7c4de8 100%)',
+                      },
+                    }}
+                  >
+                    {uploadingFile ? 'Processing...' : 'Upload Folder'}
+                    <input
+                      type="file"
+                      hidden
+                      webkitdirectory=""
+                      directory=""
+                      multiple
+                      onChange={handleFolderUpload}
+                      disabled={uploadingFile}
+                    />
+                  </Button>
+                </Box>
               )}
             </Grid>
           </Grid>
