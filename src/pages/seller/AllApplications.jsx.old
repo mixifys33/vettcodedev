@@ -43,10 +43,6 @@ import {
   Fade,
   Badge,
   LinearProgress,
-  Stack,
-  Avatar,
-  ListItemIcon,
-  ListItemText,
 } from '@mui/material'
 import {
   Search,
@@ -77,29 +73,6 @@ import {
   CheckBoxOutlineBlank,
   TableChart,
   Build,
-  ArrowUpward,
-  ArrowDownward,
-  Sync,
-  PriceChange,
-  ArchiveOutlined,
-  UnarchiveOutlined,
-  PublishOutlined,
-  BarChart,
-  CalendarToday,
-  Code,
-  Category,
-  MonetizationOn,
-  Update,
-  VisibilityOff,
-  Lock,
-  LockOpen,
-  Star,
-  StarBorder,
-  FileCopy,
-  CloudDownload,
-  Assessment,
-  Timeline,
-  ShowChart,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -114,14 +87,13 @@ const AllApplications = () => {
   const { user } = useAuthStore()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'))
-  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'))
   
   // State Management
   const [applications, setApplications] = useState([])
   const [filteredApps, setFilteredApps] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [viewMode, setViewMode] = useState(isMobile ? 'card' : isDesktop ? 'table' : 'grid')
+  const [viewMode, setViewMode] = useState(isMobile ? 'card' : 'grid')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedApps, setSelectedApps] = useState([])
@@ -130,34 +102,20 @@ const AllApplications = () => {
   const [deleteDialog, setDeleteDialog] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [slideOverOpen, setSlideOverOpen] = useState(false)
-  const [slideOverApp, setSlideOverApp] = useState(null)
   const [batchMenuAnchor, setBatchMenuAnchor] = useState(null)
   const [sortBy, setSortBy] = useState('createdAt')
   const [sortOrder, setSortOrder] = useState('desc')
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
-  const [hoveredApp, setHoveredApp] = useState(null)
-  const [batchActionDialog, setBatchActionDialog] = useState({ open: false, action: null })
-  const [processingBatch, setProcessingBatch] = useState(false)
   
   // User role (for demo - replace with actual role from auth)
   const userRole = user?.role || 'Owner' // Owner, Manager, Analyst
-  
-  // Role-based permissions
-  const permissions = useMemo(() => ({
-    canEdit: userRole === 'Owner' || userRole === 'Manager',
-    canDelete: userRole === 'Owner',
-    canViewFinancials: userRole === 'Owner' || userRole === 'Manager',
-    canBatchEdit: userRole === 'Owner' || userRole === 'Manager',
-    canArchive: userRole === 'Owner' || userRole === 'Manager',
-  }), [userRole])
 
   useEffect(() => {
     fetchApplications()
   }, [])
 
   useEffect(() => {
-    filterAndSortApplications()
-  }, [applications, searchQuery, categoryFilter, statusFilter, sortBy, sortOrder])
+    filterApplications()
+  }, [applications, searchQuery, categoryFilter, statusFilter])
 
   const fetchApplications = async () => {
     try {
@@ -180,10 +138,9 @@ const AllApplications = () => {
     }
   }
 
-  const filterAndSortApplications = () => {
+  const filterApplications = () => {
     let filtered = [...applications]
 
-    // Apply filters
     if (searchQuery) {
       filtered = filtered.filter(
         (app) =>
@@ -201,148 +158,7 @@ const AllApplications = () => {
       filtered = filtered.filter((app) => app.verificationStatus === statusFilter)
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aVal, bVal
-      
-      switch (sortBy) {
-        case 'name':
-          aVal = a.appName?.toLowerCase() || ''
-          bVal = b.appName?.toLowerCase() || ''
-          break
-        case 'price':
-          aVal = a.price || 0
-          bVal = b.price || 0
-          break
-        case 'status':
-          aVal = a.verificationStatus || ''
-          bVal = b.verificationStatus || ''
-          break
-        case 'createdAt':
-        default:
-          aVal = new Date(a.createdAt || 0).getTime()
-          bVal = new Date(b.createdAt || 0).getTime()
-          break
-      }
-
-      if (sortOrder === 'asc') {
-        return aVal > bVal ? 1 : -1
-      } else {
-        return aVal < bVal ? 1 : -1
-      }
-    })
-
     setFilteredApps(filtered)
-  }
-
-  // Batch Actions
-  const handleSelectAll = (event) => {
-    if (event.target.checked) {
-      setSelectedApps(filteredApps.map(app => app._id))
-    } else {
-      setSelectedApps([])
-    }
-  }
-
-  const handleSelectApp = (appId) => {
-    setSelectedApps(prev => 
-      prev.includes(appId) 
-        ? prev.filter(id => id !== appId)
-        : [...prev, appId]
-    )
-  }
-
-  const handleBatchAction = (action) => {
-    if (selectedApps.length === 0) {
-      toast.error('Please select at least one application')
-      return
-    }
-    setBatchActionDialog({ open: true, action })
-    setBatchMenuAnchor(null)
-  }
-
-  const executeBatchAction = async () => {
-    const { action } = batchActionDialog
-    
-    try {
-      setProcessingBatch(true)
-      
-      switch (action) {
-        case 'archive':
-          // Implement archive logic
-          toast.success(`${selectedApps.length} applications archived`)
-          break
-        case 'sync':
-          // Implement sync to marketplace logic
-          toast.success(`${selectedApps.length} applications synced`)
-          break
-        case 'updatePricing':
-          // Open pricing dialog
-          toast.info('Bulk pricing update coming soon')
-          break
-        case 'delete':
-          // Batch delete
-          await Promise.all(
-            selectedApps.map(id => api.delete(`/applications/${id}`))
-          )
-          setApplications(prev => prev.filter(app => !selectedApps.includes(app._id)))
-          toast.success(`${selectedApps.length} applications deleted`)
-          break
-        default:
-          break
-      }
-      
-      setSelectedApps([])
-      setBatchActionDialog({ open: false, action: null })
-    } catch (error) {
-      toast.error('Batch action failed')
-      console.error(error)
-    } finally {
-      setProcessingBatch(false)
-    }
-  }
-
-  // Quick Stats for hover (simulated - replace with real data)
-  const getQuickStats = (app) => {
-    // This would come from your analytics API
-    return {
-      revenue7d: Math.floor(Math.random() * 500000),
-      downloads7d: Math.floor(Math.random() * 100),
-      trend: Math.random() > 0.5 ? 'up' : 'down',
-      trendPercent: Math.floor(Math.random() * 30)
-    }
-  }
-
-  // Inline editing
-  const handleInlineEdit = async (appId, field, value) => {
-    try {
-      const response = await api.patch(`/applications/${appId}`, {
-        [field]: value
-      })
-      
-      if (response.data.success) {
-        setApplications(prev => 
-          prev.map(app => 
-            app._id === appId ? { ...app, [field]: value } : app
-          )
-        )
-        toast.success('Updated successfully')
-      }
-    } catch (error) {
-      toast.error('Update failed')
-      console.error(error)
-    }
-  }
-
-  // Slide-over panel
-  const openSlideOver = (app) => {
-    setSlideOverApp(app)
-    setSlideOverOpen(true)
-  }
-
-  const closeSlideOver = () => {
-    setSlideOverOpen(false)
-    setTimeout(() => setSlideOverApp(null), 300)
   }
 
   const handleMenuOpen = (event, app) => {

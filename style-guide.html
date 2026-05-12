@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VettCode Design System - Style Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+      line-height: 1.5;
+      padding: 48px 24px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .header h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #4F46E5 0%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header p {
+      font-size: 1.25rem;
+      color: #64748B;
+    }
+
+    .section {
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 32px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #1E293B;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .color-swatch {
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .color-preview {
+      height: 80px;
+      width: 100%;
+    }
+
+    .color-info {
+      padding: 12px;
+      background: white;
+    }
+
+    .color-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #1E293B;
+      margin-bottom: 4px;
+    }
+
+    .color-value {
+      font-size: 0.75rem;
+      color: #64748B;
+      font-family: 'Courier New', monospace;
+    }
+
+    .button-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-primary {
+      background: #4F46E5;
+      color: white;
+      box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05), inset 0px 1px 0px rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-primary:hover {
+      background: #4338CA;
+      box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08), inset 0px 1px 0px rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #334155;
+      border: 1px solid #E2E8F0;
+    }
+
+    .btn-secondary:hover {
+      background: #F8FAFC;
+      border-color: #4F46E5;
+      color: #4F46E5;
+    }
+
+    .btn-danger {
+      background: #EF4444;
+      color: white;
+      box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-danger:hover {
+      background: #DC2626;
+    }
+
+    .input-example {
+      margin-top: 16px;
+    }
+
+    .input {
+      width: 100%;
+      max-width: 400px;
+      padding: 12px 14px;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-family: 'Inter', sans-serif;
+      transition: all 150ms;
+      background: white;
+    }
+
+    .input:hover {
+      border-color: #CBD5E1;
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: #4F46E5;
+      box-shadow: 0 0 0 3px #EEF2FF;
+    }
+
+    .badge-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .badge {
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid;
+    }
+
+    .badge-success {
+      background: #D1FAE5;
+      color: #065F46;
+      border-color: #A7F3D0;
+    }
+
+    .badge-error {
+      background: #FEE2E2;
+      color: #991B1B;
+      border-color: #FECACA;
+    }
+
+    .badge-warning {
+      background: #FEF3C7;
+      color: #92400E;
+      border-color: #FDE68A;
+    }
+
+    .badge-info {
+      background: #DBEAFE;
+      color: #1E40AF;
+      border-color: #BFDBFE;
+    }
+
+    .badge-neutral {
+      background: #F1F5F9;
+      color: #334155;
+      border-color: #E2E8F0;
+    }
+
+    .typography-example {
+      margin-top: 16px;
+    }
+
+    .typography-example h1,
+    .typography-example h2,
+    .typography-example h3,
+    .typography-example h4,
+    .typography-example h5,
+    .typography-example h6 {
+      margin-bottom: 8px;
+    }
+
+    .typography-example h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .typography-example h2 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .typography-example h3 {
+      font-size: 1.875rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .typography-example h4 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .typography-example h5 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .typography-example h6 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .typography-example p {
+      font-size: 1rem;
+      line-height: 1.5;
+      color: #334155;
+      margin-bottom: 8px;
+    }
+
+    .card-example {
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      margin-top: 16px;
+      transition: all 150ms;
+    }
+
+    .card-example:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .shadow-examples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .shadow-box {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      font-size: 0.875rem;
+      color: #64748B;
+    }
+
+    .shadow-xs { box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05); }
+    .shadow-sm { box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05), 0px 1px 2px rgba(0, 0, 0, 0.03); }
+    .shadow-md { box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.05), 0px 2px 4px rgba(0, 0, 0, 0.03); }
+    .shadow-lg { box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.03); }
+    .shadow-xl { box-shadow: 0px 20px 25px rgba(0, 0, 0, 0.05), 0px 10px 10px rgba(0, 0, 0, 0.02); }
+
+    .code {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: #4F46E5;
+    }
+
+    .spacing-grid {
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .spacing-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .spacing-visual {
+      background: #4F46E5;
+      height: 24px;
+      border-radius: 4px;
+    }
+
+    .spacing-label {
+      font-size: 0.875rem;
+      color: #64748B;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>VettCode Design System</h1>
+      <p>Enterprise-grade design inspired by Stripe and Linear</p>
+    </div>
+
+    <!-- Colors Section -->
+    <div class="section">
+      <h2 class="section-title">🎨 Color Palette</h2>
+      
+      <h3 style="font-size: 1.125rem; font-weight: 600; margin: 24px 0 12px 0; color: #475569;">Primary Brand</h3>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #4F46E5;"></div>
+          <div class="color-info">
+            <div class="color-name">Primary</div>
+            <div class="color-value">#4F46E5</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #4338CA;"></div>
+          <div class="color-info">
+            <div class="color-name">Primary Dark</div>
+            <div class="color-value">#4338CA</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #6366F1;"></div>
+          <div class="color-info">
+            <div class="color-name">Primary Light</div>
+            <div class="color-value">#6366F1</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #EEF2FF;"></div>
+          <div class="color-info">
+            <div class="color-name">Primary BG</div>
+            <div class="color-value">#EEF2FF</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size: 1.125rem; font-weight: 600; margin: 24px 0 12px 0; color: #475569;">Neutrals (Slate Scale)</h3>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #F8FAFC;"></div>
+          <div class="color-info">
+            <div class="color-name">Slate 50</div>
+            <div class="color-value">#F8FAFC</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #E2E8F0;"></div>
+          <div class="color-info">
+            <div class="color-name">Slate 200</div>
+            <div class="color-value">#E2E8F0</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #94A3B8;"></div>
+          <div class="color-info">
+            <div class="color-name">Slate 400</div>
+            <div class="color-value">#94A3B8</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #64748B;"></div>
+          <div class="color-info">
+            <div class="color-name">Slate 500</div>
+            <div class="color-value">#64748B</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #334155;"></div>
+          <div class="color-info">
+            <div class="color-name">Slate 700</div>
+            <div class="color-value">#334155</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #0F172A;"></div>
+          <div class="color-info">
+            <div class="color-name">Slate 900</div>
+            <div class="color-value">#0F172A</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size: 1.125rem; font-weight: 600; margin: 24px 0 12px 0; color: #475569;">Semantic Colors</h3>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #10B981;"></div>
+          <div class="color-info">
+            <div class="color-name">Success</div>
+            <div class="color-value">#10B981</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #EF4444;"></div>
+          <div class="color-info">
+            <div class="color-name">Error</div>
+            <div class="color-value">#EF4444</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #F59E0B;"></div>
+          <div class="color-info">
+            <div class="color-name">Warning</div>
+            <div class="color-value">#F59E0B</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background: #3B82F6;"></div>
+          <div class="color-info">
+            <div class="color-name">Info</div>
+            <div class="color-value">#3B82F6</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Typography Section -->
+    <div class="section">
+      <h2 class="section-title">🔤 Typography</h2>
+      <p style="color: #64748B; margin-bottom: 24px;">Font Family: <span class="code">Inter</span></p>
+      
+      <div class="typography-example">
+        <h1>Heading 1 - 48px Bold</h1>
+        <h2>Heading 2 - 36px Bold</h2>
+        <h3>Heading 3 - 30px Semibold</h3>
+        <h4>Heading 4 - 24px Semibold</h4>
+        <h5>Heading 5 - 20px Semibold</h5>
+        <h6>Heading 6 - 16px Semibold</h6>
+        <p>Body text - 16px Regular with 1.5x line height for optimal readability. This is how your main content should look.</p>
+        <p style="font-size: 0.875rem;">Small text - 14px Regular for secondary content and labels.</p>
+        <p style="font-size: 0.75rem; color: #64748B;">Caption - 12px Regular for hints and helper text.</p>
+      </div>
+    </div>
+
+    <!-- Buttons Section -->
+    <div class="section">
+      <h2 class="section-title">🔘 Buttons</h2>
+      <div class="button-grid">
+        <button class="btn btn-primary">Primary Button</button>
+        <button class="btn btn-secondary">Secondary Button</button>
+        <button class="btn btn-danger">Danger Button</button>
+        <button class="btn btn-primary" disabled style="opacity: 0.5; cursor: not-allowed;">Disabled</button>
+      </div>
+      <p style="margin-top: 16px; font-size: 0.875rem; color: #64748B;">
+        <strong>Specs:</strong> 6px border radius, 10px/20px padding, 150ms transition, inner glow on primary
+      </p>
+    </div>
+
+    <!-- Inputs Section -->
+    <div class="section">
+      <h2 class="section-title">📝 Input Fields</h2>
+      <div class="input-example">
+        <input type="text" class="input" placeholder="Enter your email..." />
+      </div>
+      <p style="margin-top: 16px; font-size: 0.875rem; color: #64748B;">
+        <strong>Specs:</strong> 1px border, white background, indigo focus ring (not thick border!)
+      </p>
+    </div>
+
+    <!-- Badges Section -->
+    <div class="section">
+      <h2 class="section-title">🏷️ Status Badges</h2>
+      <div class="badge-grid">
+        <span class="badge badge-success">Active</span>
+        <span class="badge badge-error">Error</span>
+        <span class="badge badge-warning">Pending</span>
+        <span class="badge badge-info">Draft</span>
+        <span class="badge badge-neutral">Inactive</span>
+      </div>
+      <p style="margin-top: 16px; font-size: 0.875rem; color: #64748B;">
+        <strong>Key Rule:</strong> Light backgrounds with dark text (not bright colors!)
+      </p>
+    </div>
+
+    <!-- Cards Section -->
+    <div class="section">
+      <h2 class="section-title">🃏 Cards</h2>
+      <div class="card-example">
+        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 8px;">Card Title</h3>
+        <p style="color: #64748B; font-size: 0.875rem; margin-bottom: 16px;">
+          This is a standard card with 24px padding, 1px border, and subtle shadow.
+        </p>
+        <button class="btn btn-primary">Action</button>
+      </div>
+      <p style="margin-top: 16px; font-size: 0.875rem; color: #64748B;">
+        <strong>Consistency Rule:</strong> Every card uses 24px padding. No exceptions.
+      </p>
+    </div>
+
+    <!-- Shadows Section -->
+    <div class="section">
+      <h2 class="section-title">🌑 Shadows (Ambient & Subtle)</h2>
+      <div class="shadow-examples">
+        <div class="shadow-box shadow-xs">XS Shadow<br/>Buttons</div>
+        <div class="shadow-box shadow-sm">SM Shadow<br/>Cards</div>
+        <div class="shadow-box shadow-md">MD Shadow<br/>Elevated</div>
+        <div class="shadow-box shadow-lg">LG Shadow<br/>Modals</div>
+        <div class="shadow-box shadow-xl">XL Shadow<br/>Drawers</div>
+      </div>
+      <p style="margin-top: 16px; font-size: 0.875rem; color: #64748B;">
+        <strong>Philosophy:</strong> Borders over shadows. Shadows are wide, soft, and low opacity.
+      </p>
+    </div>
+
+    <!-- Spacing Section -->
+    <div class="section">
+      <h2 class="section-title">📏 Spacing (8px Grid)</h2>
+      <div class="spacing-grid">
+        <div class="spacing-item">
+          <div class="spacing-visual" style="width: 4px;"></div>
+          <span class="spacing-label">xs: 4px (0.5 unit)</span>
+        </div>
+        <div class="spacing-item">
+          <div class="spacing-visual" style="width: 8px;"></div>
+          <span class="spacing-label">sm: 8px (1 unit)</span>
+        </div>
+        <div class="spacing-item">
+          <div class="spacing-visual" style="width: 16px;"></div>
+          <span class="spacing-label">md: 16px (2 units)</span>
+        </div>
+        <div class="spacing-item">
+          <div class="spacing-visual" style="width: 24px;"></div>
+          <span class="spacing-label">lg: 24px (3 units) ← Card padding</span>
+        </div>
+        <div class="spacing-item">
+          <div class="spacing-visual" style="width: 32px;"></div>
+          <span class="spacing-label">xl: 32px (4 units)</span>
+        </div>
+        <div class="spacing-item">
+          <div class="spacing-visual" style="width: 48px;"></div>
+          <span class="spacing-label">2xl: 48px (6 units)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; margin-top: 64px; padding-top: 32px; border-top: 1px solid #E2E8F0;">
+      <p style="color: #64748B; font-size: 0.875rem;">
+        Built with ❤️ for VettCode | Enterprise Design System
+      </p>
+      <p style="color: #94A3B8; font-size: 0.75rem; margin-top: 8px;">
+        Inspired by Stripe and Linear
+      </p>
+    </div>
+  </div>
+</body>
+</html>
