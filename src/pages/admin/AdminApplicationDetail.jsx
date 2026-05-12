@@ -111,13 +111,23 @@ const AdminApplicationDetail = () => {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (response.data.success) {
-        setApplication(response.data.application)
+        const app = response.data.application
+        
+        // Debug logging for sourceCodeFile
+        console.log('Application Data:', {
+          appName: app.appName,
+          hasSourceCodeFile: !!app.sourceCodeFile,
+          sourceCodeFileUrl: app.sourceCodeFile?.url,
+          sourceCodeFileStructure: app.sourceCodeFile
+        })
+        
+        setApplication(app)
         setReviewData({
-          rating: response.data.application.adminRating || 0,
-          reason: response.data.application.verificationNotes || '',
-          notes: response.data.application.adminNotes || '',
-          completionScore: response.data.application.completionScore || 0,
-          badges: response.data.application.badges || [],
+          rating: app.adminRating || 0,
+          reason: app.verificationNotes || '',
+          notes: app.adminNotes || '',
+          completionScore: app.completionScore || 0,
+          badges: app.badges || [],
         })
       }
     } catch (error) {
@@ -439,7 +449,7 @@ const AdminApplicationDetail = () => {
           )}
 
           {/* Application ZIP File - CRITICAL FOR REVIEW */}
-          {application.sourceCodeFile && (
+          {application.sourceCodeFile && application.sourceCodeFile.url && (
             <Card sx={{ mb: 3, borderColor: 'primary.main', borderWidth: 2, borderStyle: 'solid' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -450,6 +460,9 @@ const AdminApplicationDetail = () => {
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Download and test the application before approval
+                      {application.sourceCodeFile.originalFileCount && 
+                        ` (${application.sourceCodeFile.originalFileCount} files from folder upload)`
+                      }
                     </Typography>
                   </Box>
                 </Box>
@@ -477,10 +490,21 @@ const AdminApplicationDetail = () => {
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="caption" color="text.secondary">
+                      Upload Type
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {application.sourceCodeFile.originalFileCount 
+                        ? `Folder Upload (${application.sourceCodeFile.originalFileCount} files)`
+                        : 'Direct ZIP Upload'
+                      }
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">
                       Upload Status
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      {application.sourceCodeFile.uploaded ? (
+                      {application.sourceCodeFile.uploaded || application.sourceCodeFile.url ? (
                         <>
                           <CheckCircle sx={{ fontSize: 16, color: 'success.main' }} />
                           <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
@@ -530,7 +554,7 @@ const AdminApplicationDetail = () => {
           )}
 
           {/* Warning if no ZIP file */}
-          {!application.sourceCodeFile && (
+          {(!application.sourceCodeFile || !application.sourceCodeFile.url) && (
             <Card sx={{ mb: 3, borderColor: 'error.main', borderWidth: 2, borderStyle: 'solid', bgcolor: 'error.lighter' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -689,23 +713,31 @@ const AdminApplicationDetail = () => {
         {/* Right Column - Review & Stats */}
         <Grid item xs={12} md={4}>
           {/* Source Code Status - IMPORTANT */}
-          <Card sx={{ mb: 3, borderColor: application.sourceCodeFile ? 'success.main' : 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
+          <Card sx={{ mb: 3, borderColor: (application.sourceCodeFile && application.sourceCodeFile.url) ? 'success.main' : 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 <FolderZip sx={{ mr: 1, verticalAlign: 'middle' }} />
                 Source Code Status
               </Typography>
-              {application.sourceCodeFile ? (
+              {(application.sourceCodeFile && application.sourceCodeFile.url) ? (
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <CheckCircle sx={{ color: 'success.main' }} />
                     <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
-                      ZIP File Uploaded
+                      {application.sourceCodeFile.originalFileCount 
+                        ? 'Folder Uploaded (as ZIP)'
+                        : 'ZIP File Uploaded'
+                      }
                     </Typography>
                   </Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                     {application.sourceCodeFile.fileName}
                   </Typography>
+                  {application.sourceCodeFile.originalFileCount && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                      Contains {application.sourceCodeFile.originalFileCount} files
+                    </Typography>
+                  )}
                   <Button
                     fullWidth
                     variant="outlined"
