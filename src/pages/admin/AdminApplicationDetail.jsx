@@ -972,11 +972,11 @@ const AdminApplicationDetail = () => {
                     </Typography>
                     {(() => {
                       const cleanText = stripHtmlTags(application.shortDescription)
-                      const lines = cleanText.split('\n')
-                      const shouldTruncate = lines.length > 3 || cleanText.length > 200
+                      const charLimit = 200
+                      const shouldTruncate = cleanText.length > charLimit
                       const displayText = expandedShortDesc || !shouldTruncate 
                         ? cleanText 
-                        : lines.slice(0, 3).join('\n') + (cleanText.length > 200 ? '...' : '')
+                        : cleanText.substring(0, charLimit) + '...'
                       
                       return (
                         <>
@@ -1016,11 +1016,11 @@ const AdminApplicationDetail = () => {
                     </Typography>
                     {(() => {
                       const cleanText = stripHtmlTags(application.detailedDescription)
-                      const lines = cleanText.split('\n')
-                      const shouldTruncate = lines.length > 5 || cleanText.length > 500
+                      const charLimit = 500
+                      const shouldTruncate = cleanText.length > charLimit
                       const displayText = expandedDetailedDesc || !shouldTruncate 
                         ? cleanText 
-                        : lines.slice(0, 5).join('\n') + (cleanText.length > 500 ? '...' : '')
+                        : cleanText.substring(0, charLimit) + '...'
                       
                       return (
                         <>
