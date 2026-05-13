@@ -125,6 +125,8 @@ const AdminApplicationDetail = () => {
   const [downloadMenuAnchor, setDownloadMenuAnchor] = useState(null)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxImage, setLightboxImage] = useState(null)
+  const [expandedShortDesc, setExpandedShortDesc] = useState(false)
+  const [expandedDetailedDesc, setExpandedDetailedDesc] = useState(false)
   
   // Review checklist state
   const [reviewChecklist, setReviewChecklist] = useState({
@@ -287,6 +289,23 @@ const AdminApplicationDetail = () => {
 
   const isChecklistComplete = () => {
     return Object.values(reviewChecklist).every(val => val === true)
+  }
+
+  // Helper function to strip HTML tags and decode entities
+  const stripHtmlTags = (html) => {
+    if (!html) return ''
+    
+    // Create a temporary div to decode HTML entities
+    const temp = document.createElement('div')
+    temp.innerHTML = html
+    
+    // Get text content (strips all HTML tags)
+    let text = temp.textContent || temp.innerText || ''
+    
+    // Clean up extra whitespace
+    text = text.replace(/\s+/g, ' ').trim()
+    
+    return text
   }
 
   // Helper function to check if source code file is properly uploaded
@@ -951,9 +970,43 @@ const AdminApplicationDetail = () => {
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Short Description
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.875rem', lineHeight: 1.6 }}>
-                      {application.shortDescription}
-                    </Typography>
+                    {(() => {
+                      const cleanText = stripHtmlTags(application.shortDescription)
+                      const lines = cleanText.split('\n')
+                      const shouldTruncate = lines.length > 3 || cleanText.length > 200
+                      const displayText = expandedShortDesc || !shouldTruncate 
+                        ? cleanText 
+                        : lines.slice(0, 3).join('\n') + (cleanText.length > 200 ? '...' : '')
+                      
+                      return (
+                        <>
+                          <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                            {displayText}
+                          </Typography>
+                          {shouldTruncate && (
+                            <Button
+                              size="small"
+                              onClick={() => setExpandedShortDesc(!expandedShortDesc)}
+                              sx={{
+                                mt: 1,
+                                textTransform: 'none',
+                                color: '#3B82F6',
+                                fontSize: '0.8125rem',
+                                fontWeight: 600,
+                                p: 0,
+                                minWidth: 'auto',
+                                '&:hover': {
+                                  bgcolor: 'transparent',
+                                  textDecoration: 'underline'
+                                }
+                              }}
+                            >
+                              {expandedShortDesc ? 'Read Less' : 'Read More'}
+                            </Button>
+                          )}
+                        </>
+                      )
+                    })()}
                   </Box>
                 )}
                 {application.detailedDescription && (
@@ -961,9 +1014,43 @@ const AdminApplicationDetail = () => {
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Detailed Description
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                      {application.detailedDescription}
-                    </Typography>
+                    {(() => {
+                      const cleanText = stripHtmlTags(application.detailedDescription)
+                      const lines = cleanText.split('\n')
+                      const shouldTruncate = lines.length > 5 || cleanText.length > 500
+                      const displayText = expandedDetailedDesc || !shouldTruncate 
+                        ? cleanText 
+                        : lines.slice(0, 5).join('\n') + (cleanText.length > 500 ? '...' : '')
+                      
+                      return (
+                        <>
+                          <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                            {displayText}
+                          </Typography>
+                          {shouldTruncate && (
+                            <Button
+                              size="small"
+                              onClick={() => setExpandedDetailedDesc(!expandedDetailedDesc)}
+                              sx={{
+                                mt: 1,
+                                textTransform: 'none',
+                                color: '#3B82F6',
+                                fontSize: '0.8125rem',
+                                fontWeight: 600,
+                                p: 0,
+                                minWidth: 'auto',
+                                '&:hover': {
+                                  bgcolor: 'transparent',
+                                  textDecoration: 'underline'
+                                }
+                              }}
+                            >
+                              {expandedDetailedDesc ? 'Read Less' : 'Read More'}
+                            </Button>
+                          )}
+                        </>
+                      )
+                    })()}
                   </Box>
                 )}
               </CardContent>
