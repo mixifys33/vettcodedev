@@ -27,6 +27,20 @@ import {
   AccordionDetails,
   Paper,
   Stack,
+  Checkbox,
+  FormControlLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Tooltip,
+  Menu,
+  MenuItem,
+  Breadcrumbs,
+  LinearProgress,
 } from '@mui/material'
 import {
   ArrowBack,
@@ -52,14 +66,45 @@ import {
   Download,
   FolderZip,
   Warning,
+  ContentCopy,
+  OpenInNew,
+  MoreVert,
+  NavigateNext,
+  CalendarToday,
+  Store,
+  Email,
+  CheckBox,
+  CheckBoxOutlineBlank,
+  ZoomIn,
 } from '@mui/icons-material'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 
 const STATUS_CONFIG = {
-  pending: { color: 'warning', label: 'Pending', icon: Schedule },
-  verified: { color: 'success', label: 'Verified', icon: CheckCircle },
-  rejected: { color: 'error', label: 'Rejected', icon: Cancel },
+  pending: { 
+    color: 'warning', 
+    label: 'Pending Review', 
+    icon: Schedule,
+    bgColor: '#FEF3C7',
+    textColor: '#92400E',
+    borderColor: '#FDE68A'
+  },
+  verified: { 
+    color: 'success', 
+    label: 'Verified', 
+    icon: CheckCircle,
+    bgColor: '#D1FAE5',
+    textColor: '#065F46',
+    borderColor: '#A7F3D0'
+  },
+  rejected: { 
+    color: 'error', 
+    label: 'Rejected', 
+    icon: Cancel,
+    bgColor: '#FEE2E2',
+    textColor: '#991B1B',
+    borderColor: '#FECACA'
+  },
 }
 
 const AdminApplicationDetail = () => {
@@ -77,6 +122,18 @@ const AdminApplicationDetail = () => {
     badges: [],
   })
   const [sellerApplications, setSellerApplications] = useState([])
+  const [downloadMenuAnchor, setDownloadMenuAnchor] = useState(null)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxImage, setLightboxImage] = useState(null)
+  
+  // Review checklist state
+  const [reviewChecklist, setReviewChecklist] = useState({
+    codeVerified: false,
+    maliciousCheck: false,
+    functionalityTested: false,
+    dependenciesChecked: false,
+    qualityVerified: false,
+  })
 
   // Available badges
   const AVAILABLE_BADGES = [
@@ -167,6 +224,15 @@ const AdminApplicationDetail = () => {
       return
     }
 
+    // Check if all checklist items are completed for verification
+    if (action === 'verified') {
+      const allChecked = Object.values(reviewChecklist).every(val => val === true)
+      if (!allChecked) {
+        toast.error('Please complete all review checklist items before verifying')
+        return
+      }
+    }
+
     setActionLoading(true)
 
     try {
@@ -200,6 +266,22 @@ const AdminApplicationDetail = () => {
     } finally {
       setActionLoading(false)
     }
+  }
+
+  const handleChecklistChange = (key) => {
+    setReviewChecklist(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }))
+  }
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+    toast.success('Copied to clipboard')
+  }
+
+  const isChecklistComplete = () => {
+    return Object.values(reviewChecklist).every(val => val === true)
   }
 
   const openReviewDialog = (action) => {
@@ -240,210 +322,592 @@ const AdminApplicationDetail = () => {
   const isPending = application.verificationStatus === 'pending'
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={() => navigate('/admin/applications')}
-          sx={{ mb: 2 }}
-        >
-          Back to Applications
-        </Button>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
+    <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', pb: 4 }}>
+      {/* Sticky Command Header */}
+      <Box 
+        sx={{ 
+          position: 'sticky', 
+          top: 0, 
+          zIndex: 1000, 
+          bgcolor: 'white',
+          borderBottom: '1px solid #E2E8F0',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        <Box sx={{ maxWidth: 1400, mx: 'auto', px: 3, py: 2 }}>
+          {/* Breadcrumbs */}
+          <Breadcrumbs 
+            separator={<NavigateNext fontSize="small" sx={{ color: '#94A3B8' }} />}
+            sx={{ mb: 2, fontSize: '0.875rem', color: '#64748B' }}
+          >
+            <Box 
+              component="span" 
+              sx={{ cursor: 'pointer', '&:hover': { color: '#0F172A' } }}
+              onClick={() => navigate('/admin/applications')}
+            >
+              Applications
+            </Box>
+            <Box component="span" sx={{ cursor: 'pointer', '&:hover': { color: '#0F172A' } }}>
+              Review
+            </Box>
+            <Box component="span" sx={{ color: '#0F172A', fontWeight: 600 }}>
               {application.appName}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Chip
-                icon={<StatusIcon />}
-                label={statusConfig.label}
-                color={statusConfig.color}
-              />
-              {application.adminRating > 0 && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Star sx={{ fontSize: 20, color: 'secondary.main' }} />
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {application.adminRating}/5
-                  </Typography>
-                </Box>
-              )}
-              {application.completionScore > 0 && (
+            </Box>
+          </Breadcrumbs>
+
+          {/* Title Area & Actions */}
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontWeight: 700, 
+                  color: '#0F172A',
+                  mb: 0.5,
+                  fontSize: '1.75rem',
+                  letterSpacing: '-0.025em'
+                }}
+              >
+                {application.appName}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                <Typography variant="body2" sx={{ color: '#64748B', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <CalendarToday sx={{ fontSize: 16 }} />
+                  Submitted {new Date(application.createdAt).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })}
+                </Typography>
                 <Chip
-                  label={`${application.completionScore}% Complete`}
+                  icon={<StatusIcon sx={{ fontSize: 16 }} />}
+                  label={statusConfig.label}
                   size="small"
-                  color="info"
-                  variant="outlined"
+                  sx={{
+                    bgcolor: statusConfig.bgColor,
+                    color: statusConfig.textColor,
+                    border: `1px solid ${statusConfig.borderColor}`,
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    height: 24,
+                    borderRadius: '6px',
+                    '& .MuiChip-icon': { color: statusConfig.textColor }
+                  }}
                 />
+                {application.adminRating > 0 && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Star sx={{ fontSize: 16, color: '#F59E0B' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A' }}>
+                      {application.adminRating.toFixed(1)}
+                    </Typography>
+                  </Box>
+                )}
+                {application.completionScore > 0 && (
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
+                    {application.completionScore}% Complete
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+
+            {/* Action Buttons */}
+            <Box sx={{ display: 'flex', gap: 1.5, ml: 2 }}>
+              {isPending && (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Cancel />}
+                    onClick={() => openReviewDialog('rejected')}
+                    sx={{
+                      borderColor: '#FCA5A5',
+                      color: '#DC2626',
+                      borderRadius: '6px',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 3,
+                      '&:hover': {
+                        borderColor: '#DC2626',
+                        bgcolor: '#FEF2F2'
+                      }
+                    }}
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<CheckCircle />}
+                    onClick={() => openReviewDialog('verified')}
+                    disabled={!isChecklistComplete()}
+                    sx={{
+                      bgcolor: '#10B981',
+                      color: 'white',
+                      borderRadius: '6px',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 3,
+                      boxShadow: 'none',
+                      '&:hover': {
+                        bgcolor: '#059669',
+                        boxShadow: 'none'
+                      },
+                      '&:disabled': {
+                        bgcolor: '#D1D5DB',
+                        color: '#9CA3AF'
+                      }
+                    }}
+                  >
+                    Verify Application
+                  </Button>
+                </>
+              )}
+              {!isPending && (
+                <Button
+                  variant="outlined"
+                  onClick={() => openReviewDialog(application.verificationStatus)}
+                  sx={{
+                    borderColor: '#CBD5E1',
+                    color: '#475569',
+                    borderRadius: '6px',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    px: 3,
+                    '&:hover': {
+                      borderColor: '#94A3B8',
+                      bgcolor: '#F8FAFC'
+                    }
+                  }}
+                >
+                  Update Review
+                </Button>
               )}
             </Box>
           </Box>
-
-          {/* Action Buttons */}
-          {isPending && (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<CheckCircle />}
-                onClick={() => openReviewDialog('verified')}
-              >
-                Verify
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<Cancel />}
-                onClick={() => openReviewDialog('rejected')}
-              >
-                Reject
-              </Button>
-            </Box>
-          )}
         </Box>
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Left Column - Main Info */}
-        <Grid item xs={12} md={8}>
-          {/* Basic Information */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                Basic Information
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Code sx={{ color: 'text.secondary' }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Application Name
+      {/* Main Content */}
+      <Box sx={{ maxWidth: 1400, mx: 'auto', px: 3, mt: 3 }}>
+        <Grid container spacing={3}>
+          {/* Left Column - Main Info */}
+          <Grid item xs={12} md={8}>
+            
+            {/* THE INSPECTION ROOM - Source Code Card */}
+            {application.sourceCodeFile && application.sourceCodeFile.url && (
+              <Card 
+                sx={{ 
+                  mb: 2, 
+                  borderRadius: '6px',
+                  border: '1px solid #E2E8F0',
+                  boxShadow: 'none',
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Dark Header - Action Zone */}
+                <Box sx={{ bgcolor: '#18181B', color: 'white', p: 2.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <FolderZip sx={{ fontSize: 28 }} />
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.125rem', mb: 0.25 }}>
+                          Source Code Package
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#A1A1AA', fontSize: '0.8125rem' }}>
+                          Critical Review Required
+                          {application.sourceCodeFile.originalFileCount && 
+                            ` • ${application.sourceCodeFile.originalFileCount} files`
+                          }
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Chip
+                      icon={<CheckCircle sx={{ fontSize: 14 }} />}
+                      label="Uploaded"
+                      size="small"
+                      sx={{
+                        bgcolor: '#065F46',
+                        color: '#D1FAE5',
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        height: 22,
+                        '& .MuiChip-icon': { color: '#D1FAE5' }
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                <CardContent sx={{ p: 2.5 }}>
+                  {/* File Details Grid */}
+                  <Grid container spacing={2} sx={{ mb: 2.5 }}>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        File Name
                       </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                        {application.appName}
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.875rem', fontFamily: 'monospace' }}>
+                        {application.sourceCodeFile.fileName || 'application.zip'}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        File Size
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.875rem', fontFamily: 'monospace' }}>
+                        {application.sourceCodeFile.fileSize 
+                          ? `${(application.sourceCodeFile.fileSize / (1024 * 1024)).toFixed(2)} MB`
+                          : 'Unknown'}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Upload Type
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.875rem' }}>
+                        {application.sourceCodeFile.originalFileCount 
+                          ? `Folder (${application.sourceCodeFile.originalFileCount})`
+                          : 'Direct ZIP'
+                        }
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        File ID
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                        {application.sourceCodeFile.fileId?.substring(0, 12) || 'N/A'}...
+                      </Typography>
+                    </Grid>
+                  </Grid>
+
+                  <Divider sx={{ my: 2.5 }} />
+
+                  {/* Interactive Checklist */}
+                  <Box sx={{ mb: 2.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1.5, fontSize: '0.875rem' }}>
+                      Review Checklist (Required for Verification)
+                    </Typography>
+                    <Stack spacing={0.75}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox 
+                            checked={reviewChecklist.codeVerified}
+                            onChange={() => handleChecklistChange('codeVerified')}
+                            size="small"
+                            sx={{ py: 0.5 }}
+                          />
+                        }
+                        label={
+                          <Typography variant="body2" sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                            ZIP contains actual source code/application files
+                          </Typography>
+                        }
+                        sx={{ ml: 0, mr: 0 }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Checkbox 
+                            checked={reviewChecklist.maliciousCheck}
+                            onChange={() => handleChecklistChange('maliciousCheck')}
+                            size="small"
+                            sx={{ py: 0.5 }}
+                          />
+                        }
+                        label={
+                          <Typography variant="body2" sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                            Checked for malicious code or suspicious files
+                          </Typography>
+                        }
+                        sx={{ ml: 0, mr: 0 }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Checkbox 
+                            checked={reviewChecklist.functionalityTested}
+                            onChange={() => handleChecklistChange('functionalityTested')}
+                            size="small"
+                            sx={{ py: 0.5 }}
+                          />
+                        }
+                        label={
+                          <Typography variant="body2" sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                            Application functionality matches description
+                          </Typography>
+                        }
+                        sx={{ ml: 0, mr: 0 }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Checkbox 
+                            checked={reviewChecklist.dependenciesChecked}
+                            onChange={() => handleChecklistChange('dependenciesChecked')}
+                            size="small"
+                            sx={{ py: 0.5 }}
+                          />
+                        }
+                        label={
+                          <Typography variant="body2" sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                            All dependencies are documented
+                          </Typography>
+                        }
+                        sx={{ ml: 0, mr: 0 }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Checkbox 
+                            checked={reviewChecklist.qualityVerified}
+                            onChange={() => handleChecklistChange('qualityVerified')}
+                            size="small"
+                            sx={{ py: 0.5 }}
+                          />
+                        }
+                        label={
+                          <Typography variant="body2" sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                            Code quality and completeness verified
+                          </Typography>
+                        }
+                        sx={{ ml: 0, mr: 0 }}
+                      />
+                    </Stack>
+                  </Box>
+
+                  {/* Split Download Button */}
+                  <Box sx={{ display: 'flex', gap: 0 }}>
+                    <Button
+                      variant="contained"
+                      startIcon={<Download />}
+                      href={application.sourceCodeFile.url}
+                      download
+                      target="_blank"
+                      sx={{
+                        flex: 1,
+                        bgcolor: '#3B82F6',
+                        color: 'white',
+                        borderRadius: '6px 0 0 6px',
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        py: 1.25,
+                        boxShadow: 'none',
+                        '&:hover': {
+                          bgcolor: '#2563EB',
+                          boxShadow: 'none'
+                        }
+                      }}
+                    >
+                      Download ZIP Package
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={(e) => setDownloadMenuAnchor(e.currentTarget)}
+                      sx={{
+                        minWidth: 'auto',
+                        px: 1.5,
+                        bgcolor: '#3B82F6',
+                        color: 'white',
+                        borderRadius: '0 6px 6px 0',
+                        borderLeft: '1px solid rgba(255,255,255,0.2)',
+                        boxShadow: 'none',
+                        '&:hover': {
+                          bgcolor: '#2563EB',
+                          boxShadow: 'none'
+                        }
+                      }}
+                    >
+                      <ExpandMore />
+                    </Button>
+                  </Box>
+                  
+                  <Menu
+                    anchorEl={downloadMenuAnchor}
+                    open={Boolean(downloadMenuAnchor)}
+                    onClose={() => setDownloadMenuAnchor(null)}
+                  >
+                    <MenuItem onClick={() => {
+                      copyToClipboard(application.sourceCodeFile.url)
+                      setDownloadMenuAnchor(null)
+                    }}>
+                      <ContentCopy sx={{ fontSize: 18, mr: 1 }} />
+                      Copy Download Link
+                    </MenuItem>
+                    <MenuItem onClick={() => {
+                      window.open(application.sourceCodeFile.url, '_blank')
+                      setDownloadMenuAnchor(null)
+                    }}>
+                      <OpenInNew sx={{ fontSize: 18, mr: 1 }} />
+                      Open in New Tab
+                    </MenuItem>
+                  </Menu>
+                </CardContent>
+              </Card>
+            )}
+            {/* Warning if no ZIP file */}
+            {(!application.sourceCodeFile || !application.sourceCodeFile.url) && (
+              <Card 
+                sx={{ 
+                  mb: 2, 
+                  borderRadius: '6px',
+                  border: '2px solid #FCA5A5',
+                  bgcolor: '#FEF2F2',
+                  boxShadow: 'none'
+                }}
+              >
+                <CardContent sx={{ p: 2.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                    <Warning sx={{ fontSize: 28, color: '#DC2626', mt: 0.5 }} />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#991B1B', mb: 0.5, fontSize: '1rem' }}>
+                        No Application File Uploaded
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#7F1D1D', fontSize: '0.875rem' }}>
+                        This application does not have a source code/ZIP file. Consider rejecting until the seller uploads the application file.
                       </Typography>
                     </Box>
                   </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Category sx={{ color: 'text.secondary' }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Property Grid - Basic Information & Seller */}
+            <Card 
+              sx={{ 
+                mb: 2, 
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                boxShadow: 'none'
+              }}
+            >
+              <CardContent sx={{ p: 0 }}>
+                {/* Basic Information Section */}
+                <Box sx={{ p: 2.5, borderBottom: '1px solid #F1F5F9' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A', mb: 2, fontSize: '1rem' }}>
+                    Application Details
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Category
                       </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.875rem' }}>
                         {application.appCategory}
                       </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <AttachMoney sx={{ color: 'text.secondary' }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Price
                       </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.875rem', fontFamily: 'monospace' }}>
                         {application.isFree ? 'FREE' : `$${application.price || 0}`}
                       </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Schedule sx={{ color: 'text.secondary' }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Submitted
                       </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                        {new Date(application.createdAt).toLocaleDateString()}
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.875rem' }}>
+                        {new Date(application.createdAt).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
                       </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-
-          {/* Seller Information */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                <Person sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Seller Information
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    Seller Name
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {application.sellerId?.name || 'Unknown'}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    Email
-                  </Typography>
-                  <Typography variant="body2">
-                    {application.sellerId?.email || 'N/A'}
-                  </Typography>
-                </Grid>
-                {application.sellerId?.shop?.shopName && (
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      Shop Name
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      {application.sellerId.shop.shopName}
-                    </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        App ID
+                      </Typography>
+                      <Tooltip title={application._id}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.75rem', fontFamily: 'monospace', cursor: 'pointer' }}>
+                          {application._id.substring(0, 8)}...
+                        </Typography>
+                      </Tooltip>
+                    </Grid>
                   </Grid>
-                )}
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    Seller Status
-                  </Typography>
-                  <Chip 
-                    label={application.sellerId?.status || 'Unknown'} 
-                    size="small" 
-                    color={application.sellerId?.status === 'active' ? 'success' : 'default'}
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
+                </Box>
 
-          {/* Short Description */}
-          {application.shortDescription && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                  Short Description
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {application.shortDescription}
-                </Typography>
+                {/* Seller Information Section */}
+                <Box sx={{ p: 2.5 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A', mb: 2, fontSize: '1rem' }}>
+                    Seller Profile
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Seller Name
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.875rem' }}>
+                        {application.sellerId?.name || 'Unknown'}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Email
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.875rem', wordBreak: 'break-all' }}>
+                        {application.sellerId?.email || 'N/A'}
+                      </Typography>
+                    </Grid>
+                    {application.sellerId?.shop?.shopName && (
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Shop Name
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', mt: 0.5, fontSize: '0.875rem' }}>
+                          {application.sellerId.shop.shopName}
+                        </Typography>
+                      </Grid>
+                    )}
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Status
+                      </Typography>
+                      <Box sx={{ mt: 0.5 }}>
+                        <Chip 
+                          label={application.sellerId?.status || 'Unknown'} 
+                          size="small" 
+                          sx={{
+                            bgcolor: application.sellerId?.status === 'active' ? '#D1FAE5' : '#F3F4F6',
+                            color: application.sellerId?.status === 'active' ? '#065F46' : '#6B7280',
+                            fontWeight: 600,
+                            fontSize: '0.75rem',
+                            height: 22,
+                            borderRadius: '4px'
+                          }}
+                        />
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
               </CardContent>
             </Card>
-          )}
 
-          {/* Detailed Description */}
-          {application.detailedDescription && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                  <Description sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Detailed Description
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {application.detailedDescription}
-                </Typography>
+          {/* Descriptions */}
+          {(application.shortDescription || application.detailedDescription) && (
+            <Card 
+              sx={{ 
+                mb: 2, 
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                boxShadow: 'none'
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                {application.shortDescription && (
+                  <Box sx={{ mb: application.detailedDescription ? 2.5 : 0 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Short Description
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.875rem', lineHeight: 1.6 }}>
+                      {application.shortDescription}
+                    </Typography>
+                  </Box>
+                )}
+                {application.detailedDescription && (
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Detailed Description
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                      {application.detailedDescription}
+                    </Typography>
+                  </Box>
+                )}
               </CardContent>
             </Card>
           )}
@@ -572,42 +1036,108 @@ const AdminApplicationDetail = () => {
             </Card>
           )}
 
-          {/* Screenshots */}
+          {/* Screenshots - Filmstrip View */}
           {application.screenshots && application.screenshots.length > 0 && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                  <Image sx={{ mr: 1, verticalAlign: 'middle' }} />
+            <Card 
+              sx={{ 
+                mb: 2, 
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                boxShadow: 'none'
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A', mb: 2, fontSize: '1rem' }}>
                   Screenshots ({application.screenshots.length})
                 </Typography>
-                <ImageList cols={3} gap={8}>
+                <Box sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 1 }}>
                   {application.screenshots.map((screenshot, index) => (
-                    <ImageListItem key={index}>
+                    <Box
+                      key={index}
+                      sx={{
+                        position: 'relative',
+                        minWidth: 200,
+                        height: 150,
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        border: '1px solid #E2E8F0',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                          '& .zoom-icon': {
+                            opacity: 1
+                          }
+                        }
+                      }}
+                      onClick={() => {
+                        setLightboxImage(screenshot.url || screenshot.uri)
+                        setLightboxOpen(true)
+                      }}
+                    >
                       <img
                         src={screenshot.url || screenshot.uri}
                         alt={`Screenshot ${index + 1}`}
-                        loading="lazy"
-                        style={{ borderRadius: 8, objectFit: 'cover', height: 200 }}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
-                    </ImageListItem>
+                      <Box
+                        className="zoom-icon"
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          bgcolor: 'rgba(0,0,0,0.6)',
+                          color: 'white',
+                          borderRadius: '4px',
+                          p: 0.5,
+                          opacity: 0,
+                          transition: 'opacity 0.2s'
+                        }}
+                      >
+                        <ZoomIn sx={{ fontSize: 18 }} />
+                      </Box>
+                    </Box>
                   ))}
-                </ImageList>
+                </Box>
               </CardContent>
             </Card>
           )}
 
-          {/* Technical Details */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                <Build sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Technical Details
+          {/* Lightbox Dialog */}
+          <Dialog
+            open={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+            maxWidth="lg"
+            fullWidth
+          >
+            <DialogContent sx={{ p: 0, bgcolor: '#000' }}>
+              {lightboxImage && (
+                <img
+                  src={lightboxImage}
+                  alt="Screenshot"
+                  style={{ width: '100%', height: 'auto', display: 'block' }}
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Technical Specifications - Property Grid */}
+          <Card 
+            sx={{ 
+              mb: 2, 
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              boxShadow: 'none'
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A', mb: 2, fontSize: '1rem' }}>
+                Technical Specifications
               </Typography>
 
               {/* Platforms */}
               {application.platforms && application.platforms.length > 0 && (
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', mb: 1 }}>
                     Platforms
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -617,10 +1147,20 @@ const AdminApplicationDetail = () => {
                         label={platform}
                         size="small"
                         icon={
-                          platform.toLowerCase().includes('android') ? <Android /> :
-                          platform.toLowerCase().includes('ios') ? <Apple /> :
-                          <Language />
+                          platform.toLowerCase().includes('android') ? <Android sx={{ fontSize: 14, color: '#64748B' }} /> :
+                          platform.toLowerCase().includes('ios') ? <Apple sx={{ fontSize: 14, color: '#64748B' }} /> :
+                          <Language sx={{ fontSize: 14, color: '#64748B' }} />
                         }
+                        sx={{
+                          bgcolor: '#F8FAFC',
+                          color: '#475569',
+                          fontWeight: 600,
+                          fontSize: '0.75rem',
+                          height: 26,
+                          borderRadius: '4px',
+                          border: '1px solid #E2E8F0',
+                          '& .MuiChip-icon': { ml: 0.5 }
+                        }}
                       />
                     ))}
                   </Box>
@@ -630,30 +1170,49 @@ const AdminApplicationDetail = () => {
               {/* Technology Stack */}
               {application.technologyStack && application.technologyStack.length > 0 && (
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', mb: 1 }}>
                     Technology Stack
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
                     {application.technologyStack.map((tech) => (
-                      <Chip key={tech} label={tech} size="small" variant="outlined" />
+                      <Box
+                        key={tech}
+                        sx={{
+                          bgcolor: '#F1F5F9',
+                          color: '#334155',
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          fontFamily: 'monospace'
+                        }}
+                      >
+                        {tech}
+                      </Box>
                     ))}
                   </Box>
                 </Box>
               )}
 
-              {/* Features */}
+              {/* Features - Two Column List */}
               {application.features && application.features.length > 0 && (
                 <Box>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', mb: 1 }}>
                     Features
                   </Typography>
-                  <List dense>
+                  <Grid container spacing={1}>
                     {application.features.map((feature, index) => (
-                      <ListItem key={index}>
-                        <ListItemText primary={`• ${feature}`} />
-                      </ListItem>
+                      <Grid item xs={12} sm={6} key={index}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                          <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#64748B', mt: 1, flexShrink: 0 }} />
+                          <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.875rem', lineHeight: 1.5 }}>
+                            {feature}
+                          </Typography>
+                        </Box>
+                      </Grid>
                     ))}
-                  </List>
+                  </Grid>
                 </Box>
               )}
             </CardContent>
@@ -661,47 +1220,101 @@ const AdminApplicationDetail = () => {
 
           {/* Links & Resources */}
           {(application.demoUrl || application.githubUrl || application.documentationUrl) && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                  <LinkIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+            <Card 
+              sx={{ 
+                mb: 2, 
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                boxShadow: 'none'
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A', mb: 2, fontSize: '1rem' }}>
                   Links & Resources
                 </Typography>
-                <Stack spacing={1}>
+                <Stack spacing={1.5}>
                   {application.demoUrl && (
                     <Box>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
                         Demo URL
                       </Typography>
-                      <Typography variant="body2">
-                        <a href={application.demoUrl} target="_blank" rel="noopener noreferrer">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography 
+                          variant="body2" 
+                          component="a" 
+                          href={application.demoUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          sx={{ 
+                            color: '#3B82F6', 
+                            fontSize: '0.875rem', 
+                            textDecoration: 'none',
+                            '&:hover': { textDecoration: 'underline' },
+                            wordBreak: 'break-all'
+                          }}
+                        >
                           {application.demoUrl}
-                        </a>
-                      </Typography>
+                        </Typography>
+                        <IconButton size="small" onClick={() => copyToClipboard(application.demoUrl)}>
+                          <ContentCopy sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Box>
                     </Box>
                   )}
                   {application.githubUrl && (
                     <Box>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
                         GitHub URL
                       </Typography>
-                      <Typography variant="body2">
-                        <a href={application.githubUrl} target="_blank" rel="noopener noreferrer">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography 
+                          variant="body2" 
+                          component="a" 
+                          href={application.githubUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          sx={{ 
+                            color: '#3B82F6', 
+                            fontSize: '0.875rem', 
+                            textDecoration: 'none',
+                            '&:hover': { textDecoration: 'underline' },
+                            wordBreak: 'break-all'
+                          }}
+                        >
                           {application.githubUrl}
-                        </a>
-                      </Typography>
+                        </Typography>
+                        <IconButton size="small" onClick={() => copyToClipboard(application.githubUrl)}>
+                          <ContentCopy sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Box>
                     </Box>
                   )}
                   {application.documentationUrl && (
                     <Box>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
                         Documentation
                       </Typography>
-                      <Typography variant="body2">
-                        <a href={application.documentationUrl} target="_blank" rel="noopener noreferrer">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography 
+                          variant="body2" 
+                          component="a" 
+                          href={application.documentationUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          sx={{ 
+                            color: '#3B82F6', 
+                            fontSize: '0.875rem', 
+                            textDecoration: 'none',
+                            '&:hover': { textDecoration: 'underline' },
+                            wordBreak: 'break-all'
+                          }}
+                        >
                           {application.documentationUrl}
-                        </a>
-                      </Typography>
+                        </Typography>
+                        <IconButton size="small" onClick={() => copyToClipboard(application.documentationUrl)}>
+                          <ContentCopy sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Box>
                     </Box>
                   )}
                 </Stack>
@@ -710,133 +1323,222 @@ const AdminApplicationDetail = () => {
           )}
         </Grid>
 
-        {/* Right Column - Review & Stats */}
+        {/* Right Column - Intelligence Sidebar */}
         <Grid item xs={12} md={4}>
-          {/* Source Code Status - IMPORTANT */}
-          <Card sx={{ mb: 3, borderColor: (application.sourceCodeFile && application.sourceCodeFile.url) ? 'success.main' : 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                <FolderZip sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Source Code Status
+          
+          {/* Decision Support - Quality Meter */}
+          <Card 
+            sx={{ 
+              mb: 2, 
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              boxShadow: 'none'
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A', mb: 2.5, fontSize: '1rem' }}>
+                Quality Assessment
               </Typography>
-              {(application.sourceCodeFile && application.sourceCodeFile.url) ? (
-                <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <CheckCircle sx={{ color: 'success.main' }} />
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
-                      {application.sourceCodeFile.originalFileCount 
-                        ? 'Folder Uploaded (as ZIP)'
-                        : 'ZIP File Uploaded'
-                      }
-                    </Typography>
-                  </Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                    {application.sourceCodeFile.fileName}
-                  </Typography>
-                  {application.sourceCodeFile.originalFileCount && (
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                      Contains {application.sourceCodeFile.originalFileCount} files
-                    </Typography>
-                  )}
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    startIcon={<Download />}
-                    href={application.sourceCodeFile.url}
-                    download
-                    target="_blank"
+              
+              {/* Circular Completion Gauge */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                  <CircularProgress
+                    variant="determinate"
+                    value={100}
+                    size={120}
+                    thickness={4}
+                    sx={{ color: '#E2E8F0' }}
+                  />
+                  <CircularProgress
+                    variant="determinate"
+                    value={application.completionScore || 0}
+                    size={120}
+                    thickness={4}
+                    sx={{
+                      color: application.completionScore >= 80 ? '#10B981' : application.completionScore >= 50 ? '#F59E0B' : '#EF4444',
+                      position: 'absolute',
+                      left: 0,
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      top: 0,
+                      left: 0,
+                      bottom: 0,
+                      right: 0,
+                      position: 'absolute',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexDirection: 'column'
+                    }}
                   >
-                    Download ZIP
-                  </Button>
-                </Box>
-              ) : (
-                <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Warning sx={{ color: 'error.main' }} />
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>
-                      No File Uploaded
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#0F172A', fontFamily: 'monospace' }}>
+                      {application.completionScore || 0}%
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem' }}>
+                      Complete
                     </Typography>
                   </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Seller has not uploaded the application file yet.
+                </Box>
+              </Box>
+
+              {/* Admin Rating */}
+              {application.adminRating > 0 && (
+                <Box sx={{ textAlign: 'center', pt: 2, borderTop: '1px solid #F1F5F9' }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', mb: 1 }}>
+                    Admin Rating
                   </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                    <Rating value={application.adminRating} readOnly precision={0.5} size="small" />
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A', fontFamily: 'monospace' }}>
+                      {application.adminRating.toFixed(1)}
+                    </Typography>
+                  </Box>
                 </Box>
               )}
             </CardContent>
           </Card>
 
-          {/* Quality Scores */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                Quality Scores
+          {/* Seller Trust Profile */}
+          <Card 
+            sx={{ 
+              mb: 2, 
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              boxShadow: 'none'
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A', mb: 2, fontSize: '1rem' }}>
+                Seller Trust Profile
               </Typography>
-              <Stack spacing={2}>
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Completion
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {application.completionScore || 0}%
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      height: 8,
-                      bgcolor: 'grey.200',
-                      borderRadius: 1,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        height: '100%',
-                        width: `${application.completionScore || 0}%`,
-                        bgcolor: 'primary.main',
-                      }}
-                    />
-                  </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                <Avatar 
+                  sx={{ 
+                    width: 48, 
+                    height: 48, 
+                    bgcolor: '#3B82F6',
+                    fontWeight: 700,
+                    fontSize: '1.25rem'
+                  }}
+                >
+                  {application.sellerId?.name?.charAt(0) || 'U'}
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 700, color: '#0F172A', fontSize: '0.9375rem' }}>
+                    {application.sellerId?.name || 'Unknown'}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem' }}>
+                    {application.sellerId?.shop?.shopName || 'No shop'}
+                  </Typography>
                 </Box>
+              </Box>
 
-                {application.adminRating > 0 && (
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                      Admin Rating
-                    </Typography>
-                    <Rating value={application.adminRating} readOnly precision={0.5} />
-                  </Box>
-                )}
+              <Divider sx={{ my: 2 }} />
+
+              <Stack spacing={1.5}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem' }}>
+                    Member Since
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', fontSize: '0.8125rem' }}>
+                    {application.sellerId?.createdAt 
+                      ? new Date(application.sellerId.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                      : 'Unknown'
+                    }
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem' }}>
+                    Total Applications
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', fontSize: '0.8125rem', fontFamily: 'monospace' }}>
+                    {sellerApplications.length + 1}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem' }}>
+                    Verified Apps
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#10B981', fontSize: '0.8125rem', fontFamily: 'monospace' }}>
+                    {sellerApplications.filter(app => app.verificationStatus === 'verified').length}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem' }}>
+                    Rejected Apps
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#EF4444', fontSize: '0.8125rem', fontFamily: 'monospace' }}>
+                    {sellerApplications.filter(app => app.verificationStatus === 'rejected').length}
+                  </Typography>
+                </Box>
               </Stack>
             </CardContent>
           </Card>
 
-          {/* Badges */}
-          {application.badges && application.badges.length > 0 && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                  <Verified sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Badges
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {application.badges.map((badge) => (
-                    <Chip key={badge} label={badge} size="small" color="primary" />
-                  ))}
-                </Box>
-              </CardContent>
-            </Card>
-          )}
+          {/* Badges - Active/Inactive Slots */}
+          <Card 
+            sx={{ 
+              mb: 2, 
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              boxShadow: 'none'
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A', mb: 2, fontSize: '1rem' }}>
+                Achievement Badges
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                {AVAILABLE_BADGES.map((badge) => {
+                  const isActive = application.badges && application.badges.includes(badge)
+                  return (
+                    <Chip
+                      key={badge}
+                      label={badge}
+                      size="small"
+                      icon={isActive ? <Verified sx={{ fontSize: 14 }} /> : <CheckBoxOutlineBlank sx={{ fontSize: 14 }} />}
+                      sx={{
+                        bgcolor: isActive ? '#DBEAFE' : '#F8FAFC',
+                        color: isActive ? '#1E40AF' : '#94A3B8',
+                        border: `1px solid ${isActive ? '#93C5FD' : '#E2E8F0'}`,
+                        fontWeight: 600,
+                        fontSize: '0.6875rem',
+                        height: 24,
+                        borderRadius: '4px',
+                        '& .MuiChip-icon': { 
+                          color: isActive ? '#1E40AF' : '#CBD5E1',
+                          ml: 0.5
+                        }
+                      }}
+                    />
+                  )
+                })}
+              </Box>
+              <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', display: 'block', mt: 1.5 }}>
+                {application.badges?.length || 0} of {AVAILABLE_BADGES.length} badges assigned
+              </Typography>
+            </CardContent>
+          </Card>
 
           {/* Admin Notes */}
           {application.adminNotes && (
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+            <Card 
+              sx={{ 
+                mb: 2, 
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                boxShadow: 'none'
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A', mb: 1.5, fontSize: '1rem' }}>
                   Admin Notes
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
+                <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                   {application.adminNotes}
                 </Typography>
               </CardContent>
@@ -845,198 +1547,395 @@ const AdminApplicationDetail = () => {
 
           {/* Rejection Reason */}
           {application.verificationStatus === 'rejected' && application.verificationNotes && (
-            <Card sx={{ mb: 3, borderColor: 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: 'error.main' }}>
+            <Card 
+              sx={{ 
+                mb: 2, 
+                borderRadius: '6px',
+                border: '2px solid #FCA5A5',
+                bgcolor: '#FEF2F2',
+                boxShadow: 'none'
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#991B1B', mb: 1.5, fontSize: '1rem' }}>
                   Rejection Reason
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
+                <Typography variant="body2" sx={{ color: '#7F1D1D', fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                   {application.verificationNotes}
                 </Typography>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Update Review (if already reviewed) */}
-          {!isPending && (
-            <Card>
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                  Update Review
-                </Typography>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => openReviewDialog(application.verificationStatus)}
-                >
-                  Edit Review
-                </Button>
               </CardContent>
             </Card>
           )}
         </Grid>
       </Grid>
 
-      {/* Other Applications by This Seller */}
+      {/* Other Applications by This Seller - Condensed Table */}
       {sellerApplications.length > 0 && (
         <Box sx={{ mt: 4 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800, mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: '#0F172A', mb: 2, fontSize: '1.25rem' }}>
             Other Applications by {application.sellerId?.name || 'This Seller'}
           </Typography>
-          <Grid container spacing={2}>
-            {sellerApplications.map((app) => (
-              <Grid item xs={12} sm={6} md={4} key={app._id}>
-                <Card 
-                  sx={{ 
-                    cursor: 'pointer',
-                    '&:hover': { boxShadow: 4 },
-                    transition: 'box-shadow 0.3s'
-                  }}
-                  onClick={() => navigate(`/admin/applications/${app._id}`)}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <Avatar
-                        src={app.screenshots?.[0]?.url || app.appIcon?.url}
-                        variant="rounded"
-                        sx={{ width: 48, height: 48 }}
+          <Card 
+            sx={{ 
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              boxShadow: 'none',
+              overflow: 'hidden'
+            }}
+          >
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: '#F8FAFC' }}>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', py: 1.5 }}>
+                      Application
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', py: 1.5 }}>
+                      Category
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', py: 1.5 }}>
+                      Status
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', py: 1.5 }}>
+                      Price
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', py: 1.5 }}>
+                      Action
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sellerApplications.map((app) => {
+                    const appStatus = STATUS_CONFIG[app.verificationStatus] || STATUS_CONFIG.pending
+                    return (
+                      <TableRow
+                        key={app._id}
+                        sx={{
+                          cursor: 'pointer',
+                          '&:hover': {
+                            bgcolor: '#F8FAFC'
+                          },
+                          borderBottom: '1px solid #F1F5F9'
+                        }}
+                        onClick={() => navigate(`/admin/applications/${app._id}`)}
                       >
-                        <Code />
-                      </Avatar>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }} noWrap>
-                          {app.appName}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" noWrap>
-                          {app.appCategory}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
-                      <Chip
-                        label={STATUS_CONFIG[app.verificationStatus]?.label || 'Pending'}
-                        size="small"
-                        color={STATUS_CONFIG[app.verificationStatus]?.color || 'default'}
-                      />
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        ${app.price || 0}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Avatar
+                              src={app.screenshots?.[0]?.url || app.appIcon?.url}
+                              variant="rounded"
+                              sx={{ width: 36, height: 36, bgcolor: '#E2E8F0' }}
+                            >
+                              <Code sx={{ fontSize: 18, color: '#64748B' }} />
+                            </Avatar>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', fontSize: '0.875rem' }}>
+                              {app.appName}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.875rem' }}>
+                            {app.appCategory}
+                          </Typography>
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Chip
+                            label={appStatus.label}
+                            size="small"
+                            sx={{
+                              bgcolor: appStatus.bgColor,
+                              color: appStatus.textColor,
+                              border: `1px solid ${appStatus.borderColor}`,
+                              fontWeight: 600,
+                              fontSize: '0.6875rem',
+                              height: 22,
+                              borderRadius: '4px'
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell align="right" sx={{ py: 1.5 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', fontSize: '0.875rem', fontFamily: 'monospace' }}>
+                            {app.isFree ? 'FREE' : `$${app.price || 0}`}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right" sx={{ py: 1.5 }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/admin/applications/${app._id}`)
+                            }}
+                            sx={{
+                              borderColor: '#CBD5E1',
+                              color: '#475569',
+                              borderRadius: '4px',
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              fontSize: '0.75rem',
+                              px: 2,
+                              py: 0.5,
+                              minWidth: 'auto',
+                              '&:hover': {
+                                borderColor: '#94A3B8',
+                                bgcolor: '#F8FAFC'
+                              }
+                            }}
+                          >
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
         </Box>
       )}
+    </Box>
 
-      {/* Review Dialog */}
+      {/* Review Dialog - "Finalize Application Audit" */}
       <Dialog
         open={reviewDialog.open}
         onClose={closeReviewDialog}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '8px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }
+        }}
       >
-        <DialogTitle>
-          {reviewDialog.action === 'verified' ? 'Verify Application' : 'Reject Application'}
+        <DialogTitle sx={{ bgcolor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', py: 2.5 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A', fontSize: '1.125rem' }}>
+            Finalize Application Audit
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.8125rem' }}>
+            {reviewDialog.action === 'verified' ? 'Approve this application for publication' : 'Reject this application with reason'}
+          </Typography>
         </DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 2 }}>
-            {/* Rating */}
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Rating {reviewDialog.action === 'verified' && <span style={{ color: 'red' }}>*</span>}
+        
+        <DialogContent sx={{ p: 0 }}>
+          <Grid container>
+            {/* Left: Summary */}
+            <Grid item xs={12} md={5} sx={{ bgcolor: '#F8FAFC', p: 3, borderRight: '1px solid #E2E8F0' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 2, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Application Summary
               </Typography>
-              <Rating
-                value={reviewData.rating}
-                onChange={(e, newValue) => setReviewData({ ...reviewData, rating: newValue })}
-                size="large"
-                precision={0.5}
-              />
-            </Box>
-
-            {/* Completion Score */}
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Completion Score (0-100%)
-              </Typography>
-              <TextField
-                type="number"
-                fullWidth
-                value={reviewData.completionScore}
-                onChange={(e) => {
-                  const value = Math.min(100, Math.max(0, Number(e.target.value)))
-                  setReviewData({ ...reviewData, completionScore: value })
-                }}
-                inputProps={{ min: 0, max: 100, step: 5 }}
-                helperText="How complete is this application? (0-100%)"
-              />
-            </Box>
-
-            {/* Badges Selection */}
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Assign Badges
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {AVAILABLE_BADGES.map((badge) => (
-                  <Chip
-                    key={badge}
-                    label={badge}
-                    size="small"
-                    color={reviewData.badges.includes(badge) ? 'primary' : 'default'}
-                    onClick={() => {
-                      const newBadges = reviewData.badges.includes(badge)
-                        ? reviewData.badges.filter(b => b !== badge)
-                        : [...reviewData.badges, badge]
-                      setReviewData({ ...reviewData, badges: newBadges })
-                    }}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                ))}
+              
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                  Application Name
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', fontSize: '0.875rem' }}>
+                  {application.appName}
+                </Typography>
               </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                Click badges to select/deselect. Selected: {reviewData.badges.length}
-              </Typography>
-            </Box>
 
-            {/* Rejection Reason (only for reject) */}
-            {reviewDialog.action === 'rejected' && (
-              <TextField
-                label="Rejection Reason"
-                multiline
-                rows={4}
-                fullWidth
-                required
-                value={reviewData.reason}
-                onChange={(e) => setReviewData({ ...reviewData, reason: e.target.value })}
-                placeholder="Explain why this application is being rejected..."
-              />
-            )}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                  Category
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', fontSize: '0.875rem' }}>
+                  {application.appCategory}
+                </Typography>
+              </Box>
 
-            {/* Admin Notes */}
-            <TextField
-              label="Admin Notes (Optional)"
-              multiline
-              rows={3}
-              fullWidth
-              value={reviewData.notes}
-              onChange={(e) => setReviewData({ ...reviewData, notes: e.target.value })}
-              placeholder="Internal notes about this application..."
-            />
-          </Stack>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                  Seller
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', fontSize: '0.875rem' }}>
+                  {application.sellerId?.name || 'Unknown'}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                  Price
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', fontSize: '0.875rem', fontFamily: 'monospace' }}>
+                  {application.isFree ? 'FREE' : `$${application.price || 0}`}
+                </Typography>
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box sx={{ bgcolor: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '6px', p: 2 }}>
+                <Typography variant="caption" sx={{ color: '#92400E', fontSize: '0.75rem', fontWeight: 600, display: 'block', mb: 0.5 }}>
+                  ⚠️ Audit Trail Notice
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#78350F', fontSize: '0.75rem', lineHeight: 1.5 }}>
+                  This action will be logged under your admin account. This decision is final and will notify the seller immediately.
+                </Typography>
+              </Box>
+            </Grid>
+
+            {/* Right: Form */}
+            <Grid item xs={12} md={7} sx={{ p: 3 }}>
+              <Stack spacing={2.5}>
+                {/* Rating */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1, fontSize: '0.875rem' }}>
+                    Quality Rating {reviewDialog.action === 'verified' && <span style={{ color: '#EF4444' }}>*</span>}
+                  </Typography>
+                  <Rating
+                    value={reviewData.rating}
+                    onChange={(e, newValue) => setReviewData({ ...reviewData, rating: newValue })}
+                    size="large"
+                    precision={0.5}
+                    sx={{
+                      '& .MuiRating-iconFilled': {
+                        color: '#F59E0B'
+                      }
+                    }}
+                  />
+                </Box>
+
+                {/* Completion Score */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1, fontSize: '0.875rem' }}>
+                    Completion Score (0-100%)
+                  </Typography>
+                  <TextField
+                    type="number"
+                    fullWidth
+                    size="small"
+                    value={reviewData.completionScore}
+                    onChange={(e) => {
+                      const value = Math.min(100, Math.max(0, Number(e.target.value)))
+                      setReviewData({ ...reviewData, completionScore: value })
+                    }}
+                    inputProps={{ min: 0, max: 100, step: 5 }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px',
+                        fontFamily: 'monospace',
+                        fontWeight: 600
+                      }
+                    }}
+                  />
+                </Box>
+
+                {/* Badges Selection */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 1, fontSize: '0.875rem' }}>
+                    Assign Badges
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                    {AVAILABLE_BADGES.map((badge) => (
+                      <Chip
+                        key={badge}
+                        label={badge}
+                        size="small"
+                        onClick={() => {
+                          const newBadges = reviewData.badges.includes(badge)
+                            ? reviewData.badges.filter(b => b !== badge)
+                            : [...reviewData.badges, badge]
+                          setReviewData({ ...reviewData, badges: newBadges })
+                        }}
+                        sx={{
+                          bgcolor: reviewData.badges.includes(badge) ? '#DBEAFE' : '#F8FAFC',
+                          color: reviewData.badges.includes(badge) ? '#1E40AF' : '#64748B',
+                          border: `1px solid ${reviewData.badges.includes(badge) ? '#93C5FD' : '#E2E8F0'}`,
+                          fontWeight: 600,
+                          fontSize: '0.6875rem',
+                          height: 26,
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            bgcolor: reviewData.badges.includes(badge) ? '#BFDBFE' : '#F1F5F9'
+                          }
+                        }}
+                      />
+                    ))}
+                  </Box>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', display: 'block', mt: 1 }}>
+                    {reviewData.badges.length} badge(s) selected
+                  </Typography>
+                </Box>
+
+                {/* Rejection Reason (only for reject) */}
+                {reviewDialog.action === 'rejected' && (
+                  <TextField
+                    label="Rejection Reason"
+                    multiline
+                    rows={4}
+                    fullWidth
+                    required
+                    value={reviewData.reason}
+                    onChange={(e) => setReviewData({ ...reviewData, reason: e.target.value })}
+                    placeholder="Provide a clear explanation for rejection..."
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '6px'
+                      }
+                    }}
+                  />
+                )}
+
+                {/* Admin Notes */}
+                <TextField
+                  label="Admin Notes (Optional)"
+                  multiline
+                  rows={3}
+                  fullWidth
+                  value={reviewData.notes}
+                  onChange={(e) => setReviewData({ ...reviewData, notes: e.target.value })}
+                  placeholder="Internal notes about this application..."
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '6px'
+                    }
+                  }}
+                />
+              </Stack>
+            </Grid>
+          </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={closeReviewDialog} disabled={actionLoading}>
+        
+        <DialogActions sx={{ bgcolor: '#F8FAFC', borderTop: '1px solid #E2E8F0', px: 3, py: 2 }}>
+          <Button 
+            onClick={closeReviewDialog} 
+            disabled={actionLoading}
+            sx={{
+              borderRadius: '6px',
+              textTransform: 'none',
+              fontWeight: 600,
+              color: '#64748B',
+              '&:hover': {
+                bgcolor: '#F1F5F9'
+              }
+            }}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleReviewSubmit}
             variant="contained"
-            color={reviewDialog.action === 'verified' ? 'success' : 'error'}
             disabled={actionLoading}
+            sx={{
+              bgcolor: reviewDialog.action === 'verified' ? '#10B981' : '#EF4444',
+              color: 'white',
+              borderRadius: '6px',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': {
+                bgcolor: reviewDialog.action === 'verified' ? '#059669' : '#DC2626',
+                boxShadow: 'none'
+              },
+              '&:disabled': {
+                bgcolor: '#D1D5DB',
+                color: '#9CA3AF'
+              }
+            }}
           >
-            {actionLoading ? <CircularProgress size={24} /> : 'Submit Review'}
+            {actionLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : `${reviewDialog.action === 'verified' ? 'Approve' : 'Reject'} Application`}
           </Button>
         </DialogActions>
       </Dialog>
