@@ -11,6 +11,8 @@ import {
   CircularProgress,
   IconButton,
   Dialog,
+  DialogTitle,
+  DialogActions,
   Container,
   Stack,
   Avatar,
