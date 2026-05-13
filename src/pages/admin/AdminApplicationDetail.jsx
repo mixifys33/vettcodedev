@@ -171,12 +171,17 @@ const AdminApplicationDetail = () => {
         const app = response.data.application
         
         // Debug logging for sourceCodeFile
-        console.log('Application Data:', {
-          appName: app.appName,
-          hasSourceCodeFile: !!app.sourceCodeFile,
-          sourceCodeFileUrl: app.sourceCodeFile?.url,
-          sourceCodeFileStructure: app.sourceCodeFile
-        })
+        console.log('=== APPLICATION DEBUG INFO ===')
+        console.log('Application Name:', app.appName)
+        console.log('Has sourceCodeFile object:', !!app.sourceCodeFile)
+        console.log('sourceCodeFile structure:', JSON.stringify(app.sourceCodeFile, null, 2))
+        console.log('sourceCodeFile.url exists:', !!app.sourceCodeFile?.url)
+        console.log('sourceCodeFile.url value:', app.sourceCodeFile?.url)
+        console.log('sourceCodeFile.uploaded:', app.sourceCodeFile?.uploaded)
+        console.log('sourceCodeFile.fileId:', app.sourceCodeFile?.fileId)
+        console.log('sourceCodeFile.fileName:', app.sourceCodeFile?.fileName)
+        console.log('sourceCodeFile.originalFileCount:', app.sourceCodeFile?.originalFileCount)
+        console.log('==============================')
         
         setApplication(app)
         setReviewData({
@@ -282,6 +287,37 @@ const AdminApplicationDetail = () => {
 
   const isChecklistComplete = () => {
     return Object.values(reviewChecklist).every(val => val === true)
+  }
+
+  // Helper function to check if source code file is properly uploaded
+  const hasValidSourceCode = () => {
+    if (!application?.sourceCodeFile) {
+      console.log('No sourceCodeFile object')
+      return false
+    }
+    
+    const file = application.sourceCodeFile
+    
+    // Check if url exists and is not empty
+    if (!file.url || file.url.trim() === '') {
+      console.log('sourceCodeFile.url is missing or empty:', file.url)
+      return false
+    }
+    
+    // Additional validation - check if fileId exists (indicates successful upload)
+    if (!file.fileId || file.fileId.trim() === '') {
+      console.log('sourceCodeFile.fileId is missing or empty:', file.fileId)
+      return false
+    }
+    
+    console.log('Source code file is valid:', {
+      url: file.url,
+      fileId: file.fileId,
+      fileName: file.fileName,
+      isFolder: !!file.originalFileCount
+    })
+    
+    return true
   }
 
   const openReviewDialog = (action) => {
@@ -492,7 +528,7 @@ const AdminApplicationDetail = () => {
           <Grid item xs={12} md={8}>
             
             {/* THE INSPECTION ROOM - Source Code Card */}
-            {application.sourceCodeFile && application.sourceCodeFile.url && (
+            {hasValidSourceCode() && (
               <Card 
                 sx={{ 
                   mb: 2, 
@@ -738,7 +774,7 @@ const AdminApplicationDetail = () => {
               </Card>
             )}
             {/* Warning if no ZIP file */}
-            {(!application.sourceCodeFile || !application.sourceCodeFile.url) && (
+            {!hasValidSourceCode() && (
               <Card 
                 sx={{ 
                   mb: 2, 
@@ -755,9 +791,31 @@ const AdminApplicationDetail = () => {
                       <Typography variant="h6" sx={{ fontWeight: 700, color: '#991B1B', mb: 0.5, fontSize: '1rem' }}>
                         No Application File Uploaded
                       </Typography>
-                      <Typography variant="body2" sx={{ color: '#7F1D1D', fontSize: '0.875rem' }}>
-                        This application does not have a source code/ZIP file. Consider rejecting until the seller uploads the application file.
+                      <Typography variant="body2" sx={{ color: '#7F1D1D', fontSize: '0.875rem', mb: 2 }}>
+                        This application does not have a valid source code/ZIP file. Consider rejecting until the seller uploads the application file.
                       </Typography>
+                      
+                      {/* Debug Information */}
+                      {application?.sourceCodeFile && (
+                        <Box sx={{ mt: 2, p: 2, bgcolor: '#FEE2E2', borderRadius: '4px', border: '1px solid #FCA5A5' }}>
+                          <Typography variant="caption" sx={{ color: '#991B1B', fontWeight: 700, display: 'block', mb: 1, fontSize: '0.75rem' }}>
+                            🔍 Debug Information (Admin Only)
+                          </Typography>
+                          <Box component="pre" sx={{ 
+                            fontSize: '0.7rem', 
+                            color: '#7F1D1D', 
+                            fontFamily: 'monospace',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-all',
+                            m: 0
+                          }}>
+                            {JSON.stringify(application.sourceCodeFile, null, 2)}
+                          </Box>
+                          <Typography variant="caption" sx={{ color: '#991B1B', display: 'block', mt: 1, fontSize: '0.7rem' }}>
+                            Check browser console for detailed logs
+                          </Typography>
+                        </Box>
+                      )}
                     </Box>
                   </Box>
                 </CardContent>
