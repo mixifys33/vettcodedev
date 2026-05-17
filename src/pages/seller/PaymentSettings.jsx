@@ -1,33 +1,45 @@
 import { useState, useEffect } from 'react'
 import {
   Box,
-  Card,
-  CardContent,
-  Typography,
   TextField,
-  Button,
   Grid,
   MenuItem,
-  CircularProgress,
-  Alert,
-  Divider,
+  LinearProgress,
+  Typography,
 } from '@mui/material'
-import { Save, ArrowBack, AccountBalance, Phone } from '@mui/icons-material'
-import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import api from '../../utils/api'
 import useAuthStore from '../../store/authStore'
+import { st, inputSx } from '../../components/settings/settingsTheme'
+import { PageHeader, Panel, FieldLabel, FormFooter } from '../../components/settings/SettingsPage'
 
-const PAYMENT_METHODS = [
-  { value: 'bank', label: 'Bank Account', icon: <AccountBalance /> },
-  { value: 'mobile_money', label: 'Mobile Money', icon: <Phone /> },
-]
+const MOBILE_PROVIDERS = ['MTN Mobile Money', 'Airtel Money', 'M-Pesa', 'Other']
 
-const MOBILE_MONEY_PROVIDERS = ['MTN Mobile Money', 'Airtel Money', 'Other']
+const MethodCard = ({ selected, title, sub, onClick }) => (
+  <Box
+    component="button"
+    type="button"
+    onClick={onClick}
+    sx={{
+      flex: 1,
+      textAlign: 'left',
+      p: 2,
+      borderRadius: st.radius,
+      cursor: 'pointer',
+      fontFamily: st.fontSans,
+      border: `2px solid ${selected ? st.accent : st.line}`,
+      bgcolor: selected ? st.accentSoft : st.panel,
+      transition: 'border-color 0.15s, background 0.15s',
+      '&:hover': { borderColor: selected ? st.accent : st.lineStrong },
+    }}
+  >
+    <Typography sx={{ fontSize: '15px', fontWeight: 600, color: st.ink }}>{title}</Typography>
+    <Typography sx={{ fontSize: '12px', color: st.inkSecondary, mt: 0.5 }}>{sub}</Typography>
+  </Box>
+)
 
 const PaymentSettings = () => {
-  const navigate = useNavigate()
   const { user, updateUser } = useAuthStore()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -41,293 +53,218 @@ const PaymentSettings = () => {
   } = useForm({
     defaultValues: {
       paymentMethod: 'bank',
-      // Bank details
       bankName: '',
       accountName: '',
       accountNumber: '',
       swiftCode: '',
       branchName: '',
-      // Mobile money details
       mobileMoneyProvider: '',
       mobileMoneyNumber: '',
       mobileMoneyName: '',
     },
   })
 
-  const paymentMethod = watch('paymentMethod')
+  const method = watch('paymentMethod')
 
   useEffect(() => {
-    loadPaymentSettings()
-  }, [])
-
-  const loadPaymentSettings = async () => {
-    try {
-      setLoading(true)
-      const sellerId = user?.id || user?._id
-      const response = await api.get(`/sellers/payment-settings/${sellerId}`)
-
-      if (response.data.success) {
-        const settings = response.data.settings || {}
-        
-        setValue('paymentMethod', settings.paymentMethod || 'bank')
-        
-        // Bank details
-        if (settings.bankDetails) {
-          setValue('bankName', settings.bankDetails.bankName || '')
-          setValue('accountName', settings.bankDetails.accountName || '')
-          setValue('accountNumber', settings.bankDetails.accountNumber || '')
-          setValue('swiftCode', settings.bankDetails.swiftCode || '')
-          setValue('branchName', settings.bankDetails.branchName || '')
+    const load = async () => {
+      try {
+        const sellerId = user?.id || user?._id
+        const res = await api.get(`/sellers/payment-settings/${sellerId}`)
+        if (res.data.success) {
+          const s = res.data.settings || {}
+          setValue('paymentMethod', s.paymentMethod || 'bank')
+          if (s.bankDetails) {
+            setValue('bankName', s.bankDetails.bankName || '')
+            setValue('accountName', s.bankDetails.accountName || '')
+            setValue('accountNumber', s.bankDetails.accountNumber || '')
+            setValue('swiftCode', s.bankDetails.swiftCode || '')
+            setValue('branchName', s.bankDetails.branchName || '')
+          }
+          if (s.mobileMoneyDetails) {
+            setValue('mobileMoneyProvider', s.mobileMoneyDetails.provider || '')
+            setValue('mobileMoneyNumber', s.mobileMoneyDetails.number || '')
+            setValue('mobileMoneyName', s.mobileMoneyDetails.name || '')
+          }
         }
-        
-        // Mobile money details
-        if (settings.mobileMoneyDetails) {
-          setValue('mobileMoneyProvider', settings.mobileMoneyDetails.provider || '')
-          setValue('mobileMoneyNumber', settings.mobileMoneyDetails.number || '')
-          setValue('mobileMoneyName', settings.mobileMoneyDetails.name || '')
-        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('Failed to load payment settings:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+    if (user) load()
+  }, [user, setValue])
 
   const onSubmit = async (data) => {
     try {
       setSaving(true)
       const sellerId = user?.id || user?._id
-
       const payload = {
         sellerId,
         paymentMethod: data.paymentMethod,
-        bankDetails: data.paymentMethod === 'bank' ? {
-          bankName: data.bankName,
-          accountName: data.accountName,
-          accountNumber: data.accountNumber,
-          swiftCode: data.swiftCode,
-          branchName: data.branchName,
-        } : undefined,
-        mobileMoneyDetails: data.paymentMethod === 'mobile_money' ? {
-          provider: data.mobileMoneyProvider,
-          number: data.mobileMoneyNumber,
-          name: data.mobileMoneyName,
-        } : undefined,
+        bankDetails:
+          data.paymentMethod === 'bank'
+            ? {
+                bankName: data.bankName,
+                accountName: data.accountName,
+                accountNumber: data.accountNumber,
+                swiftCode: data.swiftCode,
+                branchName: data.branchName,
+              }
+            : undefined,
+        mobileMoneyDetails:
+          data.paymentMethod === 'mobile_money'
+            ? {
+                provider: data.mobileMoneyProvider,
+                number: data.mobileMoneyNumber,
+                name: data.mobileMoneyName,
+              }
+            : undefined,
       }
-
-      const response = await api.post('/sellers/payment-settings', payload)
-
-      if (response.data.success) {
-        toast.success('Payment settings saved successfully!')
-        
-        // Update user in store
-        const updatedUser = {
+      const res = await api.post('/sellers/payment-settings', payload)
+      if (res.data.success) {
+        toast.success('Payout details saved')
+        updateUser({
           ...user,
-          paymentSettings: {
-            ...user.paymentSettings,
-            isSetup: true,
-          },
-        }
-        updateUser(updatedUser)
+          paymentSettings: { ...user.paymentSettings, isSetup: true },
+        })
       }
-    } catch (error) {
-      toast.error('Failed to save payment settings')
-      console.error(error)
+    } catch {
+      toast.error('Failed to save')
     } finally {
       setSaving(false)
     }
   }
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress />
-      </Box>
-    )
+    return <LinearProgress sx={{ bgcolor: st.line, '& .MuiLinearProgress-bar': { bgcolor: st.accent } }} />
   }
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={() => navigate('/seller/settings')}
-          sx={{ mb: 2 }}
-        >
-          Back to Settings
-        </Button>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-          Payment Settings
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Configure how you receive payments
-        </Typography>
-      </Box>
+    <>
+      <PageHeader
+        title="Payouts"
+        description="Bank or mobile money account for earnings from paid application downloads. Double-check account numbers before saving."
+      />
 
-      {!user?.paymentSettings?.isSetup && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          Complete your payment settings to receive payments from sales
-        </Alert>
-      )}
+      <Panel>
+        <Box component="form" id="payment-form" onSubmit={handleSubmit(onSubmit)}>
+          <FieldLabel required>Payout method</FieldLabel>
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
+            <MethodCard
+              selected={method === 'bank'}
+              title="Bank transfer"
+              sub="USD / local currency"
+              onClick={() => setValue('paymentMethod', 'bank', { shouldDirty: true })}
+            />
+            <MethodCard
+              selected={method === 'mobile_money'}
+              title="Mobile money"
+              sub="MTN, Airtel, etc."
+              onClick={() => setValue('paymentMethod', 'mobile_money', { shouldDirty: true })}
+            />
+          </Box>
+          <input type="hidden" {...register('paymentMethod')} />
 
-      <Card>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {/* Payment Method Selection */}
-              <TextField
-                fullWidth
-                select
-                label="Payment Method"
-                {...register('paymentMethod')}
-              >
-                {PAYMENT_METHODS.map((method) => (
-                  <MenuItem key={method.value} value={method.value}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {method.icon}
-                      {method.label}
-                    </Box>
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <Divider />
-
-              {/* Bank Account Details */}
-              {paymentMethod === 'bank' && (
-                <>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Bank Account Details
-                  </Typography>
-
-                  <TextField
-                    fullWidth
-                    label="Bank Name"
-                    {...register('bankName', {
-                      required: paymentMethod === 'bank' && 'Bank name is required',
-                    })}
-                    error={!!errors.bankName}
-                    helperText={errors.bankName?.message}
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="Account Name"
-                    {...register('accountName', {
-                      required: paymentMethod === 'bank' && 'Account name is required',
-                    })}
-                    error={!!errors.accountName}
-                    helperText={errors.accountName?.message}
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="Account Number"
-                    {...register('accountNumber', {
-                      required: paymentMethod === 'bank' && 'Account number is required',
-                    })}
-                    error={!!errors.accountNumber}
-                    helperText={errors.accountNumber?.message}
-                  />
-
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="SWIFT/BIC Code (Optional)"
-                        {...register('swiftCode')}
-                        helperText="For international transfers"
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Branch Name (Optional)"
-                        {...register('branchName')}
-                      />
-                    </Grid>
-                  </Grid>
-                </>
-              )}
-
-              {/* Mobile Money Details */}
-              {paymentMethod === 'mobile_money' && (
-                <>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Mobile Money Details
-                  </Typography>
-
-                  <TextField
-                    fullWidth
-                    select
-                    label="Mobile Money Provider"
-                    {...register('mobileMoneyProvider', {
-                      required: paymentMethod === 'mobile_money' && 'Provider is required',
-                    })}
-                    error={!!errors.mobileMoneyProvider}
-                    helperText={errors.mobileMoneyProvider?.message}
-                  >
-                    {MOBILE_MONEY_PROVIDERS.map((provider) => (
-                      <MenuItem key={provider} value={provider}>
-                        {provider}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-
-                  <TextField
-                    fullWidth
-                    label="Mobile Money Number"
-                    {...register('mobileMoneyNumber', {
-                      required: paymentMethod === 'mobile_money' && 'Mobile number is required',
-                    })}
-                    error={!!errors.mobileMoneyNumber}
-                    helperText={errors.mobileMoneyNumber?.message}
-                    placeholder="+256 700 000000"
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="Account Name"
-                    {...register('mobileMoneyName', {
-                      required: paymentMethod === 'mobile_money' && 'Account name is required',
-                    })}
-                    error={!!errors.mobileMoneyName}
-                    helperText={errors.mobileMoneyName?.message || 'Name registered on the mobile money account'}
-                  />
-                </>
-              )}
-
-              <Alert severity="info">
-                <Typography variant="body2">
-                  <strong>Important:</strong> Ensure your payment details are accurate. Payments will be
-                  processed to this account after order completion.
-                </Typography>
-              </Alert>
-
-              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  onClick={() => navigate('/seller/settings')}
-                  disabled={saving}
+          {method === 'bank' ? (
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FieldLabel required>Bank name</FieldLabel>
+                <TextField
+                  fullWidth
+                  {...register('bankName', { required: method === 'bank' && 'Required' })}
+                  error={!!errors.bankName}
+                  helperText={errors.bankName?.message}
+                  sx={inputSx}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FieldLabel required>Account name</FieldLabel>
+                <TextField
+                  fullWidth
+                  {...register('accountName', { required: method === 'bank' && 'Required' })}
+                  error={!!errors.accountName}
+                  helperText={errors.accountName?.message}
+                  sx={inputSx}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FieldLabel required>Account number</FieldLabel>
+                <TextField
+                  fullWidth
+                  {...register('accountNumber', { required: method === 'bank' && 'Required' })}
+                  error={!!errors.accountNumber}
+                  helperText={errors.accountNumber?.message}
+                  sx={inputSx}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FieldLabel>SWIFT / BIC</FieldLabel>
+                <TextField fullWidth {...register('swiftCode')} sx={inputSx} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FieldLabel>Branch</FieldLabel>
+                <TextField fullWidth {...register('branchName')} sx={inputSx} />
+              </Grid>
+            </Grid>
+          ) : (
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <FieldLabel required>Provider</FieldLabel>
+                <TextField
+                  fullWidth
+                  select
+                  {...register('mobileMoneyProvider', {
+                    required: method === 'mobile_money' && 'Required',
+                  })}
+                  error={!!errors.mobileMoneyProvider}
+                  helperText={errors.mobileMoneyProvider?.message}
+                  sx={inputSx}
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={saving}
-                  startIcon={saving ? <CircularProgress size={20} /> : <Save />}
-                >
-                  {saving ? 'Saving...' : 'Save Payment Settings'}
-                </Button>
-              </Box>
-            </Box>
-          </form>
-        </CardContent>
-      </Card>
-    </Box>
+                  {MOBILE_PROVIDERS.map((p) => (
+                    <MenuItem key={p} value={p}>
+                      {p}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FieldLabel required>Registered name</FieldLabel>
+                <TextField
+                  fullWidth
+                  {...register('mobileMoneyName', {
+                    required: method === 'mobile_money' && 'Required',
+                  })}
+                  error={!!errors.mobileMoneyName}
+                  helperText={errors.mobileMoneyName?.message}
+                  sx={inputSx}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FieldLabel required>Mobile number</FieldLabel>
+                <TextField
+                  fullWidth
+                  placeholder="+256700000000"
+                  {...register('mobileMoneyNumber', {
+                    required: method === 'mobile_money' && 'Required',
+                  })}
+                  error={!!errors.mobileMoneyNumber}
+                  helperText={errors.mobileMoneyNumber?.message}
+                  sx={inputSx}
+                />
+              </Grid>
+            </Grid>
+          )}
+
+          <Typography sx={{ fontSize: '12px', color: st.inkMuted, mt: 2, lineHeight: 1.5 }}>
+            Payouts are processed manually after verification. Incorrect details delay transfers.
+          </Typography>
+
+          <FormFooter saving={saving} saveLabel="Save payout details" formId="payment-form" />
+        </Box>
+      </Panel>
+    </>
   )
 }
 

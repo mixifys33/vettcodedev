@@ -1,89 +1,101 @@
-import { Box, Typography, Grid, Card, CardContent, Button } from '@mui/material'
-import { Store, Person, Payment, Lock } from '@mui/icons-material'
+import { Box, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import useAuthStore from '../../store/authStore'
+import { st } from '../../components/settings/settingsTheme'
+import { PageHeader, Panel, PanelDivider, StatusDot } from '../../components/settings/SettingsPage'
+
+const Row = ({ title, hint, status, ok, onClick }) => (
+  <Box
+    component="button"
+    type="button"
+    onClick={onClick}
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+      textAlign: 'left',
+      border: 'none',
+      bgcolor: 'transparent',
+      cursor: 'pointer',
+      py: 2,
+      px: { xs: 2, sm: 2.5 },
+      fontFamily: st.fontSans,
+      transition: 'background 0.12s',
+      '&:hover': { bgcolor: st.panelMuted },
+    }}
+  >
+    <Box>
+      <Typography sx={{ fontSize: '15px', fontWeight: 600, color: st.ink }}>{title}</Typography>
+      <Typography sx={{ fontSize: '13px', color: st.inkSecondary, mt: 0.35 }}>{hint}</Typography>
+    </Box>
+    <StatusDot ok={ok} label={status} />
+  </Box>
+)
 
 const SellerSettings = () => {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
 
-  const settingsCards = [
+  const rows = [
     {
-      title: 'Shop Settings',
-      description: 'Manage your shop information and branding',
-      icon: <Store sx={{ fontSize: 40 }} />,
+      title: 'Shop',
+      hint: 'Name, branding, and business details',
+      ok: Boolean(user?.shop?.isSetup),
+      status: user?.shop?.isSetup ? 'ready' : 'incomplete',
       path: '/seller/settings/shop',
-      color: '#6366f1',
     },
     {
-      title: 'Profile Settings',
-      description: 'Update your personal information',
-      icon: <Person sx={{ fontSize: 40 }} />,
+      title: 'Profile',
+      hint: 'Name, email, phone',
+      ok: Boolean(user?.name && user?.email),
+      status: user?.name && user?.email ? 'ready' : 'incomplete',
       path: '/seller/settings/profile',
-      color: '#8b5cf6',
     },
     {
-      title: 'Payment Settings',
-      description: 'Configure payment and banking details',
-      icon: <Payment sx={{ fontSize: 40 }} />,
+      title: 'Payouts',
+      hint: 'Where we send your earnings',
+      ok: Boolean(user?.paymentSettings?.isSetup),
+      status: user?.paymentSettings?.isSetup ? 'ready' : 'incomplete',
       path: '/seller/settings/payment',
-      color: '#10b981',
     },
     {
-      title: 'Change Password',
-      description: 'Update your account password',
-      icon: <Lock sx={{ fontSize: 40 }} />,
+      title: 'Password',
+      hint: 'Sign-in credentials',
+      ok: true,
+      status: 'ready',
       path: '/seller/settings/password',
-      color: '#ef4444',
     },
   ]
 
   return (
-    <Box>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-        Settings
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-        Manage your account and preferences
-      </Typography>
+    <>
+      <PageHeader
+        title="Overview"
+        description="Everything that defines your seller identity on VettCode. Incomplete items may limit publishing or payouts."
+      />
 
-      <Grid container spacing={3}>
-        {settingsCards.map((card) => (
-          <Grid item xs={12} sm={6} md={3} key={card.title}>
-            <Card
-              sx={{
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                },
-              }}
-              onClick={() => navigate(card.path)}
-            >
-              <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: `${card.color}15`,
-                    color: card.color,
-                    mb: 2,
-                  }}
-                >
-                  {card.icon}
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                  {card.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {card.description}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+      <Panel noPadding>
+        {rows.map((row, i) => (
+          <Box key={row.path}>
+            {i > 0 && <PanelDivider />}
+            <Row {...row} onClick={() => navigate(row.path)} />
+          </Box>
         ))}
-      </Grid>
-    </Box>
+      </Panel>
+
+      <Typography
+        sx={{
+          mt: 2.5,
+          fontSize: '12px',
+          color: st.inkMuted,
+          fontFamily: st.fontMono,
+          lineHeight: 1.6,
+        }}
+      >
+        seller / {user?.email || '—'}
+      </Typography>
+    </>
   )
 }
 

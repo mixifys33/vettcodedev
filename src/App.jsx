@@ -21,6 +21,7 @@ import SellerDrafts from './pages/seller/SellerDrafts'
 import BulkUpload from './pages/seller/BulkUpload'
 import BulkEdit from './pages/seller/BulkEdit'
 import BulkUploadHistory from './pages/seller/BulkUploadHistory'
+import SettingsLayout from './components/settings/SettingsLayout'
 import SellerSettings from './pages/seller/SellerSettings'
 import ShopSettings from './pages/seller/ShopSettings'
 import ProfileSettings from './pages/seller/ProfileSettings'
@@ -75,11 +76,13 @@ function App() {
                   <Route path="bulk-upload" element={<BulkUpload />} />
                   <Route path="bulk-edit" element={<BulkEdit />} />
                   <Route path="bulk-history" element={<BulkUploadHistory />} />
-                  <Route path="settings" element={<SellerSettings />} />
-                  <Route path="settings/shop" element={<ShopSettings />} />
-                  <Route path="settings/profile" element={<ProfileSettings />} />
-                  <Route path="settings/payment" element={<PaymentSettings />} />
-                  <Route path="settings/password" element={<ChangePassword />} />
+                  <Route path="settings/*" element={<SettingsLayout />}>
+                    <Route index element={<SellerSettings />} />
+                    <Route path="shop" element={<ShopSettings />} />
+                    <Route path="profile" element={<ProfileSettings />} />
+                    <Route path="payment" element={<PaymentSettings />} />
+                    <Route path="password" element={<ChangePassword />} />
+                  </Route>
                 </Routes>
               </DashboardLayout>
             </ProtectedRoute>

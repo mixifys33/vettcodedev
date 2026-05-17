@@ -1,178 +1,164 @@
 import { useState, useEffect } from 'react'
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Button,
-  CircularProgress,
-  Avatar,
-  IconButton,
-} from '@mui/material'
-import { Save, ArrowBack, PhotoCamera } from '@mui/icons-material'
-import { useNavigate } from 'react-router-dom'
+import { Box, TextField, Avatar, Typography, Grid, LinearProgress } from '@mui/material'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import api from '../../utils/api'
 import useAuthStore from '../../store/authStore'
 import { getInitials } from '../../utils/helpers'
+import { st, inputSx } from '../../components/settings/settingsTheme'
+import { PageHeader, Panel, FieldLabel, FormFooter } from '../../components/settings/SettingsPage'
 
 const ProfileSettings = () => {
-  const navigate = useNavigate()
   const { user, updateUser } = useAuthStore()
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm()
 
+  const name = watch('name')
+
   useEffect(() => {
-    if (user) {
-      setValue('name', user.name || '')
-      setValue('email', user.email || '')
-      setValue('phone', user.phone || '')
+    const load = async () => {
+      try {
+        const sellerId = user?.id || user?._id
+        const res = await api.get(`/sellers/profile/${sellerId}`)
+        if (res.data.success) {
+          const p = res.data.profile
+          setValue('name', p.name || '')
+          setValue('email', p.email || '')
+          setValue('phoneNumber', p.phoneNumber || user?.phoneNumber || '')
+        }
+      } catch {
+        setValue('name', user?.name || '')
+        setValue('email', user?.email || '')
+        setValue('phoneNumber', user?.phoneNumber || '')
+      } finally {
+        setLoading(false)
+      }
     }
+    if (user) load()
   }, [user, setValue])
 
   const onSubmit = async (data) => {
     try {
       setSaving(true)
       const sellerId = user?.id || user?._id
-
-      const response = await api.put(`/sellers/profile/${sellerId}`, data)
-
-      if (response.data.success) {
-        toast.success('Profile updated successfully!')
+      const res = await api.put(`/sellers/profile/${sellerId}`, {
+        name: data.name,
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+      })
+      if (res.data.success) {
+        toast.success('Profile updated')
         updateUser({ ...user, ...data })
       }
     } catch (error) {
-      toast.error('Failed to update profile')
-      console.error(error)
+      toast.error(error.response?.data?.message || 'Update failed')
     } finally {
       setSaving(false)
     }
   }
 
+  if (loading) {
+    return <LinearProgress sx={{ bgcolor: st.line, '& .MuiLinearProgress-bar': { bgcolor: st.accent } }} />
+  }
+
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={() => navigate('/seller/settings')}
-          sx={{ mb: 2 }}
+    <>
+      <PageHeader
+        title="Profile"
+        description="Contact details tied to your seller account. Used for login recovery and platform notices."
+      />
+
+      <Panel noPadding sx={{ mb: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            p: 2.5,
+            bgcolor: st.ink,
+            color: '#fff',
+          }}
         >
-          Back to Settings
-        </Button>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-          Profile Settings
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Update your personal information
-        </Typography>
-      </Box>
-
-      <Card>
-        <CardContent>
-          {/* Avatar */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
-            <Box sx={{ position: 'relative' }}>
-              <Avatar
-                sx={{
-                  width: 100,
-                  height: 100,
-                  bgcolor: 'secondary.main',
-                  color: 'primary.main',
-                  fontSize: '2rem',
-                  fontWeight: 700,
-                }}
-              >
-                {getInitials(user?.name || user?.email)}
-              </Avatar>
-              <IconButton
-                sx={{
-                  position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  '&:hover': { bgcolor: 'primary.dark' },
-                }}
-                size="small"
-              >
-                <PhotoCamera fontSize="small" />
-              </IconButton>
-            </Box>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {user?.name || 'User'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {user?.email}
-              </Typography>
-            </Box>
+          <Avatar
+            sx={{
+              width: 56,
+              height: 56,
+              bgcolor: st.accent,
+              fontWeight: 700,
+              fontSize: '1.1rem',
+            }}
+          >
+            {getInitials(name || user?.email)}
+          </Avatar>
+          <Box>
+            <Typography sx={{ fontWeight: 600, fontSize: '16px' }}>{name || 'Your name'}</Typography>
+            <Typography sx={{ fontSize: '13px', opacity: 0.75, fontFamily: st.fontMono }}>
+              {user?.email}
+            </Typography>
           </Box>
+        </Box>
+      </Panel>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Panel>
+        <Box component="form" id="profile-form" onSubmit={handleSubmit(onSubmit)}>
+          <Grid container spacing={2.5}>
+            <Grid item xs={12}>
+              <FieldLabel required>Full name</FieldLabel>
               <TextField
                 fullWidth
-                label="Full Name"
-                {...register('name', { required: 'Name is required' })}
+                {...register('name', { required: 'Required' })}
                 error={!!errors.name}
                 helperText={errors.name?.message}
+                sx={inputSx}
               />
-
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FieldLabel required>Email</FieldLabel>
               <TextField
                 fullWidth
-                label="Email Address"
                 type="email"
                 {...register('email', {
-                  required: 'Email is required',
+                  required: 'Required',
                   pattern: {
                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: 'Invalid email address',
+                    message: 'Invalid email',
                   },
                 })}
                 error={!!errors.email}
                 helperText={errors.email?.message}
+                sx={inputSx}
               />
-
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FieldLabel required>Phone</FieldLabel>
               <TextField
                 fullWidth
-                label="Phone Number"
-                {...register('phone', { required: 'Phone number is required' })}
-                error={!!errors.phone}
-                helperText={errors.phone?.message}
+                placeholder="+1234567890"
+                {...register('phoneNumber', {
+                  required: 'Required',
+                  pattern: {
+                    value: /^\+\d{10,15}$/,
+                    message: 'Use international format, e.g. +256700000000',
+                  },
+                })}
+                error={!!errors.phoneNumber}
+                helperText={errors.phoneNumber?.message || 'Include country code'}
+                sx={inputSx}
               />
-
-              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  onClick={() => navigate('/seller/settings')}
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={saving}
-                  startIcon={saving ? <CircularProgress size={20} /> : <Save />}
-                >
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </Box>
-            </Box>
-          </form>
-        </CardContent>
-      </Card>
-    </Box>
+            </Grid>
+          </Grid>
+          <FormFooter saving={saving} saveLabel="Save profile" formId="profile-form" />
+        </Box>
+      </Panel>
+    </>
   )
 }
 
