@@ -39,15 +39,12 @@ import {
   Search,
   NavigateNext,
   OpenInNew,
-  ShoppingCart,
   Percent,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import {
   BarChart,
   Bar,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -56,7 +53,6 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   CartesianGrid,
-  Legend,
 } from 'recharts'
 import api from '../../utils/api'
 import useAuthStore from '../../store/authStore'
@@ -71,33 +67,23 @@ const STATUS_COLORS = {
   rejected: { bg: colors.errorBg, color: colors.errorText },
 }
 
-const buildAnalyticsFromRaw = (applications, orders) => {
-  const revenueByApp = {}
-  const orderCountByApp = {}
-  let totalRevenue = 0
+const isPaidApplication = (app) => {
+  if (app.isFree === true) return false
+  if (app.isFree === false) return true
+  return Number(app.price) > 0
+}
 
-  orders.forEach((order) => {
-    const orderTotal =
-      order.subtotal != null
-        ? order.subtotal + (order.deliveryFee || 0)
-        : (order.items || []).reduce(
-            (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
-            0
-          )
-    if (order.status === 'delivered') totalRevenue += orderTotal
-    ;(order.items || []).forEach((item) => {
-      const appId = item.productId
-      if (!appId) return
-      orderCountByApp[appId] = (orderCountByApp[appId] || 0) + 1
-      if (order.status === 'delivered') {
-        revenueByApp[appId] =
-          (revenueByApp[appId] || 0) + (item.price || 0) * (item.quantity || 1)
-      }
-    })
-  })
+const applicationRevenue = (app) => {
+  if (!isPaidApplication(app)) return 0
+  return (Number(app.price) || 0) * (app.downloads || 0)
+}
 
+const buildAnalyticsFromApplications = (applications) => {
   const totalViews = applications.reduce((s, a) => s + (a.views || 0), 0)
   const totalDownloads = applications.reduce((s, a) => s + (a.downloads || 0), 0)
+  const paidApplications = applications.filter(isPaidApplication)
+  const paidDownloads = paidApplications.reduce((s, a) => s + (a.downloads || 0), 0)
+  const totalRevenue = paidApplications.reduce((s, a) => s + applicationRevenue(a), 0)
   const totalReviews = applications.reduce((s, a) => s + (a.reviewCount || 0), 0)
   const ratedApps = applications.filter((a) => (a.rating || 0) > 0)
   const averageRating =
@@ -110,75 +96,52 @@ const buildAnalyticsFromRaw = (applications, orders) => {
   const categoryMap = {}
   applications.forEach((app) => {
     const cat = app.appCategory || 'Uncategorized'
-    if (!categoryMap[cat]) categoryMap[cat] = { category: cat, count: 0, views: 0, downloads: 0 }
+    if (!categoryMap[cat]) {
+      categoryMap[cat] = { category: cat, count: 0, views: 0, downloads: 0, revenue: 0 }
+    }
     categoryMap[cat].count += 1
     categoryMap[cat].views += app.views || 0
     categoryMap[cat].downloads += app.downloads || 0
+    categoryMap[cat].revenue += applicationRevenue(app)
   })
 
   const appAnalytics = applications.map((app) => {
     const views = app.views || 0
     const downloads = app.downloads || 0
+    const paid = isPaidApplication(app)
     return {
       ...app,
+      isPaid: paid,
+      isFree: !paid,
+      currency: app.currency || 'USD',
       views,
       downloads,
       rating: app.rating || 0,
       reviewCount: app.reviewCount || 0,
       conversionRate: views > 0 ? Number(((downloads / views) * 100).toFixed(1)) : 0,
-      orderCount: orderCountByApp[String(app._id)] || 0,
-      revenue: revenueByApp[String(app._id)] || 0,
+      revenue: applicationRevenue(app),
     }
   })
-
-  const today = new Date()
-  const revenueByDay = []
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today)
-    date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
-    const dayRevenue = orders
-      .filter((o) => {
-        if (o.status !== 'delivered') return false
-        return new Date(o.createdAt).toISOString().split('T')[0] === dateStr
-      })
-      .reduce((sum, o) => {
-        const orderTotal =
-          o.subtotal != null
-            ? o.subtotal + (o.deliveryFee || 0)
-            : (o.items || []).reduce(
-                (s, item) => s + (item.price || 0) * (item.quantity || 1),
-                0
-              )
-        return sum + orderTotal
-      }, 0)
-    revenueByDay.push({
-      date: `${date.getMonth() + 1}/${date.getDate()}`,
-      revenue: dayRevenue,
-      orders: orders.filter(
-        (o) => new Date(o.createdAt).toISOString().split('T')[0] === dateStr
-      ).length,
-    })
-  }
 
   return {
     summary: {
       totalApplications: applications.length,
+      paidApplications: paidApplications.length,
+      freeApplications: applications.length - paidApplications.length,
       verifiedApplications: applications.filter((a) => a.verificationStatus === 'verified').length,
       totalViews,
       totalDownloads,
+      paidDownloads,
       totalReviews,
       averageRating: Number(averageRating.toFixed(1)),
       conversionRate,
-      totalRevenue,
-      totalOrders: orders.length,
-      deliveredOrders: orders.filter((o) => o.status === 'delivered').length,
+      totalRevenue: Number(totalRevenue.toFixed(2)),
     },
     applications: appAnalytics,
     categoryBreakdown: Object.values(categoryMap),
     topByDownloads: [...appAnalytics].sort((a, b) => b.downloads - a.downloads).slice(0, 5),
     topByViews: [...appAnalytics].sort((a, b) => b.views - a.views).slice(0, 5),
-    revenueByDay,
+    topByRevenue: [...appAnalytics].sort((a, b) => b.revenue - a.revenue).slice(0, 5),
   }
 }
 
@@ -189,6 +152,7 @@ const SellerAnalytics = () => {
   const [data, setData] = useState(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [pricingFilter, setPricingFilter] = useState('all')
   const [sortBy, setSortBy] = useState('downloads')
   const [sortOrder, setSortOrder] = useState('desc')
 
@@ -209,34 +173,31 @@ const SellerAnalytics = () => {
         // Fallback when analytics endpoint is not deployed yet
       }
 
-      const [appsRes, ordersRes] = await Promise.all([
-        api.get(`/applications/seller/${sellerId}`),
-        api.get(`/orders?sellerId=${sellerId}`).catch(() => ({ data: { orders: [] } })),
-      ])
+      const appsRes = await api.get(`/applications/seller/${sellerId}`)
       const applications = appsRes.data.applications || []
-      const orders = ordersRes.data.orders || []
-      setData({ success: true, ...buildAnalyticsFromRaw(applications, orders) })
+      setData({ success: true, ...buildAnalyticsFromApplications(applications) })
     } catch (error) {
       console.error('Failed to fetch analytics:', error)
       setData({
         success: true,
         summary: {
           totalApplications: 0,
+          paidApplications: 0,
+          freeApplications: 0,
           verifiedApplications: 0,
           totalViews: 0,
           totalDownloads: 0,
+          paidDownloads: 0,
           totalReviews: 0,
           averageRating: 0,
           conversionRate: 0,
           totalRevenue: 0,
-          totalOrders: 0,
-          deliveredOrders: 0,
         },
         applications: [],
         categoryBreakdown: [],
         topByDownloads: [],
         topByViews: [],
-        revenueByDay: [],
+        topByRevenue: [],
       })
     } finally {
       setLoading(false)
@@ -270,6 +231,11 @@ const SellerAnalytics = () => {
     if (statusFilter !== 'all') {
       apps = apps.filter((a) => a.verificationStatus === statusFilter)
     }
+    if (pricingFilter === 'paid') {
+      apps = apps.filter((a) => a.isPaid)
+    } else if (pricingFilter === 'free') {
+      apps = apps.filter((a) => !a.isPaid)
+    }
     apps.sort((a, b) => {
       const av = a[sortBy] ?? 0
       const bv = b[sortBy] ?? 0
@@ -279,7 +245,7 @@ const SellerAnalytics = () => {
       return sortOrder === 'asc' ? av - bv : bv - av
     })
     return apps
-  }, [data, search, statusFilter, sortBy, sortOrder])
+  }, [data, search, statusFilter, pricingFilter, sortBy, sortOrder])
 
   const exportCsv = () => {
     if (!filteredApps.length) return
@@ -287,24 +253,26 @@ const SellerAnalytics = () => {
       'Application',
       'Category',
       'Status',
+      'Pricing',
+      'Price (USD)',
       'Views',
       'Downloads',
       'Conversion %',
       'Rating',
       'Reviews',
-      'Orders',
-      'Revenue',
+      'Revenue (USD)',
     ]
     const rows = filteredApps.map((a) => [
       a.appName,
       a.appCategory || '',
       a.verificationStatus || '',
+      a.isPaid ? 'Paid' : 'Free',
+      a.isPaid ? a.price : 0,
       a.views,
       a.downloads,
       a.conversionRate,
       a.rating,
       a.reviewCount,
-      a.orderCount,
       a.revenue,
     ])
     const csv = [headers, ...rows].map((r) => r.join(',')).join('\n')
@@ -329,6 +297,7 @@ const SellerAnalytics = () => {
     {
       title: 'Total Downloads',
       value: (summary.totalDownloads || 0).toLocaleString(),
+      subtitle: `${summary.paidDownloads || 0} on paid apps`,
       icon: <Download sx={{ fontSize: 20 }} />,
       color: colors.primary,
       bgColor: colors.primaryBg,
@@ -344,6 +313,7 @@ const SellerAnalytics = () => {
     {
       title: 'Total Revenue',
       value: formatCurrency(summary.totalRevenue || 0, 'USD'),
+      subtitle: 'paid apps: downloads × price',
       icon: <AttachMoney sx={{ fontSize: 20 }} />,
       color: colors.success,
       bgColor: colors.successBg,
@@ -359,7 +329,7 @@ const SellerAnalytics = () => {
     {
       title: 'Live Applications',
       value: summary.totalApplications || 0,
-      subtitle: `${summary.verifiedApplications || 0} verified`,
+      subtitle: `${summary.paidApplications || 0} paid · ${summary.freeApplications || 0} free`,
       icon: <Apps sx={{ fontSize: 20 }} />,
       color: colors.primary,
       bgColor: colors.primaryBg,
@@ -369,8 +339,14 @@ const SellerAnalytics = () => {
   const downloadsChartData = (data?.topByDownloads || []).map((a) => ({
     name: a.appName?.length > 18 ? `${a.appName.slice(0, 18)}…` : a.appName,
     downloads: a.downloads,
-    views: a.views,
   }))
+
+  const revenueChartData = (data?.topByRevenue || [])
+    .filter((a) => a.revenue > 0)
+    .map((a) => ({
+      name: a.appName?.length > 18 ? `${a.appName.slice(0, 18)}…` : a.appName,
+      revenue: a.revenue,
+    }))
 
   const categoryPieData = (data?.categoryBreakdown || []).map((c) => ({
     name: c.category,
@@ -424,7 +400,7 @@ const SellerAnalytics = () => {
               Seller Analytics
             </Typography>
             <Typography variant="body2" sx={{ color: colors.textSecondary, mt: 0.5 }}>
-              Track views, downloads, revenue, and performance across all your applications
+              Views, downloads, and revenue from your paid applications (downloads × price in USD)
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -504,23 +480,26 @@ const SellerAnalytics = () => {
             <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none' }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  Revenue & Orders (30 days)
+                  Top Apps by Revenue
                 </Typography>
                 <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 2 }}>
-                  Delivered order revenue and order volume
+                  Paid applications only — downloads × price (USD)
                 </Typography>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={data?.revenueByDay || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={colors.border} vertical={false} />
-                    <XAxis dataKey="date" tick={{ fill: colors.textSecondary, fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <YAxis yAxisId="left" tick={{ fill: colors.textSecondary, fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fill: colors.textSecondary, fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <RechartsTooltip />
-                    <Legend />
-                    <Line yAxisId="left" type="monotone" dataKey="revenue" name="Revenue" stroke={colors.primary} strokeWidth={2} dot={false} />
-                    <Line yAxisId="right" type="monotone" dataKey="orders" name="Orders" stroke={colors.success} strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {revenueChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={revenueChartData} layout="vertical" margin={{ left: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={colors.border} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 12 }} />
+                      <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
+                      <RechartsTooltip formatter={(value) => formatCurrency(value, 'USD')} />
+                      <Bar dataKey="revenue" fill={colors.success} radius={[0, 4, 4, 0]} name="Revenue" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Typography variant="body2" sx={{ color: colors.textSecondary, py: 10, textAlign: 'center' }}>
+                    No paid app revenue yet. Revenue appears when paid apps receive downloads.
+                  </Typography>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -624,6 +603,14 @@ const SellerAnalytics = () => {
                   }}
                   sx={{ minWidth: 220 }}
                 />
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Pricing</InputLabel>
+                  <Select value={pricingFilter} label="Pricing" onChange={(e) => setPricingFilter(e.target.value)}>
+                    <MenuItem value="all">All</MenuItem>
+                    <MenuItem value="paid">Paid</MenuItem>
+                    <MenuItem value="free">Free</MenuItem>
+                  </Select>
+                </FormControl>
                 <FormControl size="small" sx={{ minWidth: 140 }}>
                   <InputLabel>Status</InputLabel>
                   <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
@@ -646,6 +633,7 @@ const SellerAnalytics = () => {
                         Status
                       </TableSortLabel>
                     </TableCell>
+                    <TableCell align="right">Price</TableCell>
                     <TableCell align="right">
                       <TableSortLabel active={sortBy === 'views'} direction={sortOrder} onClick={() => handleSort('views')}>
                         Views
@@ -664,11 +652,6 @@ const SellerAnalytics = () => {
                     <TableCell align="right">
                       <TableSortLabel active={sortBy === 'rating'} direction={sortOrder} onClick={() => handleSort('rating')}>
                         Rating
-                      </TableSortLabel>
-                    </TableCell>
-                    <TableCell align="right">
-                      <TableSortLabel active={sortBy === 'orderCount'} direction={sortOrder} onClick={() => handleSort('orderCount')}>
-                        Orders
                       </TableSortLabel>
                     </TableCell>
                     <TableCell align="right">
@@ -723,6 +706,15 @@ const SellerAnalytics = () => {
                             />
                           </TableCell>
                           <TableCell align="right">
+                            {app.isPaid ? (
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {formatCurrency(app.price || 0, 'USD')}
+                              </Typography>
+                            ) : (
+                              <Chip label="Free" size="small" sx={{ bgcolor: colors.infoBg, color: colors.infoText, fontWeight: 600 }} />
+                            )}
+                          </TableCell>
+                          <TableCell align="right">
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
                               <Visibility sx={{ fontSize: 14, color: colors.slate400 }} />
                               {(app.views || 0).toLocaleString()}
@@ -744,14 +736,16 @@ const SellerAnalytics = () => {
                               </Typography>
                             </Box>
                           </TableCell>
-                          <TableCell align="right">
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
-                              <ShoppingCart sx={{ fontSize: 14, color: colors.slate400 }} />
-                              {app.orderCount || 0}
-                            </Box>
-                          </TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600 }}>
-                            {formatCurrency(app.revenue || 0, app.currency || 'USD')}
+                            {app.isPaid ? (
+                              <Tooltip title={`${app.downloads} downloads × ${formatCurrency(app.price || 0, 'USD')}`}>
+                                <span>{formatCurrency(app.revenue || 0, 'USD')}</span>
+                              </Tooltip>
+                            ) : (
+                              <Typography variant="body2" sx={{ color: colors.slate400 }}>
+                                —
+                              </Typography>
+                            )}
                           </TableCell>
                           <TableCell align="center">
                             <Tooltip title="View application">
