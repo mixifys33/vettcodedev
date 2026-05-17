@@ -1,11 +1,14 @@
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://easyshop-d00e.onrender.com/api'
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? '/api' : 'https://easyshop-d00e.onrender.com/api')
 
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE,
+  timeout: 120000,
   headers: {
     'Content-Type': 'application/json',
   },

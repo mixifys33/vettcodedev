@@ -1,7 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/((?!assets/).*)",
+      "source": "/api/:path*",
+      "destination": "https://easyshop-d00e.onrender.com/api/:path*"
+    },
+    {
+      "source": "/((?!api/)(?!assets/).*)",
       "destination": "/index.html"
     }
   ]
