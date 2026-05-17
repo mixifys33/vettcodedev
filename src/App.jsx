@@ -28,6 +28,7 @@ import ProfileSettings from './pages/seller/ProfileSettings'
 import PaymentSettings from './pages/seller/PaymentSettings'
 import ChangePassword from './pages/seller/ChangePassword'
 import SellerRefund from './pages/seller/SellerRefund'
+import SellerAnalytics from './pages/seller/SellerAnalytics'
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -64,6 +65,7 @@ function App() {
               <DashboardLayout userType="seller">
                 <Routes>
                   <Route path="dashboard" element={<SellerDashboard />} />
+                  <Route path="analytics" element={<SellerAnalytics />} />
                   <Route path="applications" element={<AllApplications />} />
                   <Route path="applications/create" element={<CreateApplication />} />
                   <Route path="applications/edit/:id" element={<EditApplication />} />
