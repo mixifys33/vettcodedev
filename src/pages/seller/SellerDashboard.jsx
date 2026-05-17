@@ -199,7 +199,7 @@ const SellerDashboard = () => {
     },
     {
       title: 'Total Revenue',
-      value: formatCurrency(stats?.totalRevenue || 0, 'UGX'),
+      value: formatCurrency(stats?.totalRevenue || 0, 'USD'),
       growth: `${stats?.revenueGrowth > 0 ? '+' : ''}${stats?.revenueGrowth}%`,
       growthPositive: stats?.revenueGrowth >= 0,
       icon: <AttachMoney sx={{ fontSize: 20 }} />,

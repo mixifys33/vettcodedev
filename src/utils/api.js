@@ -29,6 +29,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Allow callers to handle expected errors (e.g. optional endpoints not yet deployed)
+    if (error.config?.silentError) {
+      return Promise.reject(error)
+    }
+
     if (error.response) {
       // Server responded with error
       const { status, data } = error.response

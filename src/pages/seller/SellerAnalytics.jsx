@@ -198,7 +198,9 @@ const SellerAnalytics = () => {
       const sellerId = user?.id || user?._id
 
       try {
-        const res = await api.get(`/applications/seller/${sellerId}/analytics`)
+        const res = await api.get(`/applications/seller/${sellerId}/analytics`, {
+          silentError: true,
+        })
         if (res.data?.success) {
           setData(res.data)
           return
@@ -341,7 +343,7 @@ const SellerAnalytics = () => {
     },
     {
       title: 'Total Revenue',
-      value: formatCurrency(summary.totalRevenue || 0, 'UGX'),
+      value: formatCurrency(summary.totalRevenue || 0, 'USD'),
       icon: <AttachMoney sx={{ fontSize: 20 }} />,
       color: colors.success,
       bgColor: colors.successBg,
@@ -749,7 +751,7 @@ const SellerAnalytics = () => {
                             </Box>
                           </TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600 }}>
-                            {formatCurrency(app.revenue || 0, app.currency || 'UGX')}
+                            {formatCurrency(app.revenue || 0, app.currency || 'USD')}
                           </TableCell>
                           <TableCell align="center">
                             <Tooltip title="View application">

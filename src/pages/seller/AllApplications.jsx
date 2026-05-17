@@ -1100,7 +1100,7 @@ const AllApplications = () => {
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <ShowChart sx={{ fontSize: 16, color: stats.trend === 'up' ? '#10b981' : '#ef4444' }} />
                                 <Typography variant="body2">
-                                  {formatCurrency(stats.revenue7d, 'UGX')}
+                                  {formatCurrency(stats.revenue7d, 'USD')}
                                 </Typography>
                                 <Chip
                                   label={`${stats.trend === 'up' ? '+' : '-'}${stats.trendPercent}%`}

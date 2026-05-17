@@ -200,7 +200,7 @@ const SellerOrders = () => {
                 Revenue
               </Typography>
               <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                {formatCurrency(calculateRevenue(), 'UGX')}
+                {formatCurrency(calculateRevenue(), 'USD')}
               </Typography>
             </CardContent>
           </Card>
