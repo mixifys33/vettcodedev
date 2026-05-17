@@ -72,14 +72,19 @@ export const ORDER_STATUS = {
   refunded: { label: 'Refunded', color: '#16a085', icon: 'DoneAll' },
 }
 
-// Campaign Types
+// Campaign Types (must match backend Campaign model enum)
 export const CAMPAIGN_TYPES = [
   { key: 'discount', label: 'Discount', icon: 'LocalOffer', color: '#e74c3c' },
   { key: 'flash_sale', label: 'Flash Sale', icon: 'FlashOn', color: '#f39c12' },
   { key: 'bundle', label: 'Bundle Deal', icon: 'Layers', color: '#27ae60' },
-  { key: 'free_access', label: 'Free Access', icon: 'CardGiftcard', color: '#9b59b6' },
-  { key: 'launch_promo', label: 'Launch Promo', icon: 'Rocket', color: '#3498db' },
-  { key: 'limited_offer', label: 'Limited Offer', icon: 'Timer', color: '#e67e22' },
+  { key: 'buy_x_get_y', label: 'Buy X Get Y', icon: 'CardGiftcard', color: '#9b59b6' },
+  { key: 'free_shipping', label: 'Free Shipping', icon: 'Rocket', color: '#3498db' },
+]
+
+export const CAMPAIGN_APPLIES_TO = [
+  { key: 'all_products', label: 'All applications', description: 'Every verified app in your shop' },
+  { key: 'specific_products', label: 'Selected applications', description: 'Pick which apps get this deal' },
+  { key: 'specific_categories', label: 'By category', description: 'All apps in chosen categories' },
 ]
 
 // Campaign Status

@@ -14,11 +14,18 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  Switch,
-  FormControlLabel,
   CircularProgress,
   Tabs,
   Tab,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Checkbox,
+  ListItemText,
+  Alert,
+  InputAdornment,
 } from '@mui/material'
 import {
   Add,
@@ -30,7 +37,8 @@ import {
   Layers,
   CardGiftcard,
   Rocket,
-  Timer,
+  Search,
+  Apps,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -38,7 +46,20 @@ import toast from 'react-hot-toast'
 import api from '../../utils/api'
 import useAuthStore from '../../store/authStore'
 import { formatDate } from '../../utils/helpers'
-import { CAMPAIGN_TYPES, CAMPAIGN_STATUS } from '../../utils/constants'
+import { CAMPAIGN_TYPES, CAMPAIGN_STATUS, CAMPAIGN_APPLIES_TO, APP_CATEGORIES } from '../../utils/constants'
+import { colors } from '../../theme/tokens'
+
+const appliesToLabel = (campaign) => {
+  if (campaign.appliesTo === 'specific_products') {
+    const n = campaign.productIds?.length || 0
+    return n ? `${n} application${n === 1 ? '' : 's'}` : 'No applications selected'
+  }
+  if (campaign.appliesTo === 'specific_categories') {
+    const n = campaign.categories?.length || 0
+    return n ? `${n} categor${n === 1 ? 'y' : 'ies'}` : 'No categories selected'
+  }
+  return 'All applications'
+}
 
 const SellerMarketing = () => {
   const navigate = useNavigate()
@@ -49,6 +70,11 @@ const SellerMarketing = () => {
   const [createDialog, setCreateDialog] = useState(false)
   const [editingCampaign, setEditingCampaign] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [sellerApplications, setSellerApplications] = useState([])
+  const [appsLoading, setAppsLoading] = useState(false)
+  const [selectedApplicationIds, setSelectedApplicationIds] = useState([])
+  const [selectedCategories, setSelectedCategories] = useState([])
+  const [appSearch, setAppSearch] = useState('')
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
     defaultValues: {
@@ -60,11 +86,14 @@ const SellerMarketing = () => {
       minOrderAmount: '',
       maxUsage: '',
       couponCode: '',
+      appliesTo: 'all_products',
       startDate: new Date().toISOString().split('T')[0],
       endDate: '',
-      status: 'draft',
+      status: 'active',
     },
   })
+
+  const appliesTo = watch('appliesTo')
 
   useEffect(() => {
     fetchCampaigns()
@@ -87,10 +116,35 @@ const SellerMarketing = () => {
     }
   }
 
+  const fetchSellerApplications = async () => {
+    const sellerId = user?.id || user?._id
+    if (!sellerId) return
+    try {
+      setAppsLoading(true)
+      const res = await api.get(`/applications/seller/${sellerId}`)
+      const apps = (res.data.applications || []).filter(
+        (a) => !a.isDraft && a.verificationStatus === 'verified'
+      )
+      setSellerApplications(apps)
+    } catch {
+      toast.error('Could not load your applications')
+    } finally {
+      setAppsLoading(false)
+    }
+  }
+
+  const openDialog = () => {
+    fetchSellerApplications()
+    setCreateDialog(true)
+  }
+
   const handleCreate = () => {
     reset()
     setEditingCampaign(null)
-    setCreateDialog(true)
+    setSelectedApplicationIds([])
+    setSelectedCategories([])
+    setAppSearch('')
+    openDialog()
   }
 
   const handleEdit = (campaign) => {
@@ -98,18 +152,64 @@ const SellerMarketing = () => {
     setValue('title', campaign.title)
     setValue('description', campaign.description)
     setValue('type', campaign.type)
-    setValue('discountType', campaign.discountType)
+    setValue('discountType', campaign.discountType === 'fixed_amount' ? 'fixed' : campaign.discountType)
     setValue('discountValue', campaign.discountValue)
     setValue('minOrderAmount', campaign.minOrderAmount)
     setValue('maxUsage', campaign.maxUsage)
     setValue('couponCode', campaign.couponCode)
+    setValue('appliesTo', campaign.appliesTo || 'all_products')
     setValue('startDate', campaign.startDate?.split('T')[0])
     setValue('endDate', campaign.endDate?.split('T')[0])
     setValue('status', campaign.status)
-    setCreateDialog(true)
+    setSelectedApplicationIds((campaign.productIds || []).map((id) => String(id)))
+    setSelectedCategories(campaign.categories || [])
+    setAppSearch('')
+    openDialog()
   }
 
+  const toggleApplication = (id) => {
+    const sid = String(id)
+    setSelectedApplicationIds((prev) =>
+      prev.includes(sid) ? prev.filter((x) => x !== sid) : [...prev, sid]
+    )
+  }
+
+  const toggleCategory = (cat) => {
+    setSelectedCategories((prev) =>
+      prev.includes(cat) ? prev.filter((x) => x !== cat) : [...prev, cat]
+    )
+  }
+
+  const filteredApplications = appSearch.trim()
+    ? sellerApplications.filter(
+        (a) =>
+          a.appName?.toLowerCase().includes(appSearch.toLowerCase()) ||
+          a.appCategory?.toLowerCase().includes(appSearch.toLowerCase())
+      )
+    : sellerApplications
+
+  const shopCategories = [
+    ...new Set(sellerApplications.map((a) => a.appCategory).filter(Boolean)),
+  ]
+
   const onSubmit = async (data) => {
+    if (new Date(data.endDate) <= new Date(data.startDate)) {
+      toast.error('End date must be after start date')
+      return
+    }
+    if (data.appliesTo === 'specific_products' && selectedApplicationIds.length === 0) {
+      toast.error('Select at least one application')
+      return
+    }
+    if (data.appliesTo === 'specific_categories' && selectedCategories.length === 0) {
+      toast.error('Select at least one category')
+      return
+    }
+    if (!data.couponCode?.trim()) {
+      toast.error('Coupon code is required for buyers to use at checkout')
+      return
+    }
+
     try {
       setSaving(true)
       const sellerId = user?.id || user?._id
@@ -117,6 +217,13 @@ const SellerMarketing = () => {
       const payload = {
         ...data,
         sellerId,
+        discountValue: parseFloat(data.discountValue) || 0,
+        minOrderAmount: parseFloat(data.minOrderAmount) || 0,
+        maxUsage: data.maxUsage ? parseInt(data.maxUsage, 10) : null,
+        couponCode: data.couponCode.trim().toUpperCase(),
+        discountType: data.discountType === 'fixed_amount' ? 'fixed' : data.discountType,
+        productIds: data.appliesTo === 'specific_products' ? selectedApplicationIds : [],
+        categories: data.appliesTo === 'specific_categories' ? selectedCategories : [],
       }
 
       let response
@@ -161,9 +268,8 @@ const SellerMarketing = () => {
       discount: LocalOffer,
       flash_sale: FlashOn,
       bundle: Layers,
-      free_access: CardGiftcard,
-      launch_promo: Rocket,
-      limited_offer: Timer,
+      buy_x_get_y: CardGiftcard,
+      free_shipping: Rocket,
     }
     const Icon = icons[type] || LocalOffer
     return <Icon />
@@ -325,13 +431,19 @@ const SellerMarketing = () => {
                             }}
                           />
                           <Chip label={typeMeta.label} size="small" variant="outlined" />
-                          {campaign.discountValue && (
+                          {campaign.discountValue > 0 && (
                             <Chip
-                              label={`${campaign.discountValue}${campaign.discountType === 'percentage' ? '%' : ''} OFF`}
+                              label={`${campaign.discountValue}${campaign.discountType === 'percentage' ? '%' : ' USD'} OFF`}
                               size="small"
                               color="secondary"
                             />
                           )}
+                          <Chip
+                            icon={<Apps sx={{ fontSize: 14 }} />}
+                            label={appliesToLabel(campaign)}
+                            size="small"
+                            variant="outlined"
+                          />
                         </Box>
                       </Box>
 
@@ -439,13 +551,129 @@ const SellerMarketing = () => {
                   select
                   label="Status"
                   {...register('status')}
+                  helperText="Active campaigns with valid dates work at checkout"
                 >
-                  <MenuItem value="draft">Draft</MenuItem>
                   <MenuItem value="active">Active</MenuItem>
                   <MenuItem value="paused">Paused</MenuItem>
-                  <MenuItem value="ended">Ended</MenuItem>
                 </TextField>
               </Grid>
+
+              <Grid item xs={12}>
+                <FormControl component="fieldset">
+                  <FormLabel component="legend" sx={{ fontWeight: 600, mb: 1 }}>
+                    Applies to
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={appliesTo}
+                    onChange={(e) => setValue('appliesTo', e.target.value)}
+                  >
+                    {CAMPAIGN_APPLIES_TO.map((opt) => (
+                      <FormControlLabel
+                        key={opt.key}
+                        value={opt.key}
+                        control={<Radio size="small" />}
+                        label={
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {opt.label}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {opt.description}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+              </Grid>
+
+              {appliesTo === 'specific_products' && (
+                <Grid item xs={12}>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    Select verified applications this coupon can discount. Buyers must have these apps in their cart.
+                  </Alert>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Search applications…"
+                    value={appSearch}
+                    onChange={(e) => setAppSearch(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{ mb: 2 }}
+                  />
+                  {appsLoading ? (
+                    <CircularProgress size={24} />
+                  ) : filteredApplications.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      No verified applications found. Publish and verify apps first.
+                    </Typography>
+                  ) : (
+                    <Box
+                      sx={{
+                        maxHeight: 220,
+                        overflow: 'auto',
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: 1,
+                        p: 1,
+                      }}
+                    >
+                      {filteredApplications.map((app) => (
+                        <FormControlLabel
+                          key={app._id}
+                          control={
+                            <Checkbox
+                              checked={selectedApplicationIds.includes(String(app._id))}
+                              onChange={() => toggleApplication(app._id)}
+                              size="small"
+                            />
+                          }
+                          label={
+                            <ListItemText
+                              primary={app.appName}
+                              secondary={`${app.appCategory || 'App'} · USD ${app.price ?? 0}`}
+                            />
+                          }
+                          sx={{ display: 'flex', ml: 0, py: 0.5 }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    {selectedApplicationIds.length} application{selectedApplicationIds.length === 1 ? '' : 's'} selected
+                  </Typography>
+                </Grid>
+              )}
+
+              {appliesTo === 'specific_categories' && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    Choose categories (from your verified apps)
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {(shopCategories.length ? shopCategories : APP_CATEGORIES).map((cat) => (
+                      <Chip
+                        key={cat}
+                        label={cat}
+                        clickable
+                        color={selectedCategories.includes(cat) ? 'primary' : 'default'}
+                        variant={selectedCategories.includes(cat) ? 'filled' : 'outlined'}
+                        onClick={() => toggleCategory(cat)}
+                      />
+                    ))}
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    {selectedCategories.length} categor{selectedCategories.length === 1 ? 'y' : 'ies'} selected
+                  </Typography>
+                </Grid>
+              )}
 
               <Grid item xs={12} md={4}>
                 <TextField
@@ -455,7 +683,7 @@ const SellerMarketing = () => {
                   {...register('discountType')}
                 >
                   <MenuItem value="percentage">Percentage</MenuItem>
-                  <MenuItem value="fixed_amount">Fixed Amount</MenuItem>
+                  <MenuItem value="fixed">Fixed amount (USD)</MenuItem>
                 </TextField>
               </Grid>
 
@@ -472,8 +700,10 @@ const SellerMarketing = () => {
                 <TextField
                   fullWidth
                   label="Coupon Code"
-                  {...register('couponCode')}
+                  {...register('couponCode', { required: 'Coupon code is required' })}
                   placeholder="SAVE20"
+                  error={!!errors.couponCode}
+                  helperText={errors.couponCode?.message || 'Buyers enter this at cart checkout'}
                 />
               </Grid>
 
