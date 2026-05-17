@@ -24,7 +24,6 @@ import {
   Menu as MenuIcon,
   Dashboard,
   Apps,
-  ShoppingCart,
   Campaign,
   Drafts,
   CloudUpload,
@@ -65,7 +64,6 @@ const sellerMenuGroups = [
     label: 'MANAGEMENT',
     items: [
       { text: 'Applications', icon: <Apps />, path: '/seller/applications', roles: ['owner', 'manager'], badge: 0 },
-      { text: 'Orders', icon: <ShoppingCart />, path: '/seller/orders', roles: ['owner', 'manager', 'support'], badge: 'new' },
       { text: 'Drafts', icon: <Drafts />, path: '/seller/drafts', roles: ['owner', 'manager'] },
     ],
   },
@@ -133,7 +131,6 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
 
   // Mock notification counts - replace with actual data
   const notificationCounts = {
-    new: 3, // New orders
     pending: 5, // Pending sellers (admin)
   }
 

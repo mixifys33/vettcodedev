@@ -22,7 +22,6 @@ import {
 } from '@mui/material'
 import {
   Apps,
-  ShoppingCart,
   ArrowUpward,
   ArrowDownward,
   ArrowForward,
@@ -32,6 +31,7 @@ import {
   Add,
   Drafts,
   NavigateNext,
+  Download,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
@@ -39,6 +39,17 @@ import api from '../../utils/api'
 import useAuthStore from '../../store/authStore'
 import { formatCurrency, formatRelativeTime } from '../../utils/helpers'
 import { colors } from '../../theme/tokens'
+
+const isPaidApplication = (app) => {
+  if (app.isFree === true) return false
+  if (app.isFree === false) return true
+  return Number(app.price) > 0
+}
+
+const applicationRevenue = (app) => {
+  if (!isPaidApplication(app)) return 0
+  return (Number(app.price) || 0) * (app.downloads || 0)
+}
 
 const SellerDashboard = () => {
   const navigate = useNavigate()
@@ -53,113 +64,64 @@ const SellerDashboard = () => {
     fetchDashboardData()
   }, [])
 
-  const generateRevenueData = (orders) => {
-    const last30Days = []
-    const today = new Date()
-    
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split('T')[0]
-      
-      const dayOrders = orders.filter(o => {
-        const orderDate = new Date(o.createdAt).toISOString().split('T')[0]
-        return orderDate === dateStr && o.status === 'delivered'
-      })
-      
-      const revenue = dayOrders.reduce((sum, o) => sum + (o.total || 0), 0)
-      
-      last30Days.push({
-        date: `${date.getMonth() + 1}/${date.getDate()}`,
-        revenue: revenue,
-      })
-    }
-    
-    return last30Days
-  }
+  const generateDownloadsChartData = (apps) =>
+    [...apps]
+      .sort((a, b) => (b.downloads || 0) - (a.downloads || 0))
+      .slice(0, 7)
+      .map((app) => ({
+        date: app.appName?.length > 12 ? `${app.appName.slice(0, 12)}…` : app.appName,
+        downloads: app.downloads || 0,
+      }))
 
-  const generateActivityFeed = (orders, apps) => {
-    const activities = []
-    
-    orders.slice(0, 3).forEach(order => {
-      activities.push({
-        type: 'order',
-        title: 'New Order',
-        description: `Order #${order._id.slice(-6)} - ${formatCurrency(order.total, order.currency)}`,
-        time: order.createdAt,
-        icon: <ShoppingCart />,
-        color: '#6366f1',
-      })
-    })
-    
-    apps.slice(0, 2).forEach(app => {
-      activities.push({
+  const generateActivityFeed = (apps) =>
+    [...apps]
+      .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
+      .slice(0, 5)
+      .map((app) => ({
         type: 'app',
-        title: app.verificationStatus === 'verified' ? 'App Verified' : 'App Submitted',
+        title:
+          app.verificationStatus === 'verified'
+            ? 'App Verified'
+            : app.verificationStatus === 'rejected'
+              ? 'App Rejected'
+              : 'Application Updated',
         description: app.appName,
-        time: app.createdAt,
+        time: app.updatedAt || app.createdAt,
         icon: <CheckCircle />,
         color: '#8b5cf6',
-      })
-    })
-    
-    return activities.sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 5)
-  }
+      }))
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
       const sellerId = user?.id || user?._id
 
-      const [ordersRes, appsRes] = await Promise.all([
-        api.get(`/orders?sellerId=${sellerId}`).catch(() => ({ data: { success: false, orders: [] } })),
-        api.get(`/applications/seller/${sellerId}`).catch(() => ({ data: { success: false, applications: [] } })),
-      ])
+      const appsRes = await api
+        .get(`/applications/seller/${sellerId}`)
+        .catch(() => ({ data: { success: false, applications: [] } }))
 
-      const orders = ordersRes.data.orders || []
       const apps = appsRes.data.applications || []
-
-      const now = new Date()
-      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      
-      const thisMonthOrders = orders.filter(o => new Date(o.createdAt) >= thisMonth)
-      const lastMonthOrders = orders.filter(o => new Date(o.createdAt) >= lastMonth && new Date(o.createdAt) < thisMonth)
-      
-      const thisMonthRevenue = thisMonthOrders.filter(o => o.status === 'delivered').reduce((sum, o) => sum + (o.total || 0), 0)
-      const lastMonthRevenue = lastMonthOrders.filter(o => o.status === 'delivered').reduce((sum, o) => sum + (o.total || 0), 0)
-      
-      const revenueGrowth = lastMonthRevenue > 0 ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue * 100).toFixed(1) : 0
-      const ordersGrowth = lastMonthOrders.length > 0 ? ((thisMonthOrders.length - lastMonthOrders.length) / lastMonthOrders.length * 100).toFixed(1) : 0
-
-      const totalRevenue = orders.filter((o) => o.status === 'delivered').reduce((sum, o) => sum + (o.total || 0), 0)
-      const verifiedApps = apps.filter(a => a.verificationStatus === 'verified').length
+      const totalDownloads = apps.reduce((sum, a) => sum + (a.downloads || 0), 0)
+      const totalRevenue = apps.reduce((sum, a) => sum + applicationRevenue(a), 0)
+      const verifiedApps = apps.filter((a) => a.verificationStatus === 'verified').length
       const successRate = apps.length > 0 ? ((verifiedApps / apps.length) * 100).toFixed(1) : 0
 
-      const calculatedStats = {
+      setStats({
         totalApplications: apps.length,
-        totalOrders: orders.length,
-        totalRevenue: totalRevenue,
-        pendingOrders: orders.filter((o) => o.status === 'pending').length,
-        revenueGrowth: parseFloat(revenueGrowth),
-        ordersGrowth: parseFloat(ordersGrowth),
+        totalDownloads,
+        totalRevenue,
         successRate: parseFloat(successRate),
-        verifiedApps: verifiedApps,
-      }
-
-      setStats(calculatedStats)
-      setTopApplications(apps.slice(0, 5))
-      setRevenueData(generateRevenueData(orders))
-      setRecentActivity(generateActivityFeed(orders, apps))
+        verifiedApps,
+      })
+      setTopApplications([...apps].sort((a, b) => (b.downloads || 0) - (a.downloads || 0)).slice(0, 5))
+      setRevenueData(generateDownloadsChartData(apps))
+      setRecentActivity(generateActivityFeed(apps))
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error)
       setStats({
         totalApplications: 0,
-        totalOrders: 0,
+        totalDownloads: 0,
         totalRevenue: 0,
-        pendingOrders: 0,
-        revenueGrowth: 0,
-        ordersGrowth: 0,
         successRate: 0,
         verifiedApps: 0,
       })
@@ -189,19 +151,19 @@ const SellerDashboard = () => {
       bgColor: colors.primaryBg,
     },
     {
-      title: 'Total Orders',
-      value: stats?.totalOrders || 0,
-      growth: `${stats?.ordersGrowth > 0 ? '+' : ''}${stats?.ordersGrowth}%`,
-      growthPositive: stats?.ordersGrowth >= 0,
-      icon: <ShoppingCart sx={{ fontSize: 20 }} />,
+      title: 'Total Downloads',
+      value: (stats?.totalDownloads || 0).toLocaleString(),
+      growth: `${stats?.verifiedApps || 0} verified`,
+      growthPositive: true,
+      icon: <Download sx={{ fontSize: 20 }} />,
       color: '#7C3AED',
       bgColor: 'rgba(124, 58, 237, 0.08)',
     },
     {
       title: 'Total Revenue',
       value: formatCurrency(stats?.totalRevenue || 0, 'USD'),
-      growth: `${stats?.revenueGrowth > 0 ? '+' : ''}${stats?.revenueGrowth}%`,
-      growthPositive: stats?.revenueGrowth >= 0,
+      growth: 'paid downloads × price',
+      growthPositive: true,
       icon: <AttachMoney sx={{ fontSize: 20 }} />,
       color: colors.success,
       bgColor: colors.successBg,
@@ -404,7 +366,7 @@ const SellerDashboard = () => {
                       letterSpacing: '-0.01em',
                     }}
                   >
-                    Revenue Overview
+                    Downloads by Application
                   </Typography>
                   <Typography 
                     variant="body2" 
@@ -413,23 +375,22 @@ const SellerDashboard = () => {
                       fontSize: '14px',
                     }}
                   >
-                    Last 30 days performance
+                    Top apps by download count
                   </Typography>
                 </Box>
-                <Typography
-                  variant="body2"
+                <Button
+                  size="small"
+                  endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
+                  onClick={() => navigate('/seller/analytics')}
                   sx={{
-                    color: stats?.revenueGrowth >= 0 ? '#059669' : '#DC2626',
+                    color: '#4F46E5',
+                    textTransform: 'none',
                     fontSize: '14px',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5,
+                    fontWeight: 500,
                   }}
                 >
-                  {stats?.revenueGrowth >= 0 ? <ArrowUpward sx={{ fontSize: 16 }} /> : <ArrowDownward sx={{ fontSize: 16 }} />}
-                  {`${stats?.revenueGrowth > 0 ? '+' : ''}${stats?.revenueGrowth}%`}
-                </Typography>
+                  Analytics
+                </Button>
               </Box>
 
               <ResponsiveContainer width="100%" height={280}>
@@ -466,7 +427,7 @@ const SellerDashboard = () => {
                   />
                   <Line 
                     type="monotone" 
-                    dataKey="revenue" 
+                    dataKey="downloads" 
                     stroke="#4F46E5" 
                     strokeWidth={2}
                     dot={false}

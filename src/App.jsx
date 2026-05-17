@@ -16,7 +16,6 @@ import AllApplications from './pages/seller/AllApplications'
 import CreateApplication from './pages/seller/CreateApplication'
 import EditApplication from './pages/seller/EditApplication'
 import ApplicationPreview from './pages/seller/ApplicationPreview'
-import SellerOrders from './pages/seller/SellerOrders'
 import SellerMarketing from './pages/seller/SellerMarketing'
 import SellerDrafts from './pages/seller/SellerDrafts'
 import BulkUpload from './pages/seller/BulkUpload'
@@ -70,7 +69,6 @@ function App() {
                   <Route path="applications/create" element={<CreateApplication />} />
                   <Route path="applications/edit/:id" element={<EditApplication />} />
                   <Route path="applications/preview/:id" element={<ApplicationPreview />} />
-                  <Route path="orders" element={<SellerOrders />} />
                   <Route path="refunds" element={<SellerRefund />} />
                   <Route path="marketing" element={<SellerMarketing />} />
                   <Route path="drafts" element={<SellerDrafts />} />
