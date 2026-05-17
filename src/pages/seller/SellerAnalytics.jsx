@@ -8,6 +8,8 @@ import {
   Button,
   Chip,
   LinearProgress,
+  Stack,
+  Rating,
   Table,
   TableBody,
   TableCell,
@@ -78,18 +80,108 @@ const applicationRevenue = (app) => {
   return (Number(app.price) || 0) * (app.downloads || 0)
 }
 
+const getAdminRating = (app) => Number(app.adminRating) || 0
+
+const computeAdminRatingStats = (applications) => {
+  const ratedApps = applications.filter((a) => getAdminRating(a) > 0)
+  const averageAdminRating =
+    ratedApps.length > 0
+      ? ratedApps.reduce((s, a) => s + getAdminRating(a), 0) / ratedApps.length
+      : 0
+  return {
+    averageAdminRating: Number(averageAdminRating.toFixed(1)),
+    ratedByAdminCount: ratedApps.length,
+  }
+}
+
+const RevenueLeaderboard = ({ apps }) => {
+  const items = [...apps]
+    .filter((a) => a.isPaid && a.revenue > 0)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 6)
+
+  if (!items.length) {
+    return (
+      <Typography variant="body2" sx={{ color: colors.textSecondary, py: 8, textAlign: 'center' }}>
+        No paid app revenue yet. Revenue appears when paid apps receive downloads.
+      </Typography>
+    )
+  }
+
+  const maxRevenue = Math.max(...items.map((a) => a.revenue), 1)
+
+  return (
+    <Stack spacing={2.5}>
+      {items.map((app, index) => (
+        <Box
+          key={app._id}
+          sx={{
+            p: 2,
+            borderRadius: '10px',
+            border: `1px solid ${colors.border}`,
+            bgcolor: index === 0 ? colors.primaryBg : colors.slate50,
+            transition: 'border-color 0.2s',
+            '&:hover': { borderColor: colors.primary },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 1.25 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0, flex: 1 }}>
+              <Box
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '8px',
+                  bgcolor: index === 0 ? colors.primary : colors.cardBackground,
+                  color: index === 0 ? '#fff' : colors.primary,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  flexShrink: 0,
+                }}
+              >
+                {index + 1}
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: colors.textPrimary }} noWrap>
+                  {app.appName}
+                </Typography>
+                <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                  {app.downloads} downloads × {formatCurrency(app.price || 0, 'USD')}
+                </Typography>
+              </Box>
+            </Box>
+            <Typography variant="body1" sx={{ fontWeight: 700, color: colors.success, flexShrink: 0 }}>
+              {formatCurrency(app.revenue, 'USD')}
+            </Typography>
+          </Box>
+          <LinearProgress
+            variant="determinate"
+            value={(app.revenue / maxRevenue) * 100}
+            sx={{
+              height: 10,
+              borderRadius: '6px',
+              bgcolor: colors.border,
+              '& .MuiLinearProgress-bar': {
+                borderRadius: '6px',
+                background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.success} 100%)`,
+              },
+            }}
+          />
+        </Box>
+      ))}
+    </Stack>
+  )
+}
+
 const buildAnalyticsFromApplications = (applications) => {
   const totalViews = applications.reduce((s, a) => s + (a.views || 0), 0)
   const totalDownloads = applications.reduce((s, a) => s + (a.downloads || 0), 0)
   const paidApplications = applications.filter(isPaidApplication)
   const paidDownloads = paidApplications.reduce((s, a) => s + (a.downloads || 0), 0)
   const totalRevenue = paidApplications.reduce((s, a) => s + applicationRevenue(a), 0)
-  const totalReviews = applications.reduce((s, a) => s + (a.reviewCount || 0), 0)
-  const ratedApps = applications.filter((a) => (a.rating || 0) > 0)
-  const averageRating =
-    ratedApps.length > 0
-      ? ratedApps.reduce((s, a) => s + a.rating, 0) / ratedApps.length
-      : 0
+  const adminRatingStats = computeAdminRatingStats(applications)
   const conversionRate =
     totalViews > 0 ? Number(((totalDownloads / totalViews) * 100).toFixed(1)) : 0
 
@@ -116,8 +208,8 @@ const buildAnalyticsFromApplications = (applications) => {
       currency: app.currency || 'USD',
       views,
       downloads,
-      rating: app.rating || 0,
-      reviewCount: app.reviewCount || 0,
+      adminRating: getAdminRating(app),
+      completionScore: app.completionScore || 0,
       conversionRate: views > 0 ? Number(((downloads / views) * 100).toFixed(1)) : 0,
       revenue: applicationRevenue(app),
     }
@@ -132,8 +224,8 @@ const buildAnalyticsFromApplications = (applications) => {
       totalViews,
       totalDownloads,
       paidDownloads,
-      totalReviews,
-      averageRating: Number(averageRating.toFixed(1)),
+      averageAdminRating: adminRatingStats.averageAdminRating,
+      ratedByAdminCount: adminRatingStats.ratedByAdminCount,
       conversionRate,
       totalRevenue: Number(totalRevenue.toFixed(2)),
     },
@@ -166,7 +258,20 @@ const SellerAnalytics = () => {
           silentError: true,
         })
         if (res.data?.success) {
-          setData(res.data)
+          const payload = res.data
+          setData({
+            ...payload,
+            summary: {
+              ...payload.summary,
+              averageAdminRating:
+                payload.summary?.averageAdminRating ?? payload.summary?.averageRating ?? 0,
+              ratedByAdminCount: payload.summary?.ratedByAdminCount ?? 0,
+            },
+            applications: (payload.applications || []).map((a) => ({
+              ...a,
+              adminRating: Number(a.adminRating) || 0,
+            })),
+          })
           return
         }
       } catch {
@@ -188,8 +293,8 @@ const SellerAnalytics = () => {
           totalViews: 0,
           totalDownloads: 0,
           paidDownloads: 0,
-          totalReviews: 0,
-          averageRating: 0,
+          averageAdminRating: 0,
+          ratedByAdminCount: 0,
           conversionRate: 0,
           totalRevenue: 0,
         },
@@ -258,8 +363,7 @@ const SellerAnalytics = () => {
       'Views',
       'Downloads',
       'Conversion %',
-      'Rating',
-      'Reviews',
+      'Admin Rating',
       'Revenue (USD)',
     ]
     const rows = filteredApps.map((a) => [
@@ -271,8 +375,7 @@ const SellerAnalytics = () => {
       a.views,
       a.downloads,
       a.conversionRate,
-      a.rating,
-      a.reviewCount,
+      a.adminRating || '',
       a.revenue,
     ])
     const csv = [headers, ...rows].map((r) => r.join(',')).join('\n')
@@ -319,9 +422,15 @@ const SellerAnalytics = () => {
       bgColor: colors.successBg,
     },
     {
-      title: 'Avg. Rating',
-      value: summary.averageRating || '0.0',
-      subtitle: `${summary.totalReviews || 0} reviews`,
+      title: 'Avg. Admin Rating',
+      value:
+        (summary.ratedByAdminCount || 0) > 0
+          ? `${summary.averageAdminRating ?? summary.averageRating ?? 0}`
+          : '—',
+      subtitle:
+        (summary.ratedByAdminCount || 0) > 0
+          ? `${summary.ratedByAdminCount} rated at verification`
+          : 'Assigned when admin verifies apps',
       icon: <Star sx={{ fontSize: 20 }} />,
       color: colors.warning,
       bgColor: colors.warningBg,
@@ -340,13 +449,6 @@ const SellerAnalytics = () => {
     name: a.appName?.length > 18 ? `${a.appName.slice(0, 18)}…` : a.appName,
     downloads: a.downloads,
   }))
-
-  const revenueChartData = (data?.topByRevenue || [])
-    .filter((a) => a.revenue > 0)
-    .map((a) => ({
-      name: a.appName?.length > 18 ? `${a.appName.slice(0, 18)}…` : a.appName,
-      revenue: a.revenue,
-    }))
 
   const categoryPieData = (data?.categoryBreakdown || []).map((c) => ({
     name: c.category,
@@ -485,21 +587,7 @@ const SellerAnalytics = () => {
                 <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 2 }}>
                   Paid applications only — downloads × price (USD)
                 </Typography>
-                {revenueChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={revenueChartData} layout="vertical" margin={{ left: 8 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={colors.border} horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 12 }} />
-                      <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
-                      <RechartsTooltip formatter={(value) => formatCurrency(value, 'USD')} />
-                      <Bar dataKey="revenue" fill={colors.success} radius={[0, 4, 4, 0]} name="Revenue" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <Typography variant="body2" sx={{ color: colors.textSecondary, py: 10, textAlign: 'center' }}>
-                    No paid app revenue yet. Revenue appears when paid apps receive downloads.
-                  </Typography>
-                )}
+                <RevenueLeaderboard apps={data?.applications || []} />
               </CardContent>
             </Card>
           </Grid>
@@ -650,8 +738,8 @@ const SellerAnalytics = () => {
                       </TableSortLabel>
                     </TableCell>
                     <TableCell align="right">
-                      <TableSortLabel active={sortBy === 'rating'} direction={sortOrder} onClick={() => handleSort('rating')}>
-                        Rating
+                      <TableSortLabel active={sortBy === 'adminRating'} direction={sortOrder} onClick={() => handleSort('adminRating')}>
+                        Admin Rating
                       </TableSortLabel>
                     </TableCell>
                     <TableCell align="right">
@@ -728,13 +816,22 @@ const SellerAnalytics = () => {
                           </TableCell>
                           <TableCell align="right">{app.conversionRate}%</TableCell>
                           <TableCell align="right">
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
-                              <Star sx={{ fontSize: 14, color: colors.warning }} />
-                              {app.rating?.toFixed(1) || '0.0'}
-                              <Typography component="span" variant="caption" sx={{ color: colors.slate400 }}>
-                                ({app.reviewCount || 0})
+                            {app.adminRating > 0 ? (
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
+                                <Rating value={app.adminRating} readOnly size="small" precision={0.5} />
+                                <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 28 }}>
+                                  {app.adminRating.toFixed(1)}
+                                </Typography>
+                              </Box>
+                            ) : app.verificationStatus === 'verified' ? (
+                              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                Not scored
                               </Typography>
-                            </Box>
+                            ) : (
+                              <Typography variant="caption" sx={{ color: colors.slate400 }}>
+                                Pending review
+                              </Typography>
+                            )}
                           </TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600 }}>
                             {app.isPaid ? (
