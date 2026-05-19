@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import {
   Box,
   Drawer,
@@ -134,7 +135,7 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
   const [anchorEl, setAnchorEl] = useState(null)
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout } = useAuthStore()
+  const { user, logout, updateUser } = useAuthStore()
 
   // Mock role - replace with actual user role from your auth system
   const userRole = user?.role || 'owner' // Can be: 'owner', 'manager', 'support', 'admin'
@@ -145,6 +146,33 @@ const DashboardLayout = ({ children, userType = 'seller' }) => {
   }
 
   const menuGroups = userType === 'admin' ? adminMenuGroups : sellerMenuGroups
+
+  // Kick banned/suspended sellers out of an existing session
+  useEffect(() => {
+    if (userType !== 'seller') return
+    const sellerId = user?.id || user?._id
+    if (!sellerId) return
+
+    const verifyAccount = async () => {
+      try {
+        const { default: api } = await import('../../utils/api')
+        const res = await api.get(`/sellers/account-status/${sellerId}`)
+        if (res.data?.success && res.data.allowed === false) {
+          toast.error(res.data.error || 'Your account access has been restricted.')
+          logout()
+          navigate('/login')
+          return
+        }
+        if (res.data?.status && user?.status !== res.data.status) {
+          updateUser({ ...user, status: res.data.status, approvalStatus: res.data.approvalStatus })
+        }
+      } catch {
+        // ignore — network errors should not lock users out
+      }
+    }
+
+    verifyAccount()
+  }, [userType, user?.id, user?._id, user?.status, logout, navigate, updateUser])
 
   // Filter menu items based on user role
   const filteredMenuGroups = useMemo(() => {

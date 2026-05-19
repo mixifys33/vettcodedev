@@ -74,7 +74,14 @@ const SellerLogin = () => {
         setError(response.data.error || 'Login failed');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
+      const message =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        'Invalid credentials. Please try again.'
+      setError(message)
+      if (err.response?.status === 403) {
+        toast.error(message)
+      }
     } finally {
       setLoading(false);
     }

@@ -50,7 +50,21 @@ api.interceptors.response.use(
         window.location.href = '/login'
         toast.error('Session expired. Please login again.')
       } else if (status === 403) {
-        toast.error('Access denied')
+        const sellerBlockedCodes = [
+          'SELLER_BANNED',
+          'SELLER_SUSPENDED',
+          'SELLER_REJECTED',
+          'SELLER_INACTIVE',
+          'SELLER_PENDING_APPROVAL',
+          'SELLER_UNVERIFIED',
+        ]
+        if (sellerBlockedCodes.includes(data?.code)) {
+          localStorage.clear()
+          window.location.href = '/login'
+          toast.error(data?.error || 'Your seller account access has been restricted.')
+        } else {
+          toast.error(data?.error || data?.message || 'Access denied')
+        }
       } else if (status === 404) {
         toast.error('Resource not found')
       } else if (status >= 500) {
