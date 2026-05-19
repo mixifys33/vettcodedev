@@ -25,6 +25,9 @@ import {
   Send,
   History,
   ManageAccounts,
+  BarChart,
+  PersonSearch,
+  Storefront,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import api from '../../utils/api'
@@ -338,6 +341,40 @@ const AdminDashboard = () => {
                 icon={History}
                 color="success"
                 onClick={() => navigate('/admin/notifications/history')}
+              />
+            </Grid>
+          </Grid>
+
+          {/* Analytics */}
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, mt: 4 }}>
+            Analytics
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <QuickAction
+                title="User Analytics"
+                description="Registrations, buy rates, conversion & top buyers"
+                icon={PersonSearch}
+                color="secondary"
+                onClick={() => navigate('/admin/analytics/users')}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <QuickAction
+                title="Seller Analytics"
+                description="Revenue, downloads, app counts & leaderboards"
+                icon={Storefront}
+                color="info"
+                onClick={() => navigate('/admin/analytics/sellers')}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <QuickAction
+                title="Platform Overview"
+                description="Overall finances, revenue trends & health indicators"
+                icon={BarChart}
+                color="warning"
+                onClick={() => navigate('/admin/analytics/overview')}
               />
             </Grid>
           </Grid>

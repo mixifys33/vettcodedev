@@ -40,6 +40,9 @@ import AdminApplicationManagement from './pages/admin/AdminApplicationManagement
 import AdminApplicationDetail from './pages/admin/AdminApplicationDetail'
 import AdminPushNotifications from './pages/admin/AdminPushNotifications'
 import AdminNotificationHistory from './pages/admin/AdminNotificationHistory'
+import AdminUserAnalytics from './pages/admin/AdminUserAnalytics'
+import AdminSellerAnalytics from './pages/admin/AdminSellerAnalytics'
+import AdminOverviewAnalytics from './pages/admin/AdminOverviewAnalytics'
 
 // Layout
 import DashboardLayout from './components/layout/DashboardLayout'
@@ -105,6 +108,9 @@ function App() {
                   <Route path="applications/:id" element={<AdminApplicationDetail />} />
                   <Route path="notifications" element={<AdminPushNotifications />} />
                   <Route path="notifications/history" element={<AdminNotificationHistory />} />
+                  <Route path="analytics/users" element={<AdminUserAnalytics />} />
+                  <Route path="analytics/sellers" element={<AdminSellerAnalytics />} />
+                  <Route path="analytics/overview" element={<AdminOverviewAnalytics />} />
                 </Routes>
               </DashboardLayout>
             </ProtectedRoute>
