@@ -44,6 +44,9 @@ import {
   HelpOutline,
   Notifications,
   TrendingUp,
+  PersonSearch,
+  Storefront,
+  BarChart,
 } from '@mui/icons-material'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useAuthStore from '../../store/authStore'
@@ -88,30 +91,37 @@ const adminMenuGroups = [
     label: 'OVERVIEW',
     items: [
       { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard', roles: ['admin'] },
-      { text: 'Analytics', icon: <TrendingUp />, path: '/admin/analytics', roles: ['admin'] },
+    ],
+  },
+  {
+    label: 'ANALYTICS',
+    items: [
+      { text: 'User Analytics',    icon: <PersonSearch />, path: '/admin/analytics/users',    roles: ['admin'] },
+      { text: 'Seller Analytics',  icon: <Storefront />,   path: '/admin/analytics/sellers',  roles: ['admin'] },
+      { text: 'Platform Overview', icon: <BarChart />,     path: '/admin/analytics/overview', roles: ['admin'] },
     ],
   },
   {
     label: 'MANAGEMENT',
     items: [
-      { text: 'Sellers', icon: <Store />, path: '/admin/sellers', roles: ['admin'] },
-      { text: 'Pending Sellers', icon: <PendingActions />, path: '/admin/sellers/pending', roles: ['admin'], badge: 'pending' },
-      { text: 'Users', icon: <People />, path: '/admin/users', roles: ['admin'] },
-      { text: 'Applications', icon: <Inventory />, path: '/admin/applications', roles: ['admin'] },
+      { text: 'Sellers',        icon: <Store />,         path: '/admin/sellers',          roles: ['admin'] },
+      { text: 'Pending Sellers',icon: <PendingActions />,path: '/admin/sellers/pending',  roles: ['admin'], badge: 'pending' },
+      { text: 'Users',          icon: <People />,        path: '/admin/users',            roles: ['admin'] },
+      { text: 'Applications',   icon: <Inventory />,     path: '/admin/applications',     roles: ['admin'] },
     ],
   },
   {
     label: 'COMMUNICATION',
     items: [
-      { text: 'Notifications', icon: <Send />, path: '/admin/notifications', roles: ['admin'] },
-      { text: 'History', icon: <History />, path: '/admin/notifications/history', roles: ['admin'] },
+      { text: 'Notifications', icon: <Send />,    path: '/admin/notifications',         roles: ['admin'] },
+      { text: 'History',       icon: <History />, path: '/admin/notifications/history', roles: ['admin'] },
     ],
   },
   {
     label: 'ACCOUNT',
     items: [
-      { text: 'Settings', icon: <Settings />, path: '/admin/settings', roles: ['admin'] },
-      { text: 'Help & Support', icon: <HelpOutline />, path: '/admin/support', roles: ['admin'] },
+      { text: 'Settings',      icon: <Settings />,    path: '/admin/settings', roles: ['admin'] },
+      { text: 'Help & Support',icon: <HelpOutline />, path: '/admin/support',  roles: ['admin'] },
     ],
   },
 ]
