@@ -44,8 +44,7 @@ import {
   People,
   HourglassEmpty,
   Warning,
-  MoreVert,
-  Visibility,
+  Delete,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import api from '../../utils/api'
@@ -70,7 +69,18 @@ const FILTERS = [
   { key: 'active', label: 'Active', icon: CheckCircle },
   { key: 'pending', label: 'Pending', icon: HourglassEmpty },
   { key: 'suspended', label: 'Suspended', icon: Block },
+  { key: 'banned', label: 'Banned', icon: Warning },
 ]
+
+const ACTION_LABELS = {
+  approve: 'approved',
+  reject: 'rejected',
+  suspend: 'suspended',
+  unsuspend: 'unsuspended',
+  ban: 'banned',
+  unban: 'unbanned',
+  delete: 'deleted',
+}
 
 const StatCard = ({ title, value, subtitle, icon: Icon, color, bgColor, trend }) => (
   <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none', height: '100%' }}>
@@ -133,43 +143,58 @@ const AdminSellerManagement = () => {
 
     try {
       const token = getToken()
-      const body = action === 'reject' ? { reason: 'Does not meet requirements.' } : undefined
-      const response = await api.patch(
-        `/admin/sellers/${seller._id}/${action}`,
-        body,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      const headers = { Authorization: `Bearer ${token}` }
+      const body = action === 'reject'
+        ? { reason: 'Does not meet requirements.' }
+        : action === 'ban'
+        ? { reason: 'Banned by admin' }
+        : undefined
+
+      const response = action === 'delete'
+        ? await api.delete(`/admin/sellers/${seller._id}`, { headers })
+        : await api.patch(`/admin/sellers/${seller._id}/${action}`, body, { headers })
 
       if (response.data.success) {
-        setSellers((prev) =>
-          prev.map((s) =>
-            s._id === seller._id
-              ? {
-                  ...s,
-                  status:
-                    action === 'approve'
-                      ? 'active'
-                      : action === 'suspend'
-                      ? 'suspended'
-                      : action === 'unsuspend'
-                      ? 'active'
-                      : s.status,
-                  approvalStatus:
-                    action === 'approve'
-                      ? 'approved'
-                      : action === 'reject'
-                      ? 'rejected'
-                      : s.approvalStatus,
-                }
-              : s
+        if (action === 'delete') {
+          setSellers((prev) => prev.filter((s) => s._id !== seller._id))
+        } else {
+          setSellers((prev) =>
+            prev.map((s) =>
+              s._id === seller._id
+                ? {
+                    ...s,
+                    status:
+                      action === 'approve' || action === 'unsuspend' || action === 'unban'
+                        ? 'active'
+                        : action === 'suspend'
+                        ? 'suspended'
+                        : action === 'ban'
+                        ? 'banned'
+                        : s.status,
+                    approvalStatus:
+                      action === 'approve'
+                        ? 'approved'
+                        : action === 'reject'
+                        ? 'rejected'
+                        : s.approvalStatus,
+                  }
+                : s
+            )
           )
-        )
-        toast.success(`${seller.name} has been ${action}d successfully`)
+        }
+        if (action === 'delete' && response.data.deleted) {
+          const d = response.data.deleted
+          toast.success(
+            `${seller.name} deleted — ${d.applications} apps, ${d.products} products, ${d.orders} orders removed`
+          )
+        } else {
+          toast.success(`${seller.name} has been ${ACTION_LABELS[action] || action} successfully`)
+        }
       } else {
         toast.error(response.data.error || 'Action failed')
       }
     } catch (error) {
-      toast.error('Network error. Please try again.')
+      toast.error(error.response?.data?.error || 'Network error. Please try again.')
     } finally {
       setActionLoading(null)
     }
@@ -196,6 +221,7 @@ const AdminSellerManagement = () => {
     active: sellers.filter(s => s.status === 'active').length,
     pending: sellers.filter(s => s.approvalStatus === 'pending_review').length,
     suspended: sellers.filter(s => s.status === 'suspended').length,
+    banned: sellers.filter(s => s.status === 'banned').length,
     approved: sellers.filter(s => s.approvalStatus === 'approved').length,
     rejected: sellers.filter(s => s.approvalStatus === 'rejected').length,
   }
@@ -221,6 +247,18 @@ const AdminSellerManagement = () => {
         title: 'Restore Seller',
         content: `Restore ${seller.name}'s account? They will regain dashboard access.`,
       },
+      ban: {
+        title: 'Ban Seller',
+        content: `Ban ${seller.name}? They will lose all dashboard access and be notified.`,
+      },
+      unban: {
+        title: 'Unban Seller',
+        content: `Unban ${seller.name}? They will regain dashboard access.`,
+      },
+      delete: {
+        title: 'Delete Seller Permanently',
+        content: `Permanently delete ${seller.name}, all applications, products, campaigns, orders, chat history, and ImageKit files? This cannot be undone.`,
+      },
     }
 
     return messages[action] || {}
@@ -239,6 +277,7 @@ const AdminSellerManagement = () => {
     { title: 'Active Sellers', value: stats.active.toLocaleString(), subtitle: 'Currently selling', icon: CheckCircle, color: colors.success, bgColor: colors.successBg },
     { title: 'Pending Review', value: stats.pending.toLocaleString(), subtitle: 'Awaiting approval', icon: HourglassEmpty, color: colors.warning, bgColor: colors.warningBg },
     { title: 'Suspended', value: stats.suspended.toLocaleString(), subtitle: `${stats.rejected} rejected`, icon: Block, color: colors.error, bgColor: colors.errorBg },
+    { title: 'Banned', value: stats.banned.toLocaleString(), subtitle: 'Permanently restricted', icon: Warning, color: colors.slate600, bgColor: colors.slate100 },
   ]
 
   return (
@@ -300,7 +339,12 @@ const AdminSellerManagement = () => {
               {FILTERS.map((f) => {
                 const Icon = f.icon
                 const isActive = filter === f.key
-                const count = f.key === 'all' ? stats.total : f.key === 'active' ? stats.active : f.key === 'pending' ? stats.pending : stats.suspended
+                const count =
+                  f.key === 'all' ? stats.total
+                  : f.key === 'active' ? stats.active
+                  : f.key === 'pending' ? stats.pending
+                  : f.key === 'suspended' ? stats.suspended
+                  : stats.banned
                 return (
                   <Chip
                     key={f.key}
@@ -486,6 +530,37 @@ const AdminSellerManagement = () => {
                                     </IconButton>
                                   </Tooltip>
                                 )}
+                                {seller.status !== 'banned' && seller.approvalStatus === 'approved' && (
+                                  <Tooltip title="Ban">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => openConfirmDialog(seller, 'ban')}
+                                      sx={{ color: colors.error, '&:hover': { bgcolor: colors.errorBg } }}
+                                    >
+                                      <Warning sx={{ fontSize: 18 }} />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                                {seller.status === 'banned' && (
+                                  <Tooltip title="Unban">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => openConfirmDialog(seller, 'unban')}
+                                      sx={{ color: colors.success, '&:hover': { bgcolor: colors.successBg } }}
+                                    >
+                                      <CheckCircle sx={{ fontSize: 18 }} />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                                <Tooltip title="Delete">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => openConfirmDialog(seller, 'delete')}
+                                    sx={{ color: colors.error, '&:hover': { bgcolor: colors.errorBg } }}
+                                  >
+                                    <Delete sx={{ fontSize: 18 }} />
+                                  </IconButton>
+                                </Tooltip>
                               </Box>
                             )}
                           </TableCell>
@@ -529,13 +604,16 @@ const AdminSellerManagement = () => {
           <Button
             onClick={handleAction}
             variant="contained"
+            color={confirmDialog.action === 'delete' || confirmDialog.action === 'ban' ? 'error' : 'primary'}
             sx={{
               textTransform: 'none',
-              bgcolor: colors.primary,
-              '&:hover': { bgcolor: colors.primaryDark },
+              ...(confirmDialog.action !== 'delete' && confirmDialog.action !== 'ban' && {
+                bgcolor: colors.primary,
+                '&:hover': { bgcolor: colors.primaryDark },
+              }),
             }}
           >
-            Confirm
+            {confirmDialog.action === 'delete' ? 'Delete' : 'Confirm'}
           </Button>
         </DialogActions>
       </Dialog>
