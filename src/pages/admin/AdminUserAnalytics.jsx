@@ -86,12 +86,12 @@ const AdminUserAnalytics = () => {
   const buyers = data?.topBuyers || []
 
   const statCards = [
-    { title: 'Total Users',      value: (s.totalUsers || 0).toLocaleString(),      subtitle: `+${(s.newUsersLast30 || 0).toLocaleString()} this month`,  icon: People,       color: '#7C3AED', bgColor: 'rgba(124,58,237,0.08)' },
-    { title: 'New (7 days)',      value: (s.newUsersLast7 || 0).toLocaleString(),   subtitle: `+${(s.newUsersLast30 || 0).toLocaleString()} last 30 days`, icon: PersonAdd,    color: colors.info, bgColor: colors.infoBg },
-    { title: 'Total Orders',      value: (s.totalOrders || 0).toLocaleString(),     subtitle: `${(s.paidOrders || 0).toLocaleString()} paid`,              icon: ShoppingCart, color: colors.warning, bgColor: colors.warningBg },
-    { title: 'Buy Rate',          value: `${(s.buyRate || 0).toFixed(1)}%`,         subtitle: 'paid orders / total orders',                                icon: TrendingUp,   color: colors.success, bgColor: colors.successBg },
-    { title: 'Conversion Rate',   value: `${(s.conversionRate || 0).toFixed(1)}%`,  subtitle: 'buyers / total users',                                      icon: CheckCircle,  color: '#4F46E5', bgColor: '#EEF2FF' },
-    { title: 'Total Revenue',     value: formatCurrency(s.totalRevenue || 0, 'USD'),subtitle: `${(s.cancelRate || 0).toFixed(1)}% cancel rate`,            icon: AttachMoney,  color: colors.success, bgColor: colors.successBg },
+    { title: 'Total Users',      value: (s.totalUsers || 0).toLocaleString(),      subtitle: `+${(s.newUsersLast30 || 0).toLocaleString()} this month`,           icon: People,       color: '#7C3AED', bgColor: 'rgba(124,58,237,0.08)' },
+    { title: 'New (7 days)',      value: (s.newUsersLast7 || 0).toLocaleString(),   subtitle: `+${(s.newUsersLast30 || 0).toLocaleString()} last 30 days`,          icon: PersonAdd,    color: colors.info, bgColor: colors.infoBg },
+    { title: 'Total Orders',      value: (s.totalOrders || 0).toLocaleString(),     subtitle: `${(s.uniqueBuyers || 0).toLocaleString()} unique buyers`,            icon: ShoppingCart, color: colors.warning, bgColor: colors.warningBg },
+    { title: 'Buy Rate',          value: `${(s.buyRate || 0).toFixed(1)}%`,         subtitle: 'paid orders / total orders',                                         icon: TrendingUp,   color: colors.success, bgColor: colors.successBg },
+    { title: 'Conversion Rate',   value: `${(s.conversionRate || 0).toFixed(1)}%`,  subtitle: 'users who paid / total users',                                       icon: CheckCircle,  color: '#4F46E5', bgColor: '#EEF2FF' },
+    { title: 'Total Revenue',     value: formatCurrency(s.totalRevenue || 0, 'USD'),subtitle: `${(s.cancelRate || 0).toFixed(1)}% cancel rate`,                    icon: AttachMoney,  color: colors.success, bgColor: colors.successBg },
   ]
 
   const growthChartData = growth.map(d => ({ date: d._id?.slice(5), users: d.count }))
@@ -136,11 +136,11 @@ const AdminUserAnalytics = () => {
               <CardContent sx={{ p: 3 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>User Funnel</Typography>
                 <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 3 }}>From registration to purchase</Typography>
-                <FunnelBar label="Registered Users"  value={s.totalUsers}      max={s.totalUsers}  color="#7C3AED" icon={People} />
-                <FunnelBar label="Users Who Ordered"  value={s.totalOrders}     max={s.totalUsers}  color={colors.info} icon={ShoppingCart} />
-                <FunnelBar label="Paid Orders"        value={s.paidOrders}      max={s.totalUsers}  color={colors.success} icon={CheckCircle} />
-                <FunnelBar label="Cancelled Orders"   value={s.cancelledOrders} max={s.totalUsers}  color={colors.error} icon={Cancel} />
-                <FunnelBar label="Banned Users"       value={s.bannedUsers}     max={s.totalUsers}  color={colors.slate400} icon={Block} />
+                <FunnelBar label="Registered Users"  value={s.totalUsers}                                    max={s.totalUsers || 1} color="#7C3AED" icon={People} />
+                <FunnelBar label="Users Who Ordered" value={Math.min(s.uniqueBuyers || 0, s.totalUsers || 0)} max={s.totalUsers || 1} color={colors.info} icon={ShoppingCart} />
+                <FunnelBar label="Users Who Paid"    value={Math.min(s.uniquePaidBuyers || 0, s.totalUsers || 0)} max={s.totalUsers || 1} color={colors.success} icon={CheckCircle} />
+                <FunnelBar label="Cancelled Orders"  value={s.cancelledOrders || 0}                          max={s.totalOrders || 1} color={colors.error} icon={Cancel} />
+                <FunnelBar label="Banned Users"      value={s.bannedUsers || 0}                              max={s.totalUsers || 1} color={colors.slate400} icon={Block} />
               </CardContent>
             </Card>
           </Grid>
@@ -191,8 +191,8 @@ const AdminUserAnalytics = () => {
         {buyers.length > 0 && (
           <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none' }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>Top Buyers by Spend</Typography>
-              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 2 }}>Highest spending users on the platform</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>Most Active Users</Typography>
+              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 2 }}>Users ranked by order count — revenue shown where payment was completed</Typography>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -208,6 +208,7 @@ const AdminUserAnalytics = () => {
                     {buyers.slice(0, 10).map((b, i) => {
                       const maxSpent = Math.max(...buyers.map(x => x.totalSpent || 0), 1)
                       const pct = ((b.totalSpent || 0) / maxSpent) * 100
+                      const hasRevenue = (b.totalSpent || 0) > 0
                       return (
                         <TableRow key={i} hover>
                           <TableCell>
@@ -230,11 +231,22 @@ const AdminUserAnalytics = () => {
                             <Chip label={b.orderCount} size="small" sx={{ bgcolor: colors.infoBg, color: colors.infoText, fontWeight: 700 }} />
                           </TableCell>
                           <TableCell align="right">
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: colors.success }}>{formatCurrency(b.totalSpent || 0, 'USD')}</Typography>
+                            {hasRevenue ? (
+                              <Typography variant="body2" sx={{ fontWeight: 700, color: colors.success }}>{formatCurrency(b.totalSpent, 'USD')}</Typography>
+                            ) : (
+                              <Box>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: colors.slate400 }}>—</Typography>
+                                <Typography variant="caption" sx={{ color: colors.slate400 }}>free / pending</Typography>
+                              </Box>
+                            )}
                           </TableCell>
                           <TableCell align="right" sx={{ minWidth: 120 }}>
-                            <LinearProgress variant="determinate" value={pct}
-                              sx={{ height: 6, borderRadius: '3px', bgcolor: colors.border, '& .MuiLinearProgress-bar': { borderRadius: '3px', bgcolor: '#f0a500' } }} />
+                            {hasRevenue ? (
+                              <LinearProgress variant="determinate" value={pct}
+                                sx={{ height: 6, borderRadius: '3px', bgcolor: colors.border, '& .MuiLinearProgress-bar': { borderRadius: '3px', bgcolor: '#f0a500' } }} />
+                            ) : (
+                              <Typography variant="caption" sx={{ color: colors.slate400 }}>no revenue yet</Typography>
+                            )}
                           </TableCell>
                         </TableRow>
                       )
