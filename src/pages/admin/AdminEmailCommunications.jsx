@@ -561,21 +561,16 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
           >
             {smtpStatus.configured || smtpStatus.ready ? (
               <>
-                Email transport ready
-                {smtpStatus.transportVersion ? (
-                  <> (backend v{smtpStatus.transportVersion})</>
-                ) : null}
-                {smtpStatus.resendConfigured ? (
-                  <> — using <strong>Resend</strong> (fast on cloud)</>
-                ) : smtpStatus.fromEmail ? (
+                Uses the <strong>same Gmail SMTP</strong> as OTP emails
+                {smtpStatus.fromEmail ? (
                   <>
                     {' '}
-                    via Gmail <strong>{smtpStatus.fromEmail}</strong>
+                    ({smtpStatus.fromEmail})
                   </>
                 ) : null}
-                {smtpStatus.transportVersion && smtpStatus.transportVersion < 3 ? (
+                {smtpStatus.transportVersion && smtpStatus.transportVersion < 4 ? (
                   <Typography component="span" display="block" sx={{ mt: 0.5, fontWeight: 600 }}>
-                    Deploy latest backend — you are on an old build (45s timeout bug).
+                    Deploy latest backend — admin email must use the same transport as OTP (v4+).
                   </Typography>
                 ) : null}
               </>
