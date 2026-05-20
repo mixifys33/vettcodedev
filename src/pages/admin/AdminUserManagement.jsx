@@ -11,14 +11,21 @@ import {
   Grid,
   CircularProgress,
   InputAdornment,
-  Tabs,
-  Tab,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
-  useMediaQuery,
-  useTheme,
+  LinearProgress,
+  Breadcrumbs,
+  Link,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Tooltip,
 } from '@mui/material'
 import {
   Search,
@@ -28,11 +35,16 @@ import {
   CalendarToday,
   Shield,
   Block,
-  ChevronRight,
+  Refresh,
+  NavigateNext,
+  Visibility,
+  Person,
+  AdminPanelSettings,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
+import { colors } from '../../theme/tokens'
 
 const SORT_OPTIONS = [
   { key: 'newest', label: 'Newest First' },
@@ -42,18 +54,58 @@ const SORT_OPTIONS = [
 ]
 
 const ROLE_FILTERS = [
-  { key: '', label: 'All Users' },
-  { key: 'user', label: 'Customers' },
-  { key: 'admin', label: 'Admins' },
+  { key: '', label: 'All Users', icon: People },
+  { key: 'user', label: 'Customers', icon: Person },
+  { key: 'admin', label: 'Admins', icon: AdminPanelSettings },
 ]
 
 const LIMIT = 20
 
+const StatCard = ({ title, value, subtitle, icon: Icon, color, bgColor }) => (
+  <Card
+    sx={{
+      bgcolor: colors.cardBackground,
+      border: `1px solid ${colors.border}`,
+      borderRadius: '8px',
+      boxShadow: 'none',
+      height: '100%',
+    }}
+  >
+    <CardContent sx={{ p: 2.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+        <Typography variant="body2" sx={{ color: colors.textSecondary, fontWeight: 500 }}>
+          {title}
+        </Typography>
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: '6px',
+            bgcolor: bgColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color,
+          }}
+        >
+          <Icon sx={{ fontSize: 18 }} />
+        </Box>
+      </Box>
+      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.textPrimary, fontSize: '26px' }}>
+        {value ?? '—'}
+      </Typography>
+      {subtitle && (
+        <Typography variant="caption" sx={{ color: colors.slate400, mt: 0.5, display: 'block' }}>
+          {subtitle}
+        </Typography>
+      )}
+    </CardContent>
+  </Card>
+)
+
 const AdminUserManagement = () => {
   const navigate = useNavigate()
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-  
+
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -63,41 +115,72 @@ const AdminUserManagement = () => {
   const [page, setPage] = useState(1)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
+  const [summaryStats, setSummaryStats] = useState({
+    total: 0,
+    customers: 0,
+    admins: 0,
+  })
 
   const getToken = () => localStorage.getItem('adminToken')
 
-  const fetchUsers = useCallback(async (pageNum = 1, reset = false) => {
+  const fetchSummaryStats = useCallback(async () => {
     try {
-      if (pageNum === 1) setLoading(true)
-      else setLoadingMore(true)
-      
       const token = getToken()
-      const params = new URLSearchParams({
-        page: pageNum,
-        limit: LIMIT,
-        sort,
-        ...(search.trim() && { search: search.trim() }),
-        ...(roleFilter && { role: roleFilter }),
+      const headers = { Authorization: `Bearer ${token}` }
+      const [dashboard, customers, admins] = await Promise.all([
+        api.get('/admin/dashboard', { headers }),
+        api.get('/admin/users?limit=1&page=1&role=user', { headers }),
+        api.get('/admin/users?limit=1&page=1&role=admin', { headers }),
+      ])
+      setSummaryStats({
+        total: dashboard.data?.stats?.users?.total ?? 0,
+        customers: customers.data?.total ?? 0,
+        admins: admins.data?.total ?? 0,
       })
-      
-      const response = await api.get(`/admin/users?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      
-      if (response.data.success) {
-        const newUsers = response.data.users || []
-        setTotal(response.data.total || 0)
-        setHasMore(newUsers.length === LIMIT)
-        setUsers((prev) => (reset || pageNum === 1 ? newUsers : [...prev, ...newUsers]))
-      }
-    } catch (error) {
-      console.error('Failed to fetch users:', error)
-      toast.error('Failed to load users')
-    } finally {
-      setLoading(false)
-      setLoadingMore(false)
+    } catch {
+      // non-blocking
     }
-  }, [search, sort, roleFilter])
+  }, [])
+
+  const fetchUsers = useCallback(
+    async (pageNum = 1, reset = false) => {
+      try {
+        if (pageNum === 1) setLoading(true)
+        else setLoadingMore(true)
+
+        const token = getToken()
+        const params = new URLSearchParams({
+          page: pageNum,
+          limit: LIMIT,
+          sort,
+          ...(search.trim() && { search: search.trim() }),
+          ...(roleFilter && { role: roleFilter }),
+        })
+
+        const response = await api.get(`/admin/users?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (response.data.success) {
+          const newUsers = response.data.users || []
+          setTotal(response.data.total || 0)
+          setHasMore(newUsers.length === LIMIT)
+          setUsers((prev) => (reset || pageNum === 1 ? newUsers : [...prev, ...newUsers]))
+        }
+      } catch (error) {
+        console.error('Failed to fetch users:', error)
+        toast.error('Failed to load users')
+      } finally {
+        setLoading(false)
+        setLoadingMore(false)
+      }
+    },
+    [search, sort, roleFilter]
+  )
+
+  useEffect(() => {
+    fetchSummaryStats()
+  }, [fetchSummaryStats])
 
   useEffect(() => {
     setPage(1)
@@ -111,6 +194,12 @@ const AdminUserManagement = () => {
     }, 400)
     return () => clearTimeout(timer)
   }, [search])
+
+  const handleRefresh = () => {
+    setPage(1)
+    fetchSummaryStats()
+    fetchUsers(1, true)
+  }
 
   const handleLoadMore = () => {
     if (loadingMore || !hasMore) return
@@ -128,213 +217,428 @@ const AdminUserManagement = () => {
       .slice(0, 2) || '?'
 
   const getAvatarColor = (name = '') => {
-    const colors = ['#7c3aed', '#0284c7', '#059669', '#d97706', '#0891b2', '#be185d', '#0d9488']
+    const palette = ['#7c3aed', '#0284c7', '#059669', '#d97706', '#0891b2', '#be185d', '#0d9488']
     let h = 0
     for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h)
-    return colors[Math.abs(h) % colors.length]
+    return palette[Math.abs(h) % palette.length]
   }
 
-  const UserCard = ({ user }) => {
-    const color = getAvatarColor(user.name)
-    const isAdmin = user.role === 'admin'
-    const isBanned = user.isBanned
-    const joinDate = new Date(user.createdAt).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
+  const bannedInView = users.filter((u) => u.isBanned).length
 
+  if (loading && users.length === 0) {
     return (
-      <Card
-        sx={{
-          mb: 2,
-          cursor: 'pointer',
-          transition: 'all 0.3s',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: 3,
-          },
-        }}
-        onClick={() => navigate(`/admin/users/${user._id}`)}
-      >
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-            <Box sx={{ position: 'relative' }}>
-              <Avatar
-                src={user.avatar}
-                sx={{
-                  width: 56,
-                  height: 56,
-                  bgcolor: color + '20',
-                  color: color,
-                  fontSize: '1.2rem',
-                  fontWeight: 800,
-                }}
-              >
-                {getInitials(user.name)}
-              </Avatar>
-              {isAdmin && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: -2,
-                    right: -2,
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: 'secondary.main',
-                    border: 2,
-                    borderColor: 'background.paper',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Shield sx={{ fontSize: 10, color: 'white' }} />
-                </Box>
-              )}
-            </Box>
-
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700 }} noWrap>
-                  {user.name}
-                </Typography>
-                {isBanned && (
-                  <Chip label="BANNED" size="small" color="error" sx={{ height: 20, fontSize: '0.65rem' }} />
-                )}
-              </Box>
-              <Typography variant="body2" color="text.secondary" noWrap sx={{ mb: 0.5 }}>
-                {user.email}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                {user.phone && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Phone sx={{ fontSize: 12, color: 'text.secondary' }} />
-                    <Typography variant="caption" color="text.secondary">
-                      {user.phone}
-                    </Typography>
-                  </Box>
-                )}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <CalendarToday sx={{ fontSize: 12, color: 'text.secondary' }} />
-                  <Typography variant="caption" color="text.secondary">
-                    {joinDate}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-              <Chip
-                label={isAdmin ? 'Admin' : 'Customer'}
-                size="small"
-                color={isAdmin ? 'secondary' : 'info'}
-                sx={{ fontWeight: 600 }}
-              />
-              <ChevronRight sx={{ color: 'text.disabled' }} />
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: 400, gap: 2 }}>
-        <CircularProgress />
-        <Typography color="text.secondary">Loading users...</Typography>
+      <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh', p: 3 }}>
+        <LinearProgress
+          sx={{
+            borderRadius: 0.5,
+            bgcolor: colors.border,
+            '& .MuiLinearProgress-bar': { bgcolor: colors.primary },
+          }}
+        />
       </Box>
     )
   }
+
+  const statCards = [
+    {
+      title: 'Total Users',
+      value: summaryStats.total.toLocaleString(),
+      subtitle: 'Registered on platform',
+      icon: People,
+      color: '#7C3AED',
+      bgColor: 'rgba(124,58,237,0.08)',
+    },
+    {
+      title: 'Customers',
+      value: summaryStats.customers.toLocaleString(),
+      subtitle: 'Buyer accounts',
+      icon: Person,
+      color: colors.info,
+      bgColor: colors.infoBg,
+    },
+    {
+      title: 'Admins',
+      value: summaryStats.admins.toLocaleString(),
+      subtitle: 'Admin accounts',
+      icon: Shield,
+      color: colors.primary,
+      bgColor: colors.primaryBg,
+    },
+    {
+      title: 'Search Results',
+      value: total.toLocaleString(),
+      subtitle:
+        bannedInView > 0
+          ? `${bannedInView} banned in this list`
+          : `Showing ${users.length} loaded`,
+      icon: Search,
+      color: colors.warning,
+      bgColor: colors.warningBg,
+    },
+  ]
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
-          User Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          {total.toLocaleString()} registered users
-        </Typography>
+    <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh' }}>
+      {/* Page header */}
+      <Box
+        sx={{
+          bgcolor: colors.cardBackground,
+          borderBottom: `1px solid ${colors.border}`,
+          px: 3,
+          py: 2,
+          mb: 3,
+        }}
+      >
+        <Breadcrumbs
+          separator={<NavigateNext fontSize="small" sx={{ color: colors.slate400 }} />}
+          sx={{ mb: 1 }}
+        >
+          <Link
+            underline="hover"
+            onClick={() => navigate('/admin/dashboard')}
+            sx={{ color: colors.textSecondary, fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}
+          >
+            Dashboard
+          </Link>
+          <Typography sx={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 600 }}>
+            User Management
+          </Typography>
+        </Breadcrumbs>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: colors.textPrimary }}>
+              User Management
+            </Typography>
+            <Typography variant="body2" sx={{ color: colors.textSecondary, mt: 0.5 }}>
+              View customers and admins, manage bans, and open user profiles
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={handleRefresh}
+            sx={{
+              textTransform: 'none',
+              borderColor: colors.border,
+              color: colors.textSecondary,
+            }}
+          >
+            Refresh
+          </Button>
+        </Box>
       </Box>
 
-      {/* Search and Sort */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={8}>
-          <TextField
-            fullWidth
-            placeholder="Search by name, email or phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-          />
+      <Box sx={{ px: 3, pb: 4 }}>
+        {/* Stat cards */}
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          {statCards.map((c, i) => (
+            <Grid item xs={12} sm={6} lg={3} key={i}>
+              <StatCard {...c} />
+            </Grid>
+          ))}
         </Grid>
-        <Grid item xs={12} md={4}>
-          <FormControl fullWidth>
-            <InputLabel>Sort By</InputLabel>
-            <Select value={sort} label="Sort By" onChange={(e) => setSort(e.target.value)}>
-              {SORT_OPTIONS.map((opt) => (
-                <MenuItem key={opt.key} value={opt.key}>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-      </Grid>
 
-      {/* Role Filter */}
-      <Tabs value={roleFilter} onChange={(e, newValue) => setRoleFilter(newValue)} sx={{ mb: 3 }}>
-        {ROLE_FILTERS.map((f) => (
-          <Tab key={f.key} label={f.label} value={f.key} />
-        ))}
-      </Tabs>
-
-      {/* Users List */}
-      {users.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <People sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            No users found
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {search ? `No results for "${search}"` : 'No users in the database yet'}
-          </Typography>
-        </Box>
-      ) : (
-        <>
-          <Grid container spacing={2}>
-            {users.map((user) => (
-              <Grid item xs={12} key={user._id}>
-                <UserCard user={user} />
+        {/* Search, sort, filters */}
+        <Card
+          sx={{
+            bgcolor: colors.cardBackground,
+            border: `1px solid ${colors.border}`,
+            borderRadius: '8px',
+            boxShadow: 'none',
+            mb: 3,
+          }}
+        >
+          <CardContent sx={{ p: 2.5 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={8}>
+                <TextField
+                  fullWidth
+                  placeholder="Search by name, email, or phone..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{ color: colors.textSecondary }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: colors.pageBackground,
+                      '& fieldset': { borderColor: colors.border },
+                      '&:hover fieldset': { borderColor: colors.primary },
+                    },
+                  }}
+                />
               </Grid>
-            ))}
-          </Grid>
-
-          {/* Load More */}
-          {hasMore && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-              <Button
-                variant="outlined"
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                startIcon={loadingMore ? <CircularProgress size={20} /> : null}
-              >
-                {loadingMore ? 'Loading...' : 'Load More'}
-              </Button>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Sort by</InputLabel>
+                  <Select
+                    value={sort}
+                    label="Sort by"
+                    onChange={(e) => setSort(e.target.value)}
+                    sx={{
+                      bgcolor: colors.pageBackground,
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: colors.border },
+                    }}
+                  >
+                    {SORT_OPTIONS.map((opt) => (
+                      <MenuItem key={opt.key} value={opt.key}>
+                        {opt.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+            <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
+              {ROLE_FILTERS.map((f) => {
+                const Icon = f.icon
+                const isActive = roleFilter === f.key
+                const count =
+                  f.key === ''
+                    ? summaryStats.total
+                    : f.key === 'user'
+                    ? summaryStats.customers
+                    : summaryStats.admins
+                return (
+                  <Chip
+                    key={f.key || 'all'}
+                    icon={<Icon sx={{ fontSize: 16 }} />}
+                    label={`${f.label} (${count.toLocaleString()})`}
+                    onClick={() => setRoleFilter(f.key)}
+                    sx={{
+                      bgcolor: isActive ? colors.primaryBg : colors.pageBackground,
+                      color: isActive ? colors.primary : colors.textSecondary,
+                      border: `1px solid ${isActive ? colors.primary : colors.border}`,
+                      fontWeight: isActive ? 700 : 500,
+                      '&:hover': { bgcolor: isActive ? colors.primaryBg : colors.slate100 },
+                    }}
+                  />
+                )
+              })}
             </Box>
-          )}
-        </>
-      )}
+          </CardContent>
+        </Card>
+
+        {/* Users table */}
+        {users.length === 0 ? (
+          <Card
+            sx={{
+              bgcolor: colors.cardBackground,
+              border: `1px solid ${colors.border}`,
+              borderRadius: '8px',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent sx={{ textAlign: 'center', py: 8 }}>
+              <People sx={{ fontSize: 64, color: colors.slate300, mb: 2 }} />
+              <Typography variant="h6" sx={{ color: colors.textSecondary, fontWeight: 600 }}>
+                No users found
+              </Typography>
+              <Typography variant="body2" sx={{ color: colors.slate400, mt: 1 }}>
+                {search ? `No results for "${search}"` : 'No users match the selected filter'}
+              </Typography>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card
+            sx={{
+              bgcolor: colors.cardBackground,
+              border: `1px solid ${colors.border}`,
+              borderRadius: '8px',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: colors.pageBackground }}>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>User</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Contact</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Role</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Joined</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, color: colors.textPrimary }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {users.map((user) => {
+                      const color = getAvatarColor(user.name)
+                      const isAdmin = user.role === 'admin'
+                      const isBanned = user.isBanned
+
+                      return (
+                        <TableRow
+                          key={user._id}
+                          hover
+                          sx={{ '&:hover': { bgcolor: colors.slate50 }, cursor: 'pointer' }}
+                          onClick={() => navigate(`/admin/users/${user._id}`)}
+                        >
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Box sx={{ position: 'relative' }}>
+                                <Avatar
+                                  src={user.avatar}
+                                  sx={{
+                                    width: 40,
+                                    height: 40,
+                                    bgcolor: color + '20',
+                                    color,
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  {getInitials(user.name)}
+                                </Avatar>
+                                {isAdmin && (
+                                  <Box
+                                    sx={{
+                                      position: 'absolute',
+                                      bottom: -2,
+                                      right: -2,
+                                      width: 18,
+                                      height: 18,
+                                      borderRadius: '50%',
+                                      bgcolor: colors.primary,
+                                      border: `2px solid ${colors.cardBackground}`,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                    }}
+                                  >
+                                    <Shield sx={{ fontSize: 10, color: '#fff' }} />
+                                  </Box>
+                                )}
+                              </Box>
+                              <Box>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600, color: colors.textPrimary }}
+                                >
+                                  {user.name || 'Unknown'}
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                  ID: {user._id.slice(-6).toUpperCase()}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                              <Email sx={{ fontSize: 12, color: colors.textSecondary }} />
+                              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                {user.email || 'N/A'}
+                              </Typography>
+                            </Box>
+                            {user.phone && (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Phone sx={{ fontSize: 12, color: colors.textSecondary }} />
+                                <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                  {user.phone}
+                                </Typography>
+                              </Box>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={isAdmin ? 'Admin' : 'Customer'}
+                              size="small"
+                              sx={{
+                                fontWeight: 600,
+                                bgcolor: isAdmin ? colors.primaryBg : colors.infoBg,
+                                color: isAdmin ? colors.primary : colors.infoText,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {isBanned ? (
+                              <Chip
+                                icon={<Block sx={{ fontSize: 14 }} />}
+                                label="Banned"
+                                size="small"
+                                color="error"
+                                sx={{ fontWeight: 600 }}
+                              />
+                            ) : (
+                              <Chip
+                                label="Active"
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                                sx={{ fontWeight: 600 }}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <CalendarToday sx={{ fontSize: 12, color: colors.textSecondary }} />
+                              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                {user.createdAt
+                                  ? new Date(user.createdAt).toLocaleDateString()
+                                  : '—'}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                            <Tooltip title="View profile">
+                              <IconButton
+                                size="small"
+                                onClick={() => navigate(`/admin/users/${user._id}`)}
+                                sx={{
+                                  color: colors.primary,
+                                  '&:hover': { bgcolor: colors.primaryBg },
+                                }}
+                              >
+                                <Visibility sx={{ fontSize: 18 }} />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {hasMore && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    p: 2,
+                    borderTop: `1px solid ${colors.border}`,
+                  }}
+                >
+                  <Button
+                    variant="outlined"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    startIcon={loadingMore ? <CircularProgress size={18} /> : null}
+                    sx={{
+                      textTransform: 'none',
+                      borderColor: colors.border,
+                      color: colors.textSecondary,
+                    }}
+                  >
+                    {loadingMore ? 'Loading...' : `Load more (${users.length} of ${total})`}
+                  </Button>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </Box>
     </Box>
   )
 }
