@@ -561,15 +561,23 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
           >
             {smtpStatus.configured || smtpStatus.ready ? (
               <>
-                Server SMTP is configured
-                {smtpStatus.fromEmail ? (
+                Email transport ready
+                {smtpStatus.transportVersion ? (
+                  <> (backend v{smtpStatus.transportVersion})</>
+                ) : null}
+                {smtpStatus.resendConfigured ? (
+                  <> — using <strong>Resend</strong> (fast on cloud)</>
+                ) : smtpStatus.fromEmail ? (
                   <>
                     {' '}
-                    (from <strong>{smtpStatus.fromEmail}</strong>)
+                    via Gmail <strong>{smtpStatus.fromEmail}</strong>
                   </>
                 ) : null}
-                . Emails are sent by the backend using <strong>SMTP_USER</strong> / <strong>SMTP_PASS</strong> — nothing
-                is stored in the browser.
+                {smtpStatus.transportVersion && smtpStatus.transportVersion < 3 ? (
+                  <Typography component="span" display="block" sx={{ mt: 0.5, fontWeight: 600 }}>
+                    Deploy latest backend — you are on an old build (45s timeout bug).
+                  </Typography>
+                ) : null}
               </>
             ) : (
               <>
