@@ -417,11 +417,19 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
       if (isSellers) payload.statusFilter = statusFilter
       else payload.includeBanned = includeBanned
 
-      const res = await api.post(sendPath, payload, { headers: headers() })
+      const res = await api.post(sendPath, payload, {
+        headers: headers(),
+        timeout: 600000,
+        silentError: true,
+      })
 
       if (res.data.success || res.data.sent > 0) {
         setLastResult(res.data)
-        toast.success(`Sent ${res.data.sent} of ${res.data.total} emails`)
+        if (res.data.failed > 0) {
+          toast.error(`Sent ${res.data.sent} of ${res.data.total}. ${res.data.failed} failed — see details below.`)
+        } else {
+          toast.success(`Sent ${res.data.sent} of ${res.data.total} emails`)
+        }
         try {
           const raw = localStorage.getItem(historyKey)
           const history = raw ? JSON.parse(raw) : []
@@ -438,11 +446,20 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
           /* ignore */
         }
       } else {
-        toast.error(res.data.error || 'No emails were sent')
+        const failMsg = res.data.error || 'No emails were sent'
+        toast.error(failMsg)
         setLastResult(res.data)
       }
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to send emails')
+      const failMsg =
+        err.response?.data?.error ||
+        (err.code === 'ECONNABORTED'
+          ? 'Send timed out. Use fewer recipients (under 50 is fastest) or redeploy the latest backend.'
+          : null) ||
+        err.message ||
+        'Failed to send emails'
+      toast.error(failMsg)
+      if (err.response?.data) setLastResult(err.response.data)
     } finally {
       setSending(false)
     }
@@ -805,7 +822,8 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
                   Step 3 — Include products & apps (optional)
                 </Typography>
                 <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 1.5 }}>
-                  Up to {MAX_FEATURED} items appear as cards in the email with image, price, and link.
+                  Up to {MAX_FEATURED} items appear as cards in the email. <strong>Apps</strong> are digital seller
+                  listings; <strong>Products</strong> are shop items (e.g. shoe racks) — both can be included.
                 </Typography>
 
                 {featuredItems.length > 0 && (
@@ -912,8 +930,30 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
                     Last send result
                   </Typography>
                   <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                    Sent: {lastResult.sent} · Failed: {lastResult.failed} · Total: {lastResult.total}
+                    Sent: {lastResult.sent ?? 0} · Failed: {lastResult.failed ?? 0} · Total:{' '}
+                    {lastResult.total ?? '—'}
                   </Typography>
+                  {lastResult.error && (
+                    <Alert severity="error" sx={{ mt: 1.5, borderRadius: '8px' }}>
+                      {lastResult.error}
+                    </Alert>
+                  )}
+                  {lastResult.results?.filter((r) => !r.success).length > 0 && (
+                    <>
+                      <Divider sx={{ my: 1.5 }} />
+                      <Typography variant="caption" sx={{ color: colors.error, fontWeight: 700, display: 'block', mb: 0.5 }}>
+                        Failed deliveries:
+                      </Typography>
+                      {lastResult.results
+                        .filter((r) => !r.success)
+                        .slice(0, 8)
+                        .map((r) => (
+                          <Typography key={r.email || r.id} variant="caption" display="block" sx={{ color: colors.textSecondary }}>
+                            {r.email || r.name || r.id}: {r.error}
+                          </Typography>
+                        ))}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}

@@ -27,6 +27,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tabs,
+  Tab,
+  Alert,
 } from '@mui/material'
 import {
   Search,
@@ -42,6 +45,8 @@ import {
   AttachMoney,
   HourglassEmpty,
   Apps,
+  ShoppingBag,
+  Inventory2,
 } from '@mui/icons-material'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
@@ -104,7 +109,9 @@ const StatCard = ({ title, value, subtitle, icon: Icon, color, bgColor }) => (
 
 const AdminApplicationManagement = () => {
   const navigate = useNavigate()
+  const [viewMode, setViewMode] = useState('apps')
   const [applications, setApplications] = useState([])
+  const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -113,8 +120,19 @@ const AdminApplicationManagement = () => {
 
   useEffect(() => {
     setLoading(true)
-    fetchApplications()
-  }, [filter])
+    if (viewMode === 'apps') fetchApplications()
+    else fetchProducts()
+  }, [filter, viewMode])
+
+  useEffect(() => {
+    const token = getToken()
+    api
+      .get('/admin/products?limit=500', { headers: { Authorization: `Bearer ${token}` }, silentError: true })
+      .then((res) => {
+        if (res.data?.success) setProducts(res.data.products || [])
+      })
+      .catch(() => {})
+  }, [])
 
   const getToken = () => localStorage.getItem('adminToken')
 
@@ -131,6 +149,25 @@ const AdminApplicationManagement = () => {
     } catch (error) {
       console.error('Failed to fetch applications:', error)
       toast.error('Failed to load applications')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchProducts = async () => {
+    try {
+      const token = getToken()
+      const params = new URLSearchParams({ limit: '500' })
+      if (search.trim()) params.set('search', search.trim())
+      const response = await api.get(`/admin/products?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (response.data.success) {
+        setProducts(response.data.products || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch products:', error)
+      toast.error('Failed to load shop products')
     } finally {
       setLoading(false)
     }
@@ -169,8 +206,8 @@ const AdminApplicationManagement = () => {
     setConfirmDialog({ open: true, app, action })
   }
 
-  const filtered = applications.filter((a) => {
-    if (!search.trim()) return true
+  const filteredApps = applications.filter((a) => {
+    if (!search.trim() || viewMode === 'products') return true
     const q = search.toLowerCase()
     return (
       a.appName?.toLowerCase().includes(q) ||
@@ -179,6 +216,26 @@ const AdminApplicationManagement = () => {
       a.sellerId?.email?.toLowerCase().includes(q)
     )
   })
+
+  const filteredProducts = products.filter((p) => {
+    if (!search.trim()) return true
+    const q = search.toLowerCase()
+    return (
+      p.title?.toLowerCase().includes(q) ||
+      p.category?.toLowerCase().includes(q) ||
+      p.sellerId?.name?.toLowerCase().includes(q)
+    )
+  })
+
+  const formatProductPrice = (p) => {
+    const amount = p.salePrice ?? p.regularPrice ?? 0
+    const currency = p.currency || 'USD'
+    try {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)
+    } catch {
+      return `${currency} ${amount}`
+    }
+  }
 
   const stats = {
     total: applications.length,
@@ -288,7 +345,7 @@ const AdminApplicationManagement = () => {
             Dashboard
           </Link>
           <Typography sx={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 600 }}>
-            Application Management
+            Applications &amp; Products
           </Typography>
         </Breadcrumbs>
         <Box
@@ -302,10 +359,10 @@ const AdminApplicationManagement = () => {
         >
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 700, color: colors.textPrimary }}>
-              Application Management
+              Applications &amp; Products
             </Typography>
             <Typography variant="body2" sx={{ color: colors.textSecondary, mt: 0.5 }}>
-              Review, verify, and manage seller applications on the marketplace
+              Seller apps (digital) and shop products (physical) — email picker shows both types
             </Typography>
           </Box>
           <Button
@@ -313,7 +370,8 @@ const AdminApplicationManagement = () => {
             startIcon={<Refresh />}
             onClick={() => {
               setLoading(true)
-              fetchApplications()
+              if (viewMode === 'apps') fetchApplications()
+              else fetchProducts()
             }}
             sx={{
               textTransform: 'none',
@@ -327,14 +385,35 @@ const AdminApplicationManagement = () => {
       </Box>
 
       <Box sx={{ px: 3, pb: 4 }}>
-        {/* Stat cards */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          {statCards.map((c, i) => (
-            <Grid item xs={12} sm={6} lg={3} key={i}>
-              <StatCard {...c} />
-            </Grid>
-          ))}
-        </Grid>
+        <Tabs
+          value={viewMode}
+          onChange={(_, v) => {
+            setViewMode(v)
+            setSearch('')
+          }}
+          sx={{ mb: 2, borderBottom: `1px solid ${colors.border}` }}
+        >
+          <Tab value="apps" label={`Seller apps (${applications.length})`} icon={<Apps />} iconPosition="start" sx={{ textTransform: 'none' }} />
+          <Tab value="products" label={`Shop products (${products.length})`} icon={<ShoppingBag />} iconPosition="start" sx={{ textTransform: 'none' }} />
+        </Tabs>
+
+        {viewMode === 'products' && (
+          <Alert severity="info" sx={{ mb: 2, borderRadius: '8px' }}>
+            Items like <strong>LuxeStep</strong> are <strong>shop products</strong> (physical goods), not seller applications.
+            They appear here and in email “Include products”, but not under seller apps.
+          </Alert>
+        )}
+
+        {/* Stat cards — apps only */}
+        {viewMode === 'apps' && (
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            {statCards.map((c, i) => (
+              <Grid item xs={12} sm={6} lg={3} key={i}>
+                <StatCard {...c} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
 
         {/* Search and filters */}
         <Card
@@ -349,9 +428,19 @@ const AdminApplicationManagement = () => {
           <CardContent sx={{ p: 2.5 }}>
             <TextField
               fullWidth
-              placeholder="Search by app name, category, or seller..."
+              placeholder={
+                viewMode === 'apps'
+                  ? 'Search by app name, category, or seller...'
+                  : 'Search shop products by title, category, or seller...'
+              }
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && viewMode === 'products') {
+                  setLoading(true)
+                  fetchProducts()
+                }
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -367,6 +456,7 @@ const AdminApplicationManagement = () => {
                 },
               }}
             />
+            {viewMode === 'apps' && (
             <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
               {FILTERS.map((f) => {
                 const Icon = f.icon
@@ -396,11 +486,79 @@ const AdminApplicationManagement = () => {
                 )
               })}
             </Box>
+            )}
           </CardContent>
         </Card>
 
-        {/* Applications table */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <LinearProgress sx={{ mb: 2 }} />
+        ) : null}
+
+        {/* Products table */}
+        {viewMode === 'products' ? (
+          filteredProducts.length === 0 ? (
+            <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none' }}>
+              <CardContent sx={{ textAlign: 'center', py: 8 }}>
+                <ShoppingBag sx={{ fontSize: 64, color: colors.slate300, mb: 2 }} />
+                <Typography variant="h6" sx={{ color: colors.textSecondary, fontWeight: 600 }}>
+                  No shop products found
+                </Typography>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none' }}>
+              <CardContent sx={{ p: 0 }}>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: colors.pageBackground }}>
+                        <TableCell sx={{ fontWeight: 700 }}>Product</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Seller</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Price</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Stock</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredProducts.map((p) => (
+                        <TableRow key={p._id} hover>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Avatar
+                                src={p.images?.[0]?.url}
+                                variant="rounded"
+                                sx={{ width: 44, height: 44, borderRadius: '8px' }}
+                              >
+                                <Inventory2 />
+                              </Avatar>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {p.title}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {p.sellerId?.name || p.sellerId?.shop?.shopName || '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip label={p.category || '—'} size="small" />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              {formatProductPrice(p)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>{p.stock ?? '—'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          )
+        ) : filteredApps.length === 0 ? (
           <Card
             sx={{
               bgcolor: colors.cardBackground,
@@ -444,7 +602,7 @@ const AdminApplicationManagement = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filtered.map((app) => {
+                    {filteredApps.map((app) => {
                       const statusConfig =
                         STATUS_CONFIG[app.verificationStatus] || STATUS_CONFIG.pending
                       const img =
@@ -632,7 +790,7 @@ const AdminApplicationManagement = () => {
               </TableContainer>
             </CardContent>
           </Card>
-        )}
+        ) : null}
       </Box>
 
       {/* Confirmation dialog */}
