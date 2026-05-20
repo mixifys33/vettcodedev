@@ -11,9 +11,22 @@ import {
   Grid,
   CircularProgress,
   InputAdornment,
-  Tabs,
-  Tab,
   Avatar,
+  LinearProgress,
+  Breadcrumbs,
+  Link,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material'
 import {
   Search,
@@ -22,22 +35,72 @@ import {
   Cancel,
   Schedule,
   Star,
+  Refresh,
+  NavigateNext,
+  Visibility,
+  Download,
+  AttachMoney,
+  HourglassEmpty,
+  Apps,
 } from '@mui/icons-material'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
+import { colors } from '../../theme/tokens'
 
 const STATUS_CONFIG = {
-  pending: { color: 'warning', label: 'Pending', icon: Schedule },
-  verified: { color: 'success', label: 'Verified', icon: CheckCircle },
-  rejected: { color: 'error', label: 'Rejected', icon: Cancel },
+  pending: { color: 'warning', label: 'Pending' },
+  verified: { color: 'success', label: 'Verified' },
+  rejected: { color: 'error', label: 'Rejected' },
 }
 
 const FILTERS = [
-  { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'verified', label: 'Verified' },
-  { key: 'rejected', label: 'Rejected' },
+  { key: 'all', label: 'All Applications', icon: Apps },
+  { key: 'pending', label: 'Pending', icon: HourglassEmpty },
+  { key: 'verified', label: 'Verified', icon: CheckCircle },
+  { key: 'rejected', label: 'Rejected', icon: Cancel },
 ]
+
+const StatCard = ({ title, value, subtitle, icon: Icon, color, bgColor }) => (
+  <Card
+    sx={{
+      bgcolor: colors.cardBackground,
+      border: `1px solid ${colors.border}`,
+      borderRadius: '8px',
+      boxShadow: 'none',
+      height: '100%',
+    }}
+  >
+    <CardContent sx={{ p: 2.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+        <Typography variant="body2" sx={{ color: colors.textSecondary, fontWeight: 500 }}>
+          {title}
+        </Typography>
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: '6px',
+            bgcolor: bgColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color,
+          }}
+        >
+          <Icon sx={{ fontSize: 18 }} />
+        </Box>
+      </Box>
+      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.textPrimary, fontSize: '26px' }}>
+        {value ?? '—'}
+      </Typography>
+      {subtitle && (
+        <Typography variant="caption" sx={{ color: colors.slate400, mt: 0.5, display: 'block' }}>
+          {subtitle}
+        </Typography>
+      )}
+    </CardContent>
+  </Card>
+)
 
 const AdminApplicationManagement = () => {
   const navigate = useNavigate()
@@ -45,8 +108,11 @@ const AdminApplicationManagement = () => {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [actionLoading, setActionLoading] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, app: null, action: null })
 
   useEffect(() => {
+    setLoading(true)
     fetchApplications()
   }, [filter])
 
@@ -70,196 +136,542 @@ const AdminApplicationManagement = () => {
     }
   }
 
-  const handleAction = async (app, status) => {
+  const handleReviewAction = async () => {
+    const { app, action } = confirmDialog
+    setActionLoading(app._id)
+    setConfirmDialog({ open: false, app: null, action: null })
+
     try {
       const token = getToken()
       const response = await api.patch(
         `/admin/applications/${app._id}/review`,
-        { status },
+        { status: action },
         { headers: { Authorization: `Bearer ${token}` } }
       )
       if (response.data.success) {
-        toast.success(`Application ${status}`)
-        fetchApplications()
+        setApplications((prev) =>
+          prev.map((a) =>
+            a._id === app._id ? { ...a, verificationStatus: action } : a
+          )
+        )
+        toast.success(`Application ${action === 'verified' ? 'verified' : 'rejected'} successfully`)
+      } else {
+        toast.error(response.data.error || 'Action failed')
       }
     } catch (error) {
-      toast.error('Action failed')
+      toast.error(error.response?.data?.error || 'Action failed')
+    } finally {
+      setActionLoading(null)
     }
   }
 
-  const filtered = applications.filter(
-    (a) =>
-      !search.trim() ||
-      a.appName?.toLowerCase().includes(search.toLowerCase()) ||
-      a.appCategory?.toLowerCase().includes(search.toLowerCase())
-  )
+  const openConfirmDialog = (app, action) => {
+    setConfirmDialog({ open: true, app, action })
+  }
 
-  const ApplicationCard = ({ app }) => {
-    const statusConfig = STATUS_CONFIG[app.verificationStatus] || STATUS_CONFIG.pending
-    const StatusIcon = statusConfig.icon
-    const img = app.screenshots?.[0]?.url || app.screenshots?.[0]?.uri
-
+  const filtered = applications.filter((a) => {
+    if (!search.trim()) return true
+    const q = search.toLowerCase()
     return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
-            <Avatar
-              src={img}
-              variant="rounded"
-              sx={{ width: 64, height: 64, bgcolor: 'background.default' }}
-            >
-              <Code />
-            </Avatar>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700 }} noWrap>
-                {app.appName}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" noWrap>
-                {app.appCategory}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                by {app.sellerId?.name || 'Unknown'}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                <Chip
-                  icon={<StatusIcon />}
-                  label={statusConfig.label}
-                  size="small"
-                  color={statusConfig.color}
-                />
-                {app.adminRating > 0 && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Star sx={{ fontSize: 16, color: 'secondary.main' }} />
-                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                      {app.adminRating}/5
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            </Box>
-            <Box sx={{ textAlign: 'right' }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main' }}>
-                ${app.price || 0}
-              </Typography>
-              {app.completionScore > 0 && (
-                <Typography variant="caption" color="info.main" sx={{ fontWeight: 600 }}>
-                  {app.completionScore}%
-                </Typography>
-              )}
-            </Box>
-          </Box>
-
-          {app.badges?.length > 0 && (
-            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 2 }}>
-              {app.badges.slice(0, 3).map((badge) => (
-                <Chip key={badge} label={badge} size="small" variant="outlined" />
-              ))}
-            </Box>
-          )}
-
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {app.verificationStatus === 'pending' && (
-              <>
-                <Button
-                  size="small"
-                  variant="contained"
-                  color="success"
-                  startIcon={<CheckCircle />}
-                  onClick={() => handleAction(app, 'verified')}
-                >
-                  Verify
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="error"
-                  startIcon={<Cancel />}
-                  onClick={() => handleAction(app, 'rejected')}
-                >
-                  Reject
-                </Button>
-              </>
-            )}
-            <Button 
-              size="small" 
-              variant="outlined" 
-              sx={{ ml: 'auto' }}
-              onClick={() => navigate(`/admin/applications/${app._id}`)}
-            >
-              Full Review
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+      a.appName?.toLowerCase().includes(q) ||
+      a.appCategory?.toLowerCase().includes(q) ||
+      a.sellerId?.name?.toLowerCase().includes(q) ||
+      a.sellerId?.email?.toLowerCase().includes(q)
     )
+  })
+
+  const stats = {
+    total: applications.length,
+    pending: applications.filter((a) => a.verificationStatus === 'pending').length,
+    verified: applications.filter((a) => a.verificationStatus === 'verified').length,
+    rejected: applications.filter((a) => a.verificationStatus === 'rejected').length,
+    totalViews: applications.reduce((s, a) => s + (a.views || 0), 0),
+    totalDownloads: applications.reduce((s, a) => s + (a.downloads || 0), 0),
+  }
+
+  const formatPrice = (app) => {
+    if (app.isFree) return 'Free'
+    const amount = app.price ?? 0
+    const currency = app.currency || 'USD'
+    try {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)
+    } catch {
+      return `$${amount}`
+    }
+  }
+
+  const getDialogContent = () => {
+    const { app, action } = confirmDialog
+    if (!app) return {}
+    if (action === 'verified') {
+      return {
+        title: 'Verify Application',
+        content: `Approve "${app.appName}" for the marketplace? It will be visible to buyers.`,
+      }
+    }
+    return {
+      title: 'Reject Application',
+      content: `Reject "${app.appName}"? The seller will need to resubmit or fix issues.`,
+    }
   }
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress />
+      <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh', p: 3 }}>
+        <LinearProgress
+          sx={{
+            borderRadius: 0.5,
+            bgcolor: colors.border,
+            '& .MuiLinearProgress-bar': { bgcolor: colors.primary },
+          }}
+        />
       </Box>
     )
   }
 
+  const statCards = [
+    {
+      title: 'Total Applications',
+      value: stats.total.toLocaleString(),
+      subtitle: `${stats.verified} live on marketplace`,
+      icon: Apps,
+      color: '#7C3AED',
+      bgColor: 'rgba(124,58,237,0.08)',
+    },
+    {
+      title: 'Pending Review',
+      value: stats.pending.toLocaleString(),
+      subtitle: 'Awaiting your decision',
+      icon: HourglassEmpty,
+      color: colors.warning,
+      bgColor: colors.warningBg,
+    },
+    {
+      title: 'Verified',
+      value: stats.verified.toLocaleString(),
+      subtitle: 'Approved listings',
+      icon: CheckCircle,
+      color: colors.success,
+      bgColor: colors.successBg,
+    },
+    {
+      title: 'Rejected',
+      value: stats.rejected.toLocaleString(),
+      subtitle: `${stats.totalViews.toLocaleString()} total views`,
+      icon: Cancel,
+      color: colors.error,
+      bgColor: colors.errorBg,
+    },
+  ]
+
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
-          Application Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          {applications.length} total applications
-        </Typography>
-        <Chip
-          label={`${applications.filter((a) => a.verificationStatus === 'pending').length} pending`}
-          color="warning"
-          size="small"
-          sx={{ mt: 1 }}
-        />
+    <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh' }}>
+      {/* Page header */}
+      <Box
+        sx={{
+          bgcolor: colors.cardBackground,
+          borderBottom: `1px solid ${colors.border}`,
+          px: 3,
+          py: 2,
+          mb: 3,
+        }}
+      >
+        <Breadcrumbs
+          separator={<NavigateNext fontSize="small" sx={{ color: colors.slate400 }} />}
+          sx={{ mb: 1 }}
+        >
+          <Link
+            underline="hover"
+            onClick={() => navigate('/admin/dashboard')}
+            sx={{ color: colors.textSecondary, fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}
+          >
+            Dashboard
+          </Link>
+          <Typography sx={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 600 }}>
+            Application Management
+          </Typography>
+        </Breadcrumbs>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: colors.textPrimary }}>
+              Application Management
+            </Typography>
+            <Typography variant="body2" sx={{ color: colors.textSecondary, mt: 0.5 }}>
+              Review, verify, and manage seller applications on the marketplace
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={() => {
+              setLoading(true)
+              fetchApplications()
+            }}
+            sx={{
+              textTransform: 'none',
+              borderColor: colors.border,
+              color: colors.textSecondary,
+            }}
+          >
+            Refresh
+          </Button>
+        </Box>
       </Box>
 
-      {/* Search */}
-      <TextField
-        fullWidth
-        placeholder="Search by name or category..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Search />
-            </InputAdornment>
-          ),
-        }}
-        sx={{ mb: 2 }}
-      />
-
-      {/* Filters */}
-      <Tabs value={filter} onChange={(e, newValue) => setFilter(newValue)} sx={{ mb: 3 }}>
-        {FILTERS.map((f) => (
-          <Tab key={f.key} label={f.label} value={f.key} />
-        ))}
-      </Tabs>
-
-      {/* Applications List */}
-      {filtered.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Code sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            No applications found
-          </Typography>
-        </Box>
-      ) : (
-        <Grid container spacing={2}>
-          {filtered.map((app) => (
-            <Grid item xs={12} key={app._id}>
-              <ApplicationCard app={app} />
+      <Box sx={{ px: 3, pb: 4 }}>
+        {/* Stat cards */}
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          {statCards.map((c, i) => (
+            <Grid item xs={12} sm={6} lg={3} key={i}>
+              <StatCard {...c} />
             </Grid>
           ))}
         </Grid>
-      )}
+
+        {/* Search and filters */}
+        <Card
+          sx={{
+            bgcolor: colors.cardBackground,
+            border: `1px solid ${colors.border}`,
+            borderRadius: '8px',
+            boxShadow: 'none',
+            mb: 3,
+          }}
+        >
+          <CardContent sx={{ p: 2.5 }}>
+            <TextField
+              fullWidth
+              placeholder="Search by app name, category, or seller..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search sx={{ color: colors.textSecondary }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: colors.pageBackground,
+                  '& fieldset': { borderColor: colors.border },
+                  '&:hover fieldset': { borderColor: colors.primary },
+                },
+              }}
+            />
+            <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
+              {FILTERS.map((f) => {
+                const Icon = f.icon
+                const isActive = filter === f.key
+                const count =
+                  f.key === 'all'
+                    ? stats.total
+                    : f.key === 'pending'
+                    ? stats.pending
+                    : f.key === 'verified'
+                    ? stats.verified
+                    : stats.rejected
+                return (
+                  <Chip
+                    key={f.key}
+                    icon={<Icon sx={{ fontSize: 16 }} />}
+                    label={`${f.label} (${count})`}
+                    onClick={() => setFilter(f.key)}
+                    sx={{
+                      bgcolor: isActive ? colors.primaryBg : colors.pageBackground,
+                      color: isActive ? colors.primary : colors.textSecondary,
+                      border: `1px solid ${isActive ? colors.primary : colors.border}`,
+                      fontWeight: isActive ? 700 : 500,
+                      '&:hover': { bgcolor: isActive ? colors.primaryBg : colors.slate100 },
+                    }}
+                  />
+                )
+              })}
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Applications table */}
+        {filtered.length === 0 ? (
+          <Card
+            sx={{
+              bgcolor: colors.cardBackground,
+              border: `1px solid ${colors.border}`,
+              borderRadius: '8px',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent sx={{ textAlign: 'center', py: 8 }}>
+              <Code sx={{ fontSize: 64, color: colors.slate300, mb: 2 }} />
+              <Typography variant="h6" sx={{ color: colors.textSecondary, fontWeight: 600 }}>
+                No applications found
+              </Typography>
+              <Typography variant="body2" sx={{ color: colors.slate400, mt: 1 }}>
+                {search ? 'Try adjusting your search' : 'No applications match the selected filter'}
+              </Typography>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card
+            sx={{
+              bgcolor: colors.cardBackground,
+              border: `1px solid ${colors.border}`,
+              borderRadius: '8px',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: colors.pageBackground }}>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Application</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Seller</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Category</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Price</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Engagement</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: colors.textPrimary }}>Submitted</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, color: colors.textPrimary }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filtered.map((app) => {
+                      const statusConfig =
+                        STATUS_CONFIG[app.verificationStatus] || STATUS_CONFIG.pending
+                      const img =
+                        app.appIcon?.url ||
+                        app.screenshots?.[0]?.url ||
+                        app.screenshots?.[0]?.uri
+                      const isLoading = actionLoading === app._id
+
+                      return (
+                        <TableRow
+                          key={app._id}
+                          hover
+                          sx={{ '&:hover': { bgcolor: colors.slate50 }, cursor: 'pointer' }}
+                          onClick={() => navigate(`/admin/applications/${app._id}`)}
+                        >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Avatar
+                                src={img}
+                                variant="rounded"
+                                sx={{
+                                  width: 44,
+                                  height: 44,
+                                  bgcolor: colors.primaryBg,
+                                  color: colors.primary,
+                                  borderRadius: '8px',
+                                }}
+                              >
+                                <Code sx={{ fontSize: 22 }} />
+                              </Avatar>
+                              <Box sx={{ minWidth: 0 }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600, color: colors.textPrimary }}
+                                  noWrap
+                                >
+                                  {app.appName || 'Untitled'}
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                  ID: {app._id.slice(-6).toUpperCase()}
+                                </Typography>
+                                {app.badges?.length > 0 && (
+                                  <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
+                                    {app.badges.slice(0, 2).map((badge) => (
+                                      <Chip
+                                        key={badge}
+                                        label={badge}
+                                        size="small"
+                                        sx={{
+                                          height: 18,
+                                          fontSize: 10,
+                                          bgcolor: colors.slate100,
+                                          color: colors.slate600,
+                                        }}
+                                      />
+                                    ))}
+                                  </Box>
+                                )}
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: colors.textPrimary }}>
+                              {app.sellerId?.name || 'Unknown'}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                              {app.sellerId?.email || '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={app.appCategory || 'Other'}
+                              size="small"
+                              sx={{
+                                bgcolor: colors.infoBg,
+                                color: colors.infoText,
+                                fontWeight: 600,
+                                maxWidth: 160,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <AttachMoney sx={{ fontSize: 14, color: colors.textSecondary }} />
+                              <Typography variant="body2" sx={{ fontWeight: 700, color: colors.textPrimary }}>
+                                {formatPrice(app)}
+                              </Typography>
+                            </Box>
+                            {app.completionScore > 0 && (
+                              <Typography variant="caption" sx={{ color: colors.info, fontWeight: 600 }}>
+                                {app.completionScore}% complete
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
+                              <Visibility sx={{ fontSize: 12, color: colors.textSecondary }} />
+                              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                {(app.views || 0).toLocaleString()} views
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Download sx={{ fontSize: 12, color: colors.textSecondary }} />
+                              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                {(app.downloads || 0).toLocaleString()} downloads
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={statusConfig.label}
+                              color={statusConfig.color}
+                              size="small"
+                              sx={{ fontWeight: 600 }}
+                            />
+                            {app.adminRating > 0 && (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mt: 0.5 }}>
+                                <Star sx={{ fontSize: 14, color: colors.warning }} />
+                                <Typography variant="caption" sx={{ fontWeight: 600, color: colors.textSecondary }}>
+                                  {app.adminRating}/5
+                                </Typography>
+                              </Box>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                              {app.createdAt
+                                ? new Date(app.createdAt).toLocaleDateString()
+                                : '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                            {isLoading ? (
+                              <CircularProgress size={20} />
+                            ) : (
+                              <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                                {app.verificationStatus === 'pending' && (
+                                  <>
+                                    <Tooltip title="Verify">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => openConfirmDialog(app, 'verified')}
+                                        sx={{
+                                          color: colors.success,
+                                          '&:hover': { bgcolor: colors.successBg },
+                                        }}
+                                      >
+                                        <CheckCircle sx={{ fontSize: 18 }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Reject">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => openConfirmDialog(app, 'rejected')}
+                                        sx={{
+                                          color: colors.error,
+                                          '&:hover': { bgcolor: colors.errorBg },
+                                        }}
+                                      >
+                                        <Cancel sx={{ fontSize: 18 }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </>
+                                )}
+                                <Tooltip title="Full review">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => navigate(`/admin/applications/${app._id}`)}
+                                    sx={{
+                                      color: colors.primary,
+                                      '&:hover': { bgcolor: colors.primaryBg },
+                                    }}
+                                  >
+                                    <Visibility sx={{ fontSize: 18 }} />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        )}
+      </Box>
+
+      {/* Confirmation dialog */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog({ open: false, app: null, action: null })}
+        PaperProps={{
+          sx: { borderRadius: '12px', border: `1px solid ${colors.border}` },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: colors.textPrimary }}>
+          {getDialogContent().title}
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ color: colors.textSecondary }}>{getDialogContent().content}</Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button
+            onClick={() => setConfirmDialog({ open: false, app: null, action: null })}
+            sx={{ textTransform: 'none', color: colors.textSecondary }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleReviewAction}
+            variant="contained"
+            color={confirmDialog.action === 'rejected' ? 'error' : 'primary'}
+            sx={{
+              textTransform: 'none',
+              ...(confirmDialog.action !== 'rejected' && {
+                bgcolor: colors.primary,
+                '&:hover': { bgcolor: colors.primaryDark },
+              }),
+            }}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
