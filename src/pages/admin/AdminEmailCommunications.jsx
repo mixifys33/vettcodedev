@@ -404,7 +404,12 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
     setSending(true)
     setConfirmOpen(false)
 
+    const uiLog = (step, detail) => {
+      console.log(`[AdminEmail UI] ${step}`, detail ?? '')
+    }
+
     try {
+      uiLog('1/5 validate OK', { recipientCount, isSellers, sendToEveryone })
       const payload = {
         subject: subject.trim(),
         message: message.trim(),
@@ -417,11 +422,32 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
       if (isSellers) payload.statusFilter = statusFilter
       else payload.includeBanned = includeBanned
 
+      uiLog('2/5 POST start', { sendPath, recipients: recipientCount, featured: featuredItems.length })
+      const postStarted = Date.now()
+
       const res = await api.post(sendPath, payload, {
         headers: headers(),
         timeout: 600000,
         silentError: true,
       })
+
+      uiLog('3/5 POST response', {
+        ms: Date.now() - postStarted,
+        success: res.data?.success,
+        sent: res.data?.sent,
+        failed: res.data?.failed,
+        error: res.data?.error,
+      })
+
+      if (res.data.results?.length) {
+        res.data.results.forEach((r, i) => {
+          uiLog(`4/5 result[${i}]`, {
+            email: r.email,
+            success: r.success,
+            error: r.error,
+          })
+        })
+      }
 
       if (res.data.success || res.data.sent > 0) {
         setLastResult(res.data)
@@ -451,10 +477,17 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
         setLastResult(res.data)
       }
     } catch (err) {
+      console.error('[AdminEmail UI] 5/5 POST failed', {
+        message: err.message,
+        code: err.code,
+        status: err.response?.status,
+        data: err.response?.data,
+      })
       const failMsg =
         err.response?.data?.error ||
+        err.response?.data?.results?.find((r) => r.error)?.error ||
         (err.code === 'ECONNABORTED'
-          ? 'Send timed out. Use fewer recipients (under 50 is fastest) or redeploy the latest backend.'
+          ? 'Send timed out. Try 1 recipient first. Check Render logs for [AdminEmail] and [email][admin].'
           : null) ||
         err.message ||
         'Failed to send emails'
