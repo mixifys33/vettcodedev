@@ -27,6 +27,7 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Avatar,
 } from '@mui/material'
 import {
   Search,
@@ -36,47 +37,144 @@ import {
   Email,
   Store,
   People,
-  CheckCircle,
   ErrorOutline,
   MarkEmailRead,
+  SelectAll,
+  Deselect,
+  ShoppingBag,
+  InfoOutlined,
 } from '@mui/icons-material'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 import { colors } from '../../theme/tokens'
 
+const STOREFRONT_DEFAULT = 'https://vettcodedev.vercel.app'
+const MAX_FEATURED = 6
+
 const SELLER_TEMPLATES = [
   {
-    subject: 'Important update for VettCode sellers',
-    message:
-      'We have an important platform update for all sellers. Please log in to your seller dashboard to review the latest changes and ensure your shop profile is up to date.',
+    id: 'seller-welcome',
+    category: 'Onboarding',
+    subject: 'Welcome to VettCode — your seller journey starts here',
+    message: `We're thrilled to have you on VettCode, the marketplace built for developers and digital creators.
+
+Here's what to do next:
+• Complete your shop profile (logo, bio, and contact details)
+• Connect your payout method so you can get paid
+• Upload your first application and submit it for review
+
+Our team reviews every listing to keep quality high. Most reviews are completed within 48 hours.
+
+If you need help, reply to this email — we're here for you.`,
+    ctaLabel: 'Open seller dashboard',
+    ctaUrl: `${STOREFRONT_DEFAULT}/seller/dashboard`,
   },
   {
-    subject: 'Complete your shop setup',
-    message:
-      'Your seller account is almost ready. Please complete your shop setup, payment details, and upload your first application to start selling on VettCode.',
+    id: 'seller-pending',
+    category: 'Action required',
+    subject: 'Action needed: finish your shop setup',
+    message: `Your seller account is almost ready to go live.
+
+We noticed a few items still need your attention:
+• Shop branding (name, logo, banner)
+• Payment / payout details
+• At least one published application
+
+Completing these steps helps buyers trust your store and improves your visibility in search.
+
+Take a few minutes today to finish setup — your future customers are waiting.`,
+    ctaLabel: 'Complete setup',
+    ctaUrl: `${STOREFRONT_DEFAULT}/seller/dashboard`,
   },
   {
-    subject: 'Application review reminder',
-    message:
-      'Our team is reviewing seller applications. If you have a pending submission, please check your dashboard for any required updates.',
+    id: 'seller-update',
+    category: 'Announcement',
+    subject: 'Important platform update for VettCode sellers',
+    message: `We've rolled out updates to improve your selling experience on VettCode.
+
+What's new:
+• Faster application review workflow
+• Improved analytics on your dashboard
+• Better buyer messaging tools
+
+Please log in and review any notifications on your dashboard. If any of your listings need updates, now is a great time to refresh screenshots and descriptions.
+
+Thank you for being part of our seller community.`,
+    ctaLabel: 'View dashboard',
+    ctaUrl: `${STOREFRONT_DEFAULT}/seller/dashboard`,
+  },
+  {
+    id: 'seller-promo',
+    category: 'Promotion',
+    subject: 'Boost your sales — tips from the VettCode team',
+    message: `Want more eyes on your apps? Here are proven tips from top sellers on VettCode:
+
+1. Use clear, high-quality screenshots and a strong app icon
+2. Write a benefit-focused short description (what problem does it solve?)
+3. Offer a limited-time launch discount for new listings
+4. Respond quickly to buyer messages — it improves your ranking
+
+We're featuring standout apps in our marketplace emails this month. Make sure your listings are up to date to be considered.`,
+    ctaLabel: 'Manage my apps',
+    ctaUrl: `${STOREFRONT_DEFAULT}/seller/applications`,
+    suggestFeatured: true,
   },
 ]
 
 const USER_TEMPLATES = [
   {
-    subject: 'Welcome to VettCode',
-    message:
-      'Thank you for joining VettCode! Explore verified applications, secure downloads, and great deals from trusted sellers.',
+    id: 'user-welcome',
+    category: 'Welcome',
+    subject: 'Welcome to VettCode — discover apps you will love',
+    message: `Thanks for joining VettCode!
+
+You now have access to a curated marketplace of verified applications, secure downloads, and trusted sellers.
+
+Here's what you can do:
+• Browse apps by category or search
+• Save favorites and get notified about deals
+• Purchase with confidence — every listing is reviewed
+
+Start exploring — we've highlighted some picks below that we think you'll enjoy.`,
+    ctaLabel: 'Browse marketplace',
+    ctaUrl: STOREFRONT_DEFAULT,
+    suggestFeatured: true,
   },
   {
-    subject: 'New apps available on VettCode',
-    message:
-      'Fresh applications have been added to the marketplace. Visit VettCode today to discover new tools and solutions.',
+    id: 'user-new-apps',
+    category: 'Promotion',
+    subject: 'New on VettCode — fresh apps just dropped',
+    message: `We've added exciting new applications to the marketplace this week.
+
+From productivity tools to creative software, there's something for everyone. Featured listings are hand-picked by our team for quality and value.
+
+Don't miss out — popular apps often sell out of launch discounts quickly.`,
+    ctaLabel: 'Shop new arrivals',
+    ctaUrl: STOREFRONT_DEFAULT,
+    suggestFeatured: true,
   },
   {
-    subject: 'Your VettCode account',
-    message:
-      'This is a message from the VettCode team regarding your customer account. If you have questions, reply to this email or contact support.',
+    id: 'user-deal',
+    category: 'Promotion',
+    subject: 'Exclusive deals for VettCode members',
+    message: `As a valued VettCode member, you get early access to deals on top-rated apps.
+
+For a limited time, check out the featured products below — each one is verified and ready for instant download.
+
+Happy shopping!`,
+    ctaLabel: 'View deals',
+    ctaUrl: STOREFRONT_DEFAULT,
+    suggestFeatured: true,
+  },
+  {
+    id: 'user-announce',
+    category: 'Announcement',
+    subject: 'An update from the VettCode team',
+    message: `We wanted to share an important update with you about VettCode.
+
+Our mission is to connect you with high-quality digital products from creators you can trust. If you have feedback or questions about your account, simply reply to this email.
+
+Thank you for being part of our community.`,
   },
 ]
 
@@ -86,6 +184,8 @@ const SELLER_STATUS_FILTERS = [
   { key: 'pending', label: 'Pending' },
   { key: 'suspended', label: 'Suspended' },
 ]
+
+const itemKey = (item) => `${item.type}:${item.id}`
 
 const AdminEmailCommunications = ({ audience = 'sellers' }) => {
   const navigate = useNavigate()
@@ -97,15 +197,22 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [includeBanned, setIncludeBanned] = useState(false)
-  const [recipientMode, setRecipientMode] = useState('all')
+  const [sendToEveryone, setSendToEveryone] = useState(false)
   const [selectedIds, setSelectedIds] = useState([])
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
+  const [ctaLabel, setCtaLabel] = useState('')
+  const [ctaUrl, setCtaUrl] = useState('')
   const [sending, setSending] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [lastResult, setLastResult] = useState(null)
 
-  const basePath = isSellers ? '/admin/communications/sellers' : '/admin/communications/users'
+  const [catalogItems, setCatalogItems] = useState([])
+  const [catalogSearch, setCatalogSearch] = useState('')
+  const [loadingCatalog, setLoadingCatalog] = useState(false)
+  const [featuredItems, setFeaturedItems] = useState([])
+  const [storefrontUrl, setStorefrontUrl] = useState(STOREFRONT_DEFAULT)
+
   const recipientsPath = isSellers
     ? '/admin/communications/sellers/recipients'
     : '/admin/communications/users/recipients'
@@ -138,10 +245,8 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
       const res = await api.get(`${recipientsPath}?${params}`, { headers: headers() })
       if (res.data.success) {
         setRecipients(res.data.recipients || [])
-        if (recipientMode === 'selected') {
-          const ids = new Set((res.data.recipients || []).map((r) => r.id))
-          setSelectedIds((prev) => prev.filter((id) => ids.has(id)))
-        }
+        const ids = new Set((res.data.recipients || []).map((r) => r.id))
+        setSelectedIds((prev) => prev.filter((id) => ids.has(id)))
       }
     } catch {
       toast.error('Failed to load recipients')
@@ -150,8 +255,29 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
     }
   }
 
+  const fetchCatalog = async () => {
+    setLoadingCatalog(true)
+    try {
+      const params = new URLSearchParams()
+      if (catalogSearch.trim()) params.set('search', catalogSearch.trim())
+      params.set('limit', '40')
+      const res = await api.get(`/admin/communications/email-catalog?${params}`, {
+        headers: headers(),
+      })
+      if (res.data.success) {
+        setCatalogItems(res.data.items || [])
+        if (res.data.storefrontUrl) setStorefrontUrl(res.data.storefrontUrl)
+      }
+    } catch {
+      toast.error('Failed to load apps & products')
+    } finally {
+      setLoadingCatalog(false)
+    }
+  }
+
   useEffect(() => {
     fetchSmtpStatus()
+    fetchCatalog()
   }, [])
 
   useEffect(() => {
@@ -159,31 +285,56 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
     return () => clearTimeout(t)
   }, [search, statusFilter, includeBanned, isSellers])
 
-  const selectedRecipients = useMemo(() => {
-    if (recipientMode === 'all') return recipients
-    return recipients.filter((r) => selectedIds.includes(r.id))
-  }, [recipientMode, recipients, selectedIds])
+  useEffect(() => {
+    const t = setTimeout(() => fetchCatalog(), 400)
+    return () => clearTimeout(t)
+  }, [catalogSearch])
 
-  const recipientCount =
-    recipientMode === 'all' ? recipients.length : selectedIds.length
+  const recipientCount = useMemo(() => {
+    if (sendToEveryone) return recipients.length
+    return selectedIds.length
+  }, [sendToEveryone, recipients.length, selectedIds.length])
 
   const toggleSelect = (id) => {
+    setSendToEveryone(false)
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     )
   }
 
-  const toggleSelectAll = () => {
-    if (selectedIds.length === recipients.length) {
-      setSelectedIds([])
-    } else {
-      setSelectedIds(recipients.map((r) => r.id))
+  const selectAllVisible = () => {
+    setSendToEveryone(false)
+    setSelectedIds(recipients.map((r) => r.id))
+  }
+
+  const clearSelection = () => {
+    setSendToEveryone(false)
+    setSelectedIds([])
+  }
+
+  const toggleFeatured = (item) => {
+    const key = itemKey(item)
+    const exists = featuredItems.some((f) => itemKey(f) === key)
+    if (exists) {
+      setFeaturedItems((prev) => prev.filter((f) => itemKey(f) !== key))
+      return
     }
+    if (featuredItems.length >= MAX_FEATURED) {
+      toast.error(`Maximum ${MAX_FEATURED} products/apps per email`)
+      return
+    }
+    setFeaturedItems((prev) => [...prev, item])
   }
 
   const applyTemplate = (tpl) => {
     setSubject(tpl.subject)
     setMessage(tpl.message)
+    setCtaLabel(tpl.ctaLabel || '')
+    setCtaUrl(tpl.ctaUrl || '')
+    if (tpl.suggestFeatured && featuredItems.length === 0 && catalogItems.length > 0) {
+      setFeaturedItems(catalogItems.slice(0, 3))
+      toast.success('Added top catalog items — adjust in "Include products" below')
+    }
   }
 
   const handleSend = async () => {
@@ -196,7 +347,7 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
       return
     }
     if (recipientCount === 0) {
-      toast.error('Select at least one recipient')
+      toast.error('Select at least one recipient (check boxes or use "Email everyone")')
       return
     }
 
@@ -207,8 +358,11 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
       const payload = {
         subject: subject.trim(),
         message: message.trim(),
-        recipientMode,
-        recipientIds: recipientMode === 'selected' ? selectedIds : [],
+        recipientMode: sendToEveryone ? 'all' : 'selected',
+        recipientIds: sendToEveryone ? [] : selectedIds,
+        featuredItems,
+        ctaLabel: ctaLabel.trim() || undefined,
+        ctaUrl: ctaUrl.trim() || undefined,
       }
       if (isSellers) payload.statusFilter = statusFilter
       else payload.includeBanned = includeBanned
@@ -223,11 +377,10 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
           const history = raw ? JSON.parse(raw) : []
           history.unshift({
             subject: subject.trim(),
-            message: message.trim(),
             sent: res.data.sent,
             failed: res.data.failed,
             total: res.data.total,
-            recipientMode,
+            featuredCount: featuredItems.length,
             at: new Date().toISOString(),
           })
           localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 20)))
@@ -271,21 +424,13 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
             {isSellers ? 'Seller Email Communications' : 'User Email Communications'}
           </Typography>
         </Breadcrumbs>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 2,
-          }}
-        >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 700, color: colors.textPrimary }}>
-              {isSellers ? 'Seller Email Communications' : 'User Email Communications'}
+              {isSellers ? 'Email Sellers' : 'Email Users'}
             </Typography>
             <Typography variant="body2" sx={{ color: colors.textSecondary, mt: 0.5 }}>
-              Send emails via Gmail SMTP configured in your server environment
+              Pick recipients with checkboxes, choose a template, optionally attach products
             </Typography>
           </Box>
           <Button
@@ -294,6 +439,7 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
             onClick={() => {
               fetchSmtpStatus()
               fetchRecipients()
+              fetchCatalog()
             }}
             sx={{ textTransform: 'none', borderColor: colors.border, color: colors.textSecondary }}
           >
@@ -311,64 +457,89 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
           >
             {smtpStatus.ready ? (
               <>
-                SMTP is ready. Emails will be sent from{' '}
-                <strong>{smtpStatus.fromEmail || 'your configured Gmail account'}</strong>
-                {smtpStatus.service ? ` (${smtpStatus.service})` : ''}.
+                SMTP ready — sending from{' '}
+                <strong>{smtpStatus.fromEmail || 'configured Gmail'}</strong>
               </>
             ) : smtpStatus.configured ? (
-              <>SMTP credentials are set but the connection failed: {smtpStatus.error}</>
+              <>SMTP configured but connection failed: {smtpStatus.error}</>
             ) : (
-              <>
-                SMTP is not configured. Add <strong>SMTP_USER</strong>, <strong>SMTP_PASS</strong>,{' '}
-                <strong>SMTP_HOST</strong>, and <strong>SMTP_PORT</strong> to your backend .env file.
-              </>
+              <>Add SMTP_USER and SMTP_PASS to your backend .env</>
             )}
           </Alert>
         )}
 
         <Grid container spacing={3}>
+          {/* Recipients */}
           <Grid item xs={12} lg={5}>
-            <Card
-              sx={{
-                bgcolor: colors.cardBackground,
-                border: `1px solid ${colors.border}`,
-                borderRadius: '8px',
-                boxShadow: 'none',
-                mb: 3,
-              }}
-            >
+            <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none', mb: 3 }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: colors.textPrimary }}>
-                  Recipients
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: colors.textPrimary }}>
+                  Step 1 — Who receives this email?
                 </Typography>
 
-                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                  <Chip
-                    label={`All (${recipients.length})`}
-                    onClick={() => setRecipientMode('all')}
-                    sx={{
-                      fontWeight: recipientMode === 'all' ? 700 : 500,
-                      bgcolor: recipientMode === 'all' ? colors.primaryBg : colors.pageBackground,
-                      color: recipientMode === 'all' ? colors.primary : colors.textSecondary,
-                      border: `1px solid ${recipientMode === 'all' ? colors.primary : colors.border}`,
-                    }}
-                  />
-                  <Chip
-                    label={`Selected (${selectedIds.length})`}
-                    onClick={() => setRecipientMode('selected')}
-                    sx={{
-                      fontWeight: recipientMode === 'selected' ? 700 : 500,
-                      bgcolor: recipientMode === 'selected' ? colors.primaryBg : colors.pageBackground,
-                      color: recipientMode === 'selected' ? colors.primary : colors.textSecondary,
-                      border: `1px solid ${recipientMode === 'selected' ? colors.primary : colors.border}`,
-                    }}
-                  />
-                </Box>
+                <Alert severity="info" icon={<InfoOutlined />} sx={{ mb: 2, borderRadius: '8px', py: 0.5 }}>
+                  <Typography variant="body2">
+                    <strong>Check the boxes</strong> next to each person, or turn on{' '}
+                    <strong>Email everyone</strong> below to send to the full filtered list.
+                  </Typography>
+                </Alert>
+
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={sendToEveryone}
+                      onChange={(e) => {
+                        setSendToEveryone(e.target.checked)
+                        if (e.target.checked) setSelectedIds([])
+                      }}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      Email everyone in this list ({recipients.length})
+                    </Typography>
+                  }
+                  sx={{ mb: 1.5, ml: 0 }}
+                />
+
+                {!sendToEveryone && (
+                  <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<SelectAll />}
+                      onClick={selectAllVisible}
+                      disabled={!recipients.length}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      Select all visible
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<Deselect />}
+                      onClick={clearSelection}
+                      disabled={!selectedIds.length}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      Clear selection
+                    </Button>
+                    <Chip
+                      label={`${selectedIds.length} selected`}
+                      size="small"
+                      sx={{
+                        bgcolor: selectedIds.length ? colors.primaryBg : colors.pageBackground,
+                        color: selectedIds.length ? colors.primary : colors.textSecondary,
+                        fontWeight: 700,
+                      }}
+                    />
+                  </Box>
+                )}
 
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder={isSellers ? 'Search sellers...' : 'Search users...'}
+                  placeholder={isSellers ? 'Search sellers by name or email...' : 'Search users...'}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   InputProps={{
@@ -378,13 +549,7 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
                       </InputAdornment>
                     ),
                   }}
-                  sx={{
-                    mb: 2,
-                    '& .MuiOutlinedInput-root': {
-                      bgcolor: colors.pageBackground,
-                      '& fieldset': { borderColor: colors.border },
-                    },
-                  }}
+                  sx={{ mb: 2, '& .MuiOutlinedInput-root': { bgcolor: colors.pageBackground } }}
                 />
 
                 {isSellers ? (
@@ -412,34 +577,18 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
                         size="small"
                       />
                     }
-                    label={
-                      <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                        Include banned users
-                      </Typography>
-                    }
+                    label={<Typography variant="body2">Include banned users</Typography>}
                     sx={{ mb: 1 }}
                   />
                 )}
 
-                {recipientMode === 'selected' && recipients.length > 0 && (
-                  <Button size="small" onClick={toggleSelectAll} sx={{ textTransform: 'none', mb: 1 }}>
-                    {selectedIds.length === recipients.length ? 'Deselect all' : 'Select all'}
-                  </Button>
-                )}
-
                 {loadingRecipients ? (
-                  <LinearProgress
-                    sx={{
-                      my: 2,
-                      bgcolor: colors.border,
-                      '& .MuiLinearProgress-bar': { bgcolor: colors.primary },
-                    }}
-                  />
+                  <LinearProgress sx={{ my: 2 }} />
                 ) : (
                   <List
                     dense
                     sx={{
-                      maxHeight: 360,
+                      maxHeight: 340,
                       overflow: 'auto',
                       border: `1px solid ${colors.border}`,
                       borderRadius: '8px',
@@ -448,143 +597,249 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
                   >
                     {recipients.length === 0 ? (
                       <ListItem>
-                        <ListItemText
-                          primary="No recipients found"
-                          secondary="Adjust search or filters"
-                        />
+                        <ListItemText primary="No recipients found" secondary="Try a different search or filter" />
                       </ListItem>
                     ) : (
-                      recipients.map((r) => (
-                        <ListItem key={r.id} disablePadding divider>
-                          <ListItemButton
-                            onClick={() => recipientMode === 'selected' && toggleSelect(r.id)}
-                            dense
-                          >
-                            {recipientMode === 'selected' && (
-                              <ListItemIcon sx={{ minWidth: 36 }}>
+                      recipients.map((r) => {
+                        const checked = sendToEveryone || selectedIds.includes(r.id)
+                        return (
+                          <ListItem key={r.id} disablePadding divider>
+                            <ListItemButton
+                              onClick={() => !sendToEveryone && toggleSelect(r.id)}
+                              dense
+                              disabled={sendToEveryone}
+                            >
+                              <ListItemIcon sx={{ minWidth: 40 }}>
                                 <Checkbox
                                   edge="start"
-                                  checked={selectedIds.includes(r.id)}
+                                  checked={checked}
+                                  disabled={sendToEveryone}
                                   tabIndex={-1}
                                   size="small"
                                 />
                               </ListItemIcon>
-                            )}
-                            <ListItemIcon sx={{ minWidth: 36 }}>
-                              {isSellers ? (
-                                <Store sx={{ fontSize: 18, color: colors.primary }} />
-                              ) : (
-                                <People sx={{ fontSize: 18, color: colors.info }} />
-                              )}
-                            </ListItemIcon>
-                            <ListItemText
-                              primary={r.name || r.email}
-                              secondary={
-                                isSellers
-                                  ? `${r.email} · ${r.status || '—'}`
-                                  : `${r.email}${r.isBanned ? ' · banned' : ''}`
-                              }
-                              primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }}
-                              secondaryTypographyProps={{ fontSize: 11 }}
-                            />
-                          </ListItemButton>
-                        </ListItem>
-                      ))
+                              <ListItemIcon sx={{ minWidth: 36 }}>
+                                {isSellers ? (
+                                  <Store sx={{ fontSize: 18, color: colors.primary }} />
+                                ) : (
+                                  <People sx={{ fontSize: 18, color: colors.info }} />
+                                )}
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={r.name || r.email}
+                                secondary={
+                                  isSellers
+                                    ? `${r.email} · ${r.status || '—'}`
+                                    : `${r.email}${r.isBanned ? ' · banned' : ''}`
+                                }
+                                primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }}
+                                secondaryTypographyProps={{ fontSize: 11 }}
+                              />
+                            </ListItemButton>
+                          </ListItem>
+                        )
+                      })
                     )}
                   </List>
                 )}
 
                 <Typography variant="caption" sx={{ color: colors.slate400, mt: 1.5, display: 'block' }}>
-                  {recipientMode === 'all'
-                    ? `${recipients.length} recipient(s) will receive this email`
-                    : `${selectedIds.length} selected recipient(s)`}
+                  {sendToEveryone
+                    ? `Will email all ${recipients.length} people matching your filters`
+                    : `${selectedIds.length} person(s) selected — check boxes above to add more`}
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
 
+          {/* Compose */}
           <Grid item xs={12} lg={7}>
-            <Card
-              sx={{
-                bgcolor: colors.cardBackground,
-                border: `1px solid ${colors.border}`,
-                borderRadius: '8px',
-                boxShadow: 'none',
-                mb: 3,
-              }}
-            >
+            <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none', mb: 3 }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: colors.textPrimary }}>
-                  Compose email
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: colors.textPrimary }}>
+                  Step 2 — Compose your email
                 </Typography>
 
-                <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 1 }}>
-                  Quick templates
+                <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 1.5 }}>
+                  Choose a template (click to fill subject & message)
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                  {templates.map((tpl, i) => (
-                    <Chip
-                      key={i}
-                      label={tpl.subject}
-                      size="small"
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+                  {templates.map((tpl) => (
+                    <Box
+                      key={tpl.id}
                       onClick={() => applyTemplate(tpl)}
                       sx={{
+                        p: 1.5,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '8px',
                         cursor: 'pointer',
                         bgcolor: colors.pageBackground,
-                        border: `1px solid ${colors.border}`,
-                        maxWidth: '100%',
+                        '&:hover': { borderColor: colors.primary, bgcolor: colors.primaryBg },
                       }}
-                    />
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Chip label={tpl.category} size="small" sx={{ height: 22, fontSize: 11 }} />
+                        {tpl.suggestFeatured && (
+                          <Chip label="Includes products" size="small" color="secondary" sx={{ height: 22, fontSize: 11 }} />
+                        )}
+                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: colors.textPrimary }}>
+                        {tpl.subject}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: colors.textSecondary,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {tpl.message.slice(0, 120)}…
+                      </Typography>
+                    </Box>
                   ))}
                 </Box>
 
-                <TextField
-                  fullWidth
-                  label="Subject"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  sx={{ mb: 2 }}
-                />
+                <TextField fullWidth label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} sx={{ mb: 2 }} />
                 <TextField
                   fullWidth
                   label="Message"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   multiline
-                  minRows={10}
-                  placeholder="Write your message to recipients..."
-                  sx={{
-                    mb: 2,
-                    '& .MuiOutlinedInput-root': { bgcolor: colors.pageBackground },
-                  }}
+                  minRows={8}
+                  sx={{ mb: 2, '& .MuiOutlinedInput-root': { bgcolor: colors.pageBackground } }}
                 />
+
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid item xs={12} sm={5}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Button text (optional)"
+                      value={ctaLabel}
+                      onChange={(e) => setCtaLabel(e.target.value)}
+                      placeholder="e.g. Browse marketplace"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={7}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Button link (optional)"
+                      value={ctaUrl}
+                      onChange={(e) => setCtaUrl(e.target.value)}
+                      placeholder={storefrontUrl}
+                    />
+                  </Grid>
+                </Grid>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ShoppingBag fontSize="small" />
+                  Step 3 — Include products & apps (optional)
+                </Typography>
+                <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 1.5 }}>
+                  Up to {MAX_FEATURED} items appear as cards in the email with image, price, and link.
+                </Typography>
+
+                {featuredItems.length > 0 && (
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                    {featuredItems.map((item) => (
+                      <Chip
+                        key={itemKey(item)}
+                        avatar={item.image ? <Avatar src={item.image} /> : undefined}
+                        label={item.name}
+                        onDelete={() => toggleFeatured(item)}
+                        sx={{ maxWidth: 220 }}
+                      />
+                    ))}
+                  </Box>
+                )}
+
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search apps and products..."
+                  value={catalogSearch}
+                  onChange={(e) => setCatalogSearch(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{ fontSize: 18 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 1.5 }}
+                />
+
+                {loadingCatalog ? (
+                  <LinearProgress sx={{ mb: 2 }} />
+                ) : (
+                  <List
+                    dense
+                    sx={{
+                      maxHeight: 220,
+                      overflow: 'auto',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      bgcolor: colors.pageBackground,
+                    }}
+                  >
+                    {catalogItems.length === 0 ? (
+                      <ListItem>
+                        <ListItemText primary="No apps/products found" />
+                      </ListItem>
+                    ) : (
+                      catalogItems.map((item) => {
+                        const selected = featuredItems.some((f) => itemKey(f) === itemKey(item))
+                        return (
+                          <ListItem key={itemKey(item)} disablePadding divider>
+                            <ListItemButton onClick={() => toggleFeatured(item)} dense>
+                              <ListItemIcon sx={{ minWidth: 40 }}>
+                                <Checkbox edge="start" checked={selected} tabIndex={-1} size="small" />
+                              </ListItemIcon>
+                              {item.image ? (
+                                <Avatar src={item.image} variant="rounded" sx={{ width: 40, height: 40, mr: 1.5 }} />
+                              ) : (
+                                <Avatar variant="rounded" sx={{ width: 40, height: 40, mr: 1.5, bgcolor: colors.border }}>
+                                  <ShoppingBag fontSize="small" />
+                                </Avatar>
+                              )}
+                              <ListItemText
+                                primary={item.name}
+                                secondary={`${item.type === 'product' ? 'Product' : 'App'} · ${item.isFree ? 'Free' : `${item.currency || 'USD'} ${item.price}`}`}
+                                primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }}
+                              />
+                            </ListItemButton>
+                          </ListItem>
+                        )
+                      })
+                    )}
+                  </List>
+                )}
 
                 <Button
                   variant="contained"
                   size="large"
+                  fullWidth
+                  sx={{ mt: 3, textTransform: 'none', bgcolor: colors.primary, '&:hover': { bgcolor: colors.primaryDark } }}
                   startIcon={sending ? <CircularProgress size={18} color="inherit" /> : <Send />}
                   disabled={sending || !smtpStatus?.ready || recipientCount === 0}
                   onClick={() => setConfirmOpen(true)}
-                  sx={{
-                    textTransform: 'none',
-                    bgcolor: colors.primary,
-                    '&:hover': { bgcolor: colors.primaryDark },
-                  }}
                 >
-                  {sending ? 'Sending...' : `Send to ${recipientCount} recipient(s)`}
+                  {sending
+                    ? 'Sending…'
+                    : `Send to ${recipientCount} recipient(s)${featuredItems.length ? ` · ${featuredItems.length} product(s)` : ''}`}
                 </Button>
               </CardContent>
             </Card>
 
             {lastResult && (
-              <Card
-                sx={{
-                  bgcolor: colors.cardBackground,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
-                  boxShadow: 'none',
-                }}
-              >
+              <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none' }}>
                 <CardContent sx={{ p: 2.5 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
                     Last send result
@@ -592,22 +847,6 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
                   <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                     Sent: {lastResult.sent} · Failed: {lastResult.failed} · Total: {lastResult.total}
                   </Typography>
-                  {lastResult.results?.some((r) => !r.success) && (
-                    <>
-                      <Divider sx={{ my: 1.5 }} />
-                      <Typography variant="caption" sx={{ color: colors.error, fontWeight: 600 }}>
-                        Failed deliveries:
-                      </Typography>
-                      {lastResult.results
-                        .filter((r) => !r.success)
-                        .slice(0, 5)
-                        .map((r) => (
-                          <Typography key={r.email} variant="caption" display="block" sx={{ color: colors.textSecondary }}>
-                            {r.email}: {r.error}
-                          </Typography>
-                        ))}
-                    </>
-                  )}
                 </CardContent>
               </Card>
             )}
@@ -615,24 +854,29 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
         </Grid>
       </Box>
 
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Confirm send</DialogTitle>
         <DialogContent>
-          <Typography sx={{ color: colors.textSecondary }}>
-            Send &quot;{subject}&quot; to <strong>{recipientCount}</strong>{' '}
-            {isSellers ? 'seller(s)' : 'user(s)'} via Gmail SMTP?
+          <Typography sx={{ color: colors.textSecondary, mb: 1 }}>
+            Send <strong>&quot;{subject}&quot;</strong> to{' '}
+            <strong>{recipientCount}</strong> {isSellers ? 'seller(s)' : 'user(s)'}?
           </Typography>
+          {featuredItems.length > 0 && (
+            <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+              Includes {featuredItems.length} featured product/app card(s) in each email.
+            </Typography>
+          )}
+          {(ctaLabel || ctaUrl) && (
+            <Typography variant="body2" sx={{ color: colors.textSecondary, mt: 1 }}>
+              CTA button: {ctaLabel || '(no label)'} → {ctaUrl || storefrontUrl}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setConfirmOpen(false)} sx={{ textTransform: 'none' }}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleSend}
-            startIcon={<Email />}
-            sx={{ textTransform: 'none', bgcolor: colors.primary }}
-          >
+          <Button variant="contained" onClick={handleSend} startIcon={<Email />} sx={{ textTransform: 'none', bgcolor: colors.primary }}>
             Send emails
           </Button>
         </DialogActions>
