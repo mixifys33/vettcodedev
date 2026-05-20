@@ -36,6 +36,7 @@ import {
   PendingActions,
   Inventory,
   Send,
+  Email,
   History,
   Close,
   Code,
@@ -116,6 +117,8 @@ const adminMenuGroups = [
     items: [
       { text: 'Notifications', icon: <Send />,    path: '/admin/notifications',         roles: ['admin'] },
       { text: 'History',       icon: <History />, path: '/admin/notifications/history', roles: ['admin'] },
+      { text: 'Email Sellers', icon: <Email />,   path: '/admin/communications/sellers', roles: ['admin'] },
+      { text: 'Email Users',   icon: <Email />,   path: '/admin/communications/users',   roles: ['admin'] },
     ],
   },
   {
