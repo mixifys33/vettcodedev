@@ -11,11 +11,14 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Alert,
+  Breadcrumbs,
+  Link,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material'
 import {
   NotificationsOff,
@@ -26,20 +29,38 @@ import {
   Send,
   CheckCircle,
   Cancel,
+  NavigateNext,
+  History,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { colors } from '../../theme/tokens'
 
 const TARGET_META = {
-  all: { label: 'Everyone', color: 'info', icon: Public },
-  users: { label: 'Customers', color: 'secondary', icon: People },
-  sellers: { label: 'Sellers', color: 'success', icon: Store },
+  all: { label: 'Everyone', color: colors.info, bgColor: colors.infoBg, icon: Public },
+  users: { label: 'Customers', color: colors.primary, bgColor: colors.primaryBg, icon: People },
+  sellers: { label: 'Sellers', color: colors.success, bgColor: colors.successBg, icon: Store },
 }
+
+const StatCard = ({ title, value, subtitle, icon: Icon, color, bgColor }) => (
+  <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none', height: '100%' }}>
+    <CardContent sx={{ p: 2.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+        <Typography variant="body2" sx={{ color: colors.textSecondary, fontWeight: 500 }}>{title}</Typography>
+        <Box sx={{ width: 32, height: 32, borderRadius: '6px', bgcolor: bgColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
+          <Icon sx={{ fontSize: 18 }} />
+        </Box>
+      </Box>
+      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.textPrimary, fontSize: '26px' }}>{value}</Typography>
+      {subtitle && <Typography variant="caption" sx={{ color: colors.slate400, mt: 0.5, display: 'block' }}>{subtitle}</Typography>}
+    </CardContent>
+  </Card>
+)
 
 const AdminNotificationHistory = () => {
   const navigate = useNavigate()
   const [history, setHistory] = useState([])
-  const [confirmDialog, setConfirmDialog] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   useEffect(() => {
     loadHistory()
@@ -49,15 +70,15 @@ const AdminNotificationHistory = () => {
     try {
       const raw = localStorage.getItem('pushNotificationHistory')
       if (raw) setHistory(JSON.parse(raw))
-    } catch (error) {
-      console.error('Failed to load history:', error)
+    } catch {
+      setHistory([])
     }
   }
 
   const clearHistory = () => {
     localStorage.removeItem('pushNotificationHistory')
     setHistory([])
-    setConfirmDialog(false)
+    setConfirmOpen(false)
     toast.success('History cleared')
   }
 
@@ -65,203 +86,141 @@ const AdminNotificationHistory = () => {
     new Date(iso).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     })
 
   const totalSent = history.reduce((sum, item) => sum + (item.sent || 0), 0)
-  const successful = history.filter((h) => h.sent > 0).length
-
-  if (history.length === 0) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 8 }}>
-        <Box
-          sx={{
-            width: 80,
-            height: 80,
-            borderRadius: 3,
-            bgcolor: 'background.default',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mx: 'auto',
-            mb: 2,
-          }}
-        >
-          <NotificationsOff sx={{ fontSize: 44, color: 'text.disabled' }} />
-        </Box>
-        <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
-          No History Yet
-        </Typography>
-        <Typography color="text.secondary" sx={{ mb: 3 }}>
-          Notifications you send will appear here.
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Send />}
-          onClick={() => navigate('/admin/notifications')}
-        >
-          Send a Notification
-        </Button>
-      </Box>
-    )
-  }
+  const successful = history.filter((h) => (h.sent || 0) > 0).length
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
-            Notification History
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {history.length} notifications sent
-          </Typography>
+    <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh' }}>
+      <Box sx={{ bgcolor: colors.cardBackground, borderBottom: `1px solid ${colors.border}`, px: 3, py: 2, mb: 3 }}>
+        <Breadcrumbs separator={<NavigateNext fontSize="small" sx={{ color: colors.slate400 }} />} sx={{ mb: 1 }}>
+          <Link underline="hover" onClick={() => navigate('/admin/dashboard')} sx={{ color: colors.textSecondary, fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>
+            Dashboard
+          </Link>
+          <Link underline="hover" onClick={() => navigate('/admin/notifications')} sx={{ color: colors.textSecondary, fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>
+            Push Notifications
+          </Link>
+          <Typography sx={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 600 }}>History</Typography>
+        </Breadcrumbs>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: colors.textPrimary }}>Notification History</Typography>
+            <Typography variant="body2" sx={{ color: colors.textSecondary, mt: 0.5 }}>
+              Notifications sent from this browser session
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="outlined" startIcon={<Send />} onClick={() => navigate('/admin/notifications')} sx={{ textTransform: 'none', borderColor: colors.border }}>
+              New notification
+            </Button>
+            {history.length > 0 && (
+              <Button variant="outlined" color="error" startIcon={<Delete />} onClick={() => setConfirmOpen(true)} sx={{ textTransform: 'none' }}>
+                Clear history
+              </Button>
+            )}
+          </Box>
         </Box>
-        <Button
-          variant="outlined"
-          color="error"
-          startIcon={<Delete />}
-          onClick={() => setConfirmDialog(true)}
-        >
-          Clear All
-        </Button>
       </Box>
 
-      {/* Summary */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h3" sx={{ fontWeight: 800, color: 'primary.main' }}>
-                {history.length}
+      <Box sx={{ px: 3, pb: 4 }}>
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={4}>
+            <StatCard title="Total sends" value={history.length} subtitle="Recorded in this browser" icon={History} color={colors.primary} bgColor={colors.primaryBg} />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <StatCard title="Devices reached" value={totalSent} subtitle="Sum of delivered devices" icon={CheckCircle} color={colors.success} bgColor={colors.successBg} />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <StatCard title="Successful campaigns" value={successful} subtitle="At least one device received" icon={Send} color={colors.info} bgColor={colors.infoBg} />
+          </Grid>
+        </Grid>
+
+        {history.length === 0 ? (
+          <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none' }}>
+            <CardContent sx={{ textAlign: 'center', py: 8 }}>
+              <NotificationsOff sx={{ fontSize: 64, color: colors.slate300, mb: 2 }} />
+              <Typography variant="h6" sx={{ fontWeight: 700, color: colors.textPrimary }}>No history yet</Typography>
+              <Typography variant="body2" sx={{ color: colors.textSecondary, mt: 1, mb: 3 }}>
+                Notifications you send will appear here.
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Campaigns
-              </Typography>
+              <Button variant="contained" startIcon={<Send />} onClick={() => navigate('/admin/notifications')} sx={{ textTransform: 'none', bgcolor: colors.primary }}>
+                Send a notification
+              </Button>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h3" sx={{ fontWeight: 800, color: 'success.main' }}>
-                {totalSent}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Delivered
-              </Typography>
+        ) : (
+          <Card sx={{ bgcolor: colors.cardBackground, border: `1px solid ${colors.border}`, borderRadius: '8px', boxShadow: 'none' }}>
+            <CardContent sx={{ p: 0 }}>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: colors.pageBackground }}>
+                      <TableCell sx={{ fontWeight: 700 }}>Title</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Audience</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Delivered</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Sent at</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {history.map((item) => {
+                      const meta = TARGET_META[item.target] || TARGET_META.all
+                      const ok = (item.sent || 0) > 0
+                      return (
+                        <TableRow key={item.id} hover sx={{ '&:hover': { bgcolor: colors.slate50 } }}>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{item.title}</Typography>
+                            <Typography variant="caption" sx={{ color: colors.textSecondary }}>{item.body}</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip label={meta.label} size="small" sx={{ bgcolor: meta.bgColor, color: meta.color, fontWeight: 600 }} />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {item.sent ?? 0} / {item.total ?? item.sent ?? 0}
+                            </Typography>
+                            {(item.failed || 0) > 0 && (
+                              <Typography variant="caption" sx={{ color: colors.error }}>
+                                {item.failed} failed
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                              {formatDate(item.sentAt)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {ok ? (
+                              <CheckCircle sx={{ color: colors.success, fontSize: 20 }} />
+                            ) : (
+                              <Cancel sx={{ color: colors.error, fontSize: 20 }} />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h3" sx={{ fontWeight: 800, color: 'secondary.main' }}>
-                {successful}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Successful
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        )}
+      </Box>
 
-      {/* History List */}
-      <Grid container spacing={2}>
-        {history.map((item) => {
-          const meta = TARGET_META[item.target] || TARGET_META.all
-          const Icon = meta.icon
-          const success = item.sent > 0
-
-          return (
-            <Grid item xs={12} key={item.id}>
-              <Card
-                sx={{
-                  borderLeft: 4,
-                  borderColor: `${meta.color}.main`,
-                }}
-              >
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 2,
-                        bgcolor: `${meta.color}.light`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Icon sx={{ color: `${meta.color}.main` }} />
-                    </Box>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }} noWrap>
-                        {item.title}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {item.body}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      icon={success ? <CheckCircle /> : <Cancel />}
-                      label={`${item.sent} sent`}
-                      size="small"
-                      color={success ? 'success' : 'error'}
-                    />
-                  </Box>
-
-                  <Divider sx={{ my: 1.5 }} />
-
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                    <Chip
-                      label={meta.label}
-                      size="small"
-                      color={meta.color}
-                      variant="outlined"
-                    />
-                    {item.failed > 0 && (
-                      <Chip
-                        label={`${item.failed} failed`}
-                        size="small"
-                        color="error"
-                        variant="outlined"
-                      />
-                    )}
-                    <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
-                      {formatDate(item.sentAt)}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          )
-        })}
-      </Grid>
-
-      {/* Confirmation Dialog */}
-      <Dialog open={confirmDialog} onClose={() => setConfirmDialog(false)}>
-        <DialogTitle>Clear History</DialogTitle>
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} PaperProps={{ sx: { borderRadius: '12px' } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Clear history?</DialogTitle>
         <DialogContent>
-          <Typography>Remove all notification history? This action cannot be undone.</Typography>
+          <Typography sx={{ color: colors.textSecondary }}>This removes all notification history stored in your browser.</Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialog(false)}>Cancel</Button>
-          <Button onClick={clearHistory} variant="contained" color="error">
-            Clear All
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setConfirmOpen(false)} sx={{ textTransform: 'none' }}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={clearHistory} sx={{ textTransform: 'none' }}>
+            Clear
           </Button>
         </DialogActions>
       </Dialog>

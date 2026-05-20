@@ -63,6 +63,9 @@ const SellerLogin = () => {
         const token = response.data.token;
 
         login(userData, token, isAdminEmail);
+        if (isAdminEmail && response.data.adminSecret) {
+          localStorage.setItem('adminSecret', response.data.adminSecret);
+        }
         toast.success(`Welcome back, ${userData.name || userData.email}!`);
 
         if (isAdminEmail) {

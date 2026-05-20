@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Box,
   Card,
@@ -13,13 +14,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  ToggleButtonGroup,
-  ToggleButton,
   Alert,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
+  InputAdornment,
+  LinearProgress,
+  Breadcrumbs,
+  Link,
 } from '@mui/material'
 import {
   Send,
@@ -29,377 +28,494 @@ import {
   Notifications,
   History,
   FlashOn,
+  Refresh,
+  NavigateNext,
+  Smartphone,
 } from '@mui/icons-material'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
+import { colors } from '../../theme/tokens'
 
 const TARGETS = [
-  { key: 'all', label: 'Everyone', icon: Public, color: 'info' },
-  { key: 'users', label: 'Customers', icon: People, color: 'secondary' },
-  { key: 'sellers', label: 'Sellers', icon: Store, color: 'success' },
+  { key: 'all', label: 'Everyone', icon: Public, color: colors.info, bgColor: colors.infoBg },
+  { key: 'users', label: 'Customers', icon: People, color: colors.primary, bgColor: colors.primaryBg },
+  { key: 'sellers', label: 'Sellers', icon: Store, color: colors.success, bgColor: colors.successBg },
 ]
 
 const TEMPLATES = [
-  { title: '🛍️ Flash Sale Alert!', body: "Huge discounts are live right now on vettcode. Shop before they're gone!", target: 'users' },
-  { title: '📦 New Products Available', body: 'Fresh arrivals just landed on vettcode. Check out the latest products!', target: 'users' },
-  { title: '🎉 Welcome to vettcode!', body: 'Thank you for joining vettcode. Discover thousands of products at great prices.', target: 'users' },
-  { title: '📊 Seller Dashboard Update', body: 'Important update for all vettcode sellers. Please check your dashboard.', target: 'sellers' },
-  { title: '✅ New Feature Available', body: "We've added exciting new features to your seller dashboard. Check it out!", target: 'sellers' },
-  { title: '🔔 Platform Announcement', body: 'Important announcement from vettcode. Please read the latest update.', target: 'all' },
+  { title: 'Flash sale is live', body: 'Huge discounts are live on VettCode. Shop before they are gone!', target: 'users' },
+  { title: 'New apps on VettCode', body: 'Fresh listings just landed. Discover new tools and solutions today.', target: 'users' },
+  { title: 'Welcome to VettCode', body: 'Thanks for joining VettCode — explore verified apps and trusted sellers.', target: 'users' },
+  { title: 'Seller dashboard update', body: 'Important update for sellers. Please check your dashboard.', target: 'sellers' },
+  { title: 'New seller features', body: 'We added new tools to your seller dashboard. Log in to explore.', target: 'sellers' },
+  { title: 'Platform announcement', body: 'Important announcement from the VettCode team. Open the app for details.', target: 'all' },
 ]
 
+const StatCard = ({ title, value, subtitle, icon: Icon, color, bgColor }) => (
+  <Card
+    sx={{
+      bgcolor: colors.cardBackground,
+      border: `1px solid ${colors.border}`,
+      borderRadius: '8px',
+      boxShadow: 'none',
+      height: '100%',
+      cursor: 'pointer',
+    }}
+  >
+    <CardContent sx={{ p: 2.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+        <Typography variant="body2" sx={{ color: colors.textSecondary, fontWeight: 500 }}>
+          {title}
+        </Typography>
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: '6px',
+            bgcolor: bgColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color,
+          }}
+        >
+          <Icon sx={{ fontSize: 18 }} />
+        </Box>
+      </Box>
+      <Typography variant="h4" sx={{ fontWeight: 700, color: colors.textPrimary, fontSize: '26px' }}>
+        {value ?? '—'}
+      </Typography>
+      {subtitle && (
+        <Typography variant="caption" sx={{ color: colors.slate400, mt: 0.5, display: 'block' }}>
+          {subtitle}
+        </Typography>
+      )}
+    </CardContent>
+  </Card>
+)
+
 const AdminPushNotifications = () => {
+  const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [target, setTarget] = useState('all')
   const [sending, setSending] = useState(false)
   const [tokenStats, setTokenStats] = useState(null)
   const [statsLoading, setStatsLoading] = useState(true)
-  const [sentHistory, setSentHistory] = useState([])
-  const [showTemplates, setShowTemplates] = useState(false)
-  const [confirmDialog, setConfirmDialog] = useState(false)
+  const [statsError, setStatsError] = useState(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [lastResult, setLastResult] = useState(null)
 
-  useEffect(() => {
-    fetchTokenStats()
-    loadHistory()
-  }, [])
+  const getToken = () => localStorage.getItem('adminToken')
+  const headers = () => ({ Authorization: `Bearer ${getToken()}` })
 
   const fetchTokenStats = async () => {
+    setStatsLoading(true)
+    setStatsError(null)
     try {
-      const secret = localStorage.getItem('adminSecret')
-      const response = await api.get('/push-tokens/stats', {
-        headers: { 'x-admin-key': secret || '' },
-      })
-      if (response.data.success) {
-        setTokenStats(response.data.stats)
+      const res = await api.get('/admin/notifications/stats', { headers: headers() })
+      if (res.data.success) {
+        setTokenStats(res.data.stats)
       }
-    } catch (error) {
-      console.error('Failed to fetch token stats:', error)
+    } catch (err) {
+      setStatsError(err.response?.data?.error || 'Could not load device stats')
     } finally {
       setStatsLoading(false)
     }
   }
 
-  const loadHistory = () => {
-    try {
-      const raw = localStorage.getItem('pushNotificationHistory')
-      if (raw) setSentHistory(JSON.parse(raw))
-    } catch (error) {
-      console.error('Failed to load history:', error)
-    }
+  useEffect(() => {
+    fetchTokenStats()
+  }, [])
+
+  const getReach = () => {
+    if (!tokenStats) return 0
+    if (target === 'all') return tokenStats.total ?? 0
+    if (target === 'users') return tokenStats.byUserType?.users ?? 0
+    if (target === 'sellers') return tokenStats.byUserType?.sellers ?? 0
+    return 0
   }
 
   const applyTemplate = (tpl) => {
     setTitle(tpl.title)
     setBody(tpl.body)
     setTarget(tpl.target)
-    setShowTemplates(false)
+    toast.success('Template applied')
+  }
+
+  const saveToHistory = (entry) => {
+    try {
+      const raw = localStorage.getItem('pushNotificationHistory')
+      const history = raw ? JSON.parse(raw) : []
+      history.unshift(entry)
+      localStorage.setItem('pushNotificationHistory', JSON.stringify(history.slice(0, 50)))
+    } catch {
+      /* ignore */
+    }
   }
 
   const handleSend = async () => {
     if (!title.trim()) {
-      toast.error('Please enter a notification title')
+      toast.error('Enter a notification title')
       return
     }
     if (!body.trim()) {
-      toast.error('Please enter a notification message')
+      toast.error('Enter a notification message')
       return
     }
 
     setSending(true)
-    setConfirmDialog(false)
+    setConfirmOpen(false)
 
     try {
-      const secret = localStorage.getItem('adminSecret')
-      const endpoint =
-        target === 'sellers'
-          ? '/push-tokens/send-to-sellers'
-          : target === 'users'
-          ? '/push-tokens/send-to-users'
-          : '/push-tokens/broadcast'
-
-      const response = await api.post(
-        endpoint,
+      const res = await api.post(
+        '/admin/notifications/send',
         {
-          title,
-          body,
+          title: title.trim(),
+          body: body.trim(),
+          target,
           data: { type: 'admin_broadcast' },
-          adminKey: secret,
         },
-        {
-          headers: { 'x-admin-key': secret || '' },
-        }
+        { headers: headers() }
       )
 
-      if (response.data.success) {
-        const entry = {
-          id: Date.now().toString(),
-          title,
-          body,
-          target,
-          sent: response.data.sent,
-          failed: response.data.failed,
-          sentAt: new Date().toISOString(),
-        }
-        const updated = [entry, ...sentHistory].slice(0, 20)
-        setSentHistory(updated)
-        localStorage.setItem('pushNotificationHistory', JSON.stringify(updated))
+      setLastResult(res.data)
 
-        toast.success(`Delivered to ${response.data.sent} device${response.data.sent !== 1 ? 's' : ''}!`)
+      if (res.data.success || res.data.sent > 0) {
+        saveToHistory({
+          id: Date.now().toString(),
+          title: title.trim(),
+          body: body.trim(),
+          target,
+          sent: res.data.sent,
+          failed: res.data.failed,
+          total: res.data.total,
+          sentAt: new Date().toISOString(),
+        })
+        toast.success(`Delivered to ${res.data.sent} device${res.data.sent !== 1 ? 's' : ''}`)
         setTitle('')
         setBody('')
+        fetchTokenStats()
       } else {
-        toast.error(response.data.error || 'Could not send. Please try again.')
+        toast.error(res.data.error || 'No devices received the notification')
       }
-    } catch (error) {
-      toast.error('Network error. Check your connection.')
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Failed to send notification'
+      toast.error(msg)
+      setLastResult(err.response?.data || { error: msg })
     } finally {
       setSending(false)
     }
   }
 
-  const getReach = () => {
-    if (!tokenStats) return '—'
-    if (target === 'all') return tokenStats.total
-    if (target === 'users') return tokenStats.byUserType?.users ?? 0
-    if (target === 'sellers') return tokenStats.byUserType?.sellers ?? 0
-    return 0
-  }
-
   const selectedTarget = TARGETS.find((t) => t.key === target)
 
+  const statCards = TARGETS.map((opt) => ({
+    ...opt,
+    value:
+      opt.key === 'all'
+        ? tokenStats?.total ?? 0
+        : opt.key === 'users'
+        ? tokenStats?.byUserType?.users ?? 0
+        : tokenStats?.byUserType?.sellers ?? 0,
+    subtitle: opt.key === 'all' ? 'All registered devices' : `Tap to target ${opt.label.toLowerCase()}`,
+    onClick: () => setTarget(opt.key),
+    active: target === opt.key,
+  }))
+
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
-          Push Notifications
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Broadcast to your audience
-        </Typography>
-      </Box>
-
-      {/* Stats */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        {statsLoading ? (
-          <Grid item xs={12}>
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          </Grid>
-        ) : (
-          TARGETS.map((opt) => {
-            const Icon = opt.icon
-            const value =
-              opt.key === 'all'
-                ? tokenStats?.total ?? 0
-                : opt.key === 'users'
-                ? tokenStats?.byUserType?.users ?? 0
-                : tokenStats?.byUserType?.sellers ?? 0
-
-            return (
-              <Grid item xs={12} sm={4} key={opt.key}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 2,
-                        bgcolor: `${opt.color}.light`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mx: 'auto',
-                        mb: 1,
-                      }}
-                    >
-                      <Icon sx={{ color: `${opt.color}.main` }} />
-                    </Box>
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: `${opt.color}.main` }}>
-                      {value}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {opt.label}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            )
-          })
-        )}
-      </Grid>
-
-      {/* Compose */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Notifications color="secondary" />
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                Compose Notification
-              </Typography>
-            </Box>
+    <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh' }}>
+      <Box
+        sx={{
+          bgcolor: colors.cardBackground,
+          borderBottom: `1px solid ${colors.border}`,
+          px: 3,
+          py: 2,
+          mb: 3,
+        }}
+      >
+        <Breadcrumbs
+          separator={<NavigateNext fontSize="small" sx={{ color: colors.slate400 }} />}
+          sx={{ mb: 1 }}
+        >
+          <Link
+            underline="hover"
+            onClick={() => navigate('/admin/dashboard')}
+            sx={{ color: colors.textSecondary, fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}
+          >
+            Dashboard
+          </Link>
+          <Typography sx={{ color: colors.textPrimary, fontSize: '14px', fontWeight: 600 }}>
+            Push Notifications
+          </Typography>
+        </Breadcrumbs>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: colors.textPrimary }}>
+              Push Notifications
+            </Typography>
+            <Typography variant="body2" sx={{ color: colors.textSecondary, mt: 0.5 }}>
+              Send mobile push alerts to customers and sellers
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <Button
-              size="small"
-              startIcon={<FlashOn />}
-              onClick={() => setShowTemplates(!showTemplates)}
               variant="outlined"
-              color="secondary"
+              startIcon={<History />}
+              onClick={() => navigate('/admin/notifications/history')}
+              sx={{ textTransform: 'none', borderColor: colors.border, color: colors.textSecondary }}
             >
-              Templates
+              History
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<Refresh />}
+              onClick={fetchTokenStats}
+              sx={{ textTransform: 'none', borderColor: colors.border, color: colors.textSecondary }}
+            >
+              Refresh
             </Button>
           </Box>
+        </Box>
+      </Box>
 
-          {showTemplates && (
-            <Box sx={{ mb: 3, p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-              <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', color: 'text.secondary', mb: 1, display: 'block' }}>
-                Quick Templates
-              </Typography>
-              <List dense>
-                {TEMPLATES.map((tpl, i) => (
-                  <Box key={i}>
-                    <ListItem
-                      button
-                      onClick={() => applyTemplate(tpl)}
-                      sx={{ borderRadius: 1 }}
-                    >
-                      <ListItemText
-                        primary={tpl.title}
-                        secondary={tpl.body}
-                        primaryTypographyProps={{ fontWeight: 600 }}
-                        secondaryTypographyProps={{ noWrap: true }}
-                      />
-                      <Chip label={tpl.target} size="small" color={tpl.target === 'users' ? 'secondary' : tpl.target === 'sellers' ? 'success' : 'info'} />
-                    </ListItem>
-                    {i < TEMPLATES.length - 1 && <Divider />}
-                  </Box>
-                ))}
-              </List>
-            </Box>
-          )}
-
-          <TextField
-            fullWidth
-            label="Notification Title *"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Flash Sale Alert! 🛍️"
-            inputProps={{ maxLength: 100 }}
-            helperText={`${title.length}/100`}
-            sx={{ mb: 2 }}
-          />
-
-          <TextField
-            fullWidth
-            label="Message *"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="Write your notification message here..."
-            multiline
-            rows={4}
-            inputProps={{ maxLength: 300 }}
-            helperText={`${body.length}/300`}
-            sx={{ mb: 3 }}
-          />
-
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-            Send To
-          </Typography>
-          <ToggleButtonGroup
-            value={target}
-            exclusive
-            onChange={(e, newValue) => newValue && setTarget(newValue)}
-            fullWidth
-            sx={{ mb: 3 }}
-          >
-            {TARGETS.map((opt) => {
-              const Icon = opt.icon
-              return (
-                <ToggleButton key={opt.key} value={opt.key}>
-                  <Icon sx={{ mr: 1, fontSize: 20 }} />
-                  {opt.label}
-                </ToggleButton>
-              )
-            })}
-          </ToggleButtonGroup>
-
-          <Alert severity="info" icon={<Notifications />} sx={{ mb: 3 }}>
-            Estimated reach: <strong>{getReach()} devices</strong>
+      <Box sx={{ px: 3, pb: 4 }}>
+        {statsError && (
+          <Alert severity="warning" sx={{ mb: 3, borderRadius: '8px' }}>
+            {statsError}. Redeploy the latest backend if this persists.
           </Alert>
+        )}
 
-          <Button
-            fullWidth
-            variant="contained"
-            size="large"
-            startIcon={sending ? <CircularProgress size={20} color="inherit" /> : <Send />}
-            onClick={() => setConfirmDialog(true)}
-            disabled={sending || !title.trim() || !body.trim()}
-            sx={{ py: 1.5 }}
-          >
-            {sending ? 'Sending...' : 'Send Notification'}
-          </Button>
-        </CardContent>
-      </Card>
+        {statsLoading ? (
+          <LinearProgress
+            sx={{ mb: 3, bgcolor: colors.border, '& .MuiLinearProgress-bar': { bgcolor: colors.primary } }}
+          />
+        ) : (
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            {statCards.map((c) => (
+              <Grid item xs={12} sm={4} key={c.key}>
+                <Box onClick={c.onClick}>
+                  <StatCard
+                    title={c.label}
+                    value={c.value}
+                    subtitle={c.subtitle}
+                    icon={c.icon}
+                    color={c.color}
+                    bgColor={c.bgColor}
+                  />
+                  {c.active && (
+                    <Chip
+                      label="Selected audience"
+                      size="small"
+                      sx={{
+                        mt: 1,
+                        bgcolor: colors.primaryBg,
+                        color: colors.primary,
+                        fontWeight: 700,
+                      }}
+                    />
+                  )}
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        )}
 
-      {/* History */}
-      {sentHistory.length > 0 && (
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <History color="info" />
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                Recent Sent
-              </Typography>
-            </Box>
-            <List>
-              {sentHistory.slice(0, 5).map((item, index) => {
-                const targetConfig = TARGETS.find((t) => t.key === item.target)
-                return (
-                  <Box key={item.id}>
-                    <ListItem>
-                      <Box
+        <Grid container spacing={3}>
+          <Grid item xs={12} lg={7}>
+            <Card
+              sx={{
+                bgcolor: colors.cardBackground,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '8px',
+                boxShadow: 'none',
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: colors.textPrimary }}>
+                  Compose notification
+                </Typography>
+
+                <TextField
+                  fullWidth
+                  label="Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Flash sale is live"
+                  inputProps={{ maxLength: 100 }}
+                  helperText={`${title.length}/100`}
+                  sx={{ mb: 2 }}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Message"
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="Write your notification message..."
+                  multiline
+                  minRows={4}
+                  inputProps={{ maxLength: 300 }}
+                  helperText={`${body.length}/300`}
+                  sx={{ mb: 2, '& .MuiOutlinedInput-root': { bgcolor: colors.pageBackground } }}
+                />
+
+                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: colors.textPrimary }}>
+                  Send to
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                  {TARGETS.map((opt) => {
+                    const Icon = opt.icon
+                    const isActive = target === opt.key
+                    return (
+                      <Chip
+                        key={opt.key}
+                        icon={<Icon sx={{ fontSize: 16 }} />}
+                        label={opt.label}
+                        onClick={() => setTarget(opt.key)}
                         sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          bgcolor: `${targetConfig?.color}.main`,
-                          mr: 2,
+                          fontWeight: isActive ? 700 : 500,
+                          bgcolor: isActive ? colors.primaryBg : colors.pageBackground,
+                          color: isActive ? colors.primary : colors.textSecondary,
+                          border: `1px solid ${isActive ? colors.primary : colors.border}`,
                         }}
                       />
-                      <ListItemText
-                        primary={item.title}
-                        secondary={`${new Date(item.sentAt).toLocaleString()} · ${item.sent} sent`}
-                        primaryTypographyProps={{ fontWeight: 600, noWrap: true }}
-                      />
-                      <Chip
-                        label={item.sent > 0 ? '✓' : '✗'}
-                        size="small"
-                        color={item.sent > 0 ? 'success' : 'error'}
-                      />
-                    </ListItem>
-                    {index < Math.min(sentHistory.length, 5) - 1 && <Divider />}
-                  </Box>
-                )
-              })}
-            </List>
-          </CardContent>
-        </Card>
-      )}
+                    )
+                  })}
+                </Box>
 
-      {/* Confirmation Dialog */}
-      <Dialog open={confirmDialog} onClose={() => setConfirmDialog(false)}>
-        <DialogTitle>Confirm Send</DialogTitle>
+                <Alert severity="info" icon={<Smartphone />} sx={{ mb: 2, borderRadius: '8px' }}>
+                  Estimated reach: <strong>{getReach()} devices</strong>
+                  {tokenStats?.byUserType?.guests > 0 && target === 'all' && (
+                    <> ({tokenStats.byUserType.guests} guest devices)</>
+                  )}
+                </Alert>
+
+                <Button
+                  variant="contained"
+                  size="large"
+                  fullWidth
+                  startIcon={sending ? <CircularProgress size={18} color="inherit" /> : <Send />}
+                  disabled={sending || !title.trim() || !body.trim()}
+                  onClick={() => setConfirmOpen(true)}
+                  sx={{
+                    textTransform: 'none',
+                    bgcolor: colors.primary,
+                    '&:hover': { bgcolor: colors.primaryDark },
+                  }}
+                >
+                  {sending ? 'Sending…' : `Send to ${selectedTarget?.label || 'audience'}`}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {lastResult && (
+              <Card
+                sx={{
+                  mt: 2,
+                  bgcolor: colors.cardBackground,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  boxShadow: 'none',
+                }}
+              >
+                <CardContent sx={{ p: 2.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                    Last send result
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                    Sent: {lastResult.sent ?? 0} · Failed: {lastResult.failed ?? 0} · Total:{' '}
+                    {lastResult.total ?? '—'}
+                  </Typography>
+                  {lastResult.error && (
+                    <Alert severity="error" sx={{ mt: 1.5, borderRadius: '8px' }}>
+                      {lastResult.error}
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </Grid>
+
+          <Grid item xs={12} lg={5}>
+            <Card
+              sx={{
+                bgcolor: colors.cardBackground,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '8px',
+                boxShadow: 'none',
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <FlashOn sx={{ color: colors.warning }} />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: colors.textPrimary }}>
+                    Quick templates
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {TEMPLATES.map((tpl, i) => (
+                    <Box
+                      key={i}
+                      onClick={() => applyTemplate(tpl)}
+                      sx={{
+                        p: 1.5,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        bgcolor: colors.pageBackground,
+                        '&:hover': { borderColor: colors.primary, bgcolor: colors.primaryBg },
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: colors.textPrimary }}>
+                        {tpl.title}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: colors.textSecondary,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {tpl.body}
+                      </Typography>
+                      <Chip label={tpl.target} size="small" sx={{ mt: 1, height: 22, fontSize: 11 }} />
+                    </Box>
+                  ))}
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        PaperProps={{ sx: { borderRadius: '12px', border: `1px solid ${colors.border}` } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Confirm send</DialogTitle>
         <DialogContent>
-          <Typography>
-            Send "{title}" to {selectedTarget?.label}?
+          <Typography sx={{ color: colors.textSecondary, mb: 1 }}>
+            Send &quot;{title}&quot; to <strong>{selectedTarget?.label}</strong>?
+          </Typography>
+          <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+            Estimated reach: {getReach()} devices
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialog(false)}>Cancel</Button>
-          <Button onClick={handleSend} variant="contained" color="primary">
-            Send Now
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setConfirmOpen(false)} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSend}
+            sx={{ textTransform: 'none', bgcolor: colors.primary }}
+          >
+            Send now
           </Button>
         </DialogActions>
       </Dialog>
