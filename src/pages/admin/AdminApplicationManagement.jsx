@@ -790,7 +790,7 @@ const AdminApplicationManagement = () => {
               </TableContainer>
             </CardContent>
           </Card>
-        ) : null}
+        )}
       </Box>
 
       {/* Confirmation dialog */}
