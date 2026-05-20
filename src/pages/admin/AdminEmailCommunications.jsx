@@ -227,10 +227,26 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
 
   const fetchSmtpStatus = async () => {
     try {
-      const res = await api.get('/admin/communications/smtp-status', { headers: headers() })
+      const res = await api.get('/admin/communications/smtp-status', {
+        headers: headers(),
+        silentError: true,
+      })
       if (res.data.success) setSmtpStatus(res.data)
-    } catch {
-      setSmtpStatus({ configured: false, ready: false, error: 'Could not verify SMTP' })
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setSmtpStatus({
+          configured: true,
+          ready: true,
+          verifyOk: false,
+          error: 'Deploy latest backend to check SMTP status',
+        })
+      } else {
+        setSmtpStatus({
+          configured: false,
+          ready: false,
+          error: err.response?.data?.error || 'Could not reach SMTP status endpoint',
+        })
+      }
     }
   }
 
@@ -294,6 +310,20 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
     if (sendToEveryone) return recipients.length
     return selectedIds.length
   }, [sendToEveryone, recipients.length, selectedIds.length])
+
+  const sendBlockReason = useMemo(() => {
+    if (sending) return null
+    if (smtpStatus === null) return 'Loading email settings…'
+    if (recipientCount === 0) {
+      return 'Select recipients: check boxes in the list on the left, or enable “Email everyone in this list”.'
+    }
+    if (!smtpStatus.configured && !smtpStatus.ready) {
+      return smtpStatus.error || 'SMTP is not set up on the server (SMTP_USER / SMTP_PASS in backend .env).'
+    }
+    return null
+  }, [sending, smtpStatus, recipientCount])
+
+  const canSend = !sendBlockReason
 
   const toggleSelect = (id) => {
     setSendToEveryone(false)
@@ -455,13 +485,21 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
             icon={smtpStatus.ready ? <MarkEmailRead /> : <ErrorOutline />}
             sx={{ mb: 3, borderRadius: '8px' }}
           >
-            {smtpStatus.ready ? (
+            {smtpStatus.ready || smtpStatus.configured ? (
               <>
-                SMTP ready — sending from{' '}
-                <strong>{smtpStatus.fromEmail || 'configured Gmail'}</strong>
+                Email sending enabled
+                {smtpStatus.fromEmail ? (
+                  <>
+                    {' '}
+                    from <strong>{smtpStatus.fromEmail}</strong>
+                  </>
+                ) : null}
+                {smtpStatus.verifyOk === false && smtpStatus.error ? (
+                  <Typography component="span" variant="body2" display="block" sx={{ mt: 0.5 }}>
+                    Note: connection test failed ({smtpStatus.error}) — you can still try sending.
+                  </Typography>
+                ) : null}
               </>
-            ) : smtpStatus.configured ? (
-              <>SMTP configured but connection failed: {smtpStatus.error}</>
             ) : (
               <>Add SMTP_USER and SMTP_PASS to your backend .env</>
             )}
@@ -828,13 +866,18 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
                   fullWidth
                   sx={{ mt: 3, textTransform: 'none', bgcolor: colors.primary, '&:hover': { bgcolor: colors.primaryDark } }}
                   startIcon={sending ? <CircularProgress size={18} color="inherit" /> : <Send />}
-                  disabled={sending || !smtpStatus?.ready || recipientCount === 0}
+                  disabled={!canSend}
                   onClick={() => setConfirmOpen(true)}
                 >
                   {sending
                     ? 'Sending…'
                     : `Send to ${recipientCount} recipient(s)${featuredItems.length ? ` · ${featuredItems.length} product(s)` : ''}`}
                 </Button>
+                {sendBlockReason && (
+                  <Alert severity="warning" sx={{ mt: 2, borderRadius: '8px' }}>
+                    {sendBlockReason}
+                  </Alert>
+                )}
               </CardContent>
             </Card>
 
