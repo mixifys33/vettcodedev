@@ -230,21 +230,39 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
       const res = await api.get('/admin/communications/smtp-status', {
         headers: headers(),
         silentError: true,
+        timeout: 12000,
       })
-      if (res.data.success) setSmtpStatus(res.data)
+      if (res.data?.success) {
+        setSmtpStatus(res.data)
+      } else {
+        setSmtpStatus({
+          configured: false,
+          ready: false,
+          error: res.data?.error || 'Could not read SMTP status',
+        })
+      }
     } catch (err) {
       if (err.response?.status === 404) {
         setSmtpStatus({
           configured: true,
           ready: true,
           verifyOk: false,
-          error: 'Deploy latest backend to check SMTP status',
+          error: 'Deploy latest backend — SMTP is read from server .env when you send',
+        })
+      } else if (err.code === 'ECONNABORTED') {
+        setSmtpStatus({
+          configured: true,
+          ready: true,
+          verifyOk: false,
+          error: 'Status check timed out — you can still send if SMTP is set on the server',
         })
       } else {
         setSmtpStatus({
           configured: false,
           ready: false,
-          error: err.response?.data?.error || 'Could not reach SMTP status endpoint',
+          error:
+            err.response?.data?.error ||
+            'Could not reach the API. Redeploy backend with communications routes.',
         })
       }
     }
@@ -313,17 +331,19 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
 
   const sendBlockReason = useMemo(() => {
     if (sending) return null
-    if (smtpStatus === null) return 'Loading email settings…'
     if (recipientCount === 0) {
       return 'Select recipients: check boxes in the list on the left, or enable “Email everyone in this list”.'
     }
-    if (!smtpStatus.configured && !smtpStatus.ready) {
-      return smtpStatus.error || 'SMTP is not set up on the server (SMTP_USER / SMTP_PASS in backend .env).'
+    if (smtpStatus && !smtpStatus.configured && !smtpStatus.ready) {
+      return (
+        smtpStatus.error ||
+        'SMTP not detected on the live server — add SMTP_USER and SMTP_PASS in Render (not just local .env).'
+      )
     }
     return null
   }, [sending, smtpStatus, recipientCount])
 
-  const canSend = !sendBlockReason
+  const canSend = recipientCount > 0 && !sending && sendBlockReason === null
 
   const toggleSelect = (id) => {
     setSendToEveryone(false)
@@ -479,29 +499,33 @@ const AdminEmailCommunications = ({ audience = 'sellers' }) => {
       </Box>
 
       <Box sx={{ px: 3, pb: 4 }}>
-        {smtpStatus && (
+        {smtpStatus === null ? (
+          <Alert severity="info" sx={{ mb: 3, borderRadius: '8px' }}>
+            Checking server email config… (credentials live in backend .env / Render, not in this app)
+          </Alert>
+        ) : (
           <Alert
-            severity={smtpStatus.ready ? 'success' : smtpStatus.configured ? 'warning' : 'error'}
-            icon={smtpStatus.ready ? <MarkEmailRead /> : <ErrorOutline />}
+            severity={smtpStatus.configured || smtpStatus.ready ? 'success' : 'warning'}
+            icon={smtpStatus.configured || smtpStatus.ready ? <MarkEmailRead /> : <ErrorOutline />}
             sx={{ mb: 3, borderRadius: '8px' }}
           >
-            {smtpStatus.ready || smtpStatus.configured ? (
+            {smtpStatus.configured || smtpStatus.ready ? (
               <>
-                Email sending enabled
+                Server SMTP is configured
                 {smtpStatus.fromEmail ? (
                   <>
                     {' '}
-                    from <strong>{smtpStatus.fromEmail}</strong>
+                    (from <strong>{smtpStatus.fromEmail}</strong>)
                   </>
                 ) : null}
-                {smtpStatus.verifyOk === false && smtpStatus.error ? (
-                  <Typography component="span" variant="body2" display="block" sx={{ mt: 0.5 }}>
-                    Note: connection test failed ({smtpStatus.error}) — you can still try sending.
-                  </Typography>
-                ) : null}
+                . Emails are sent by the backend using <strong>SMTP_USER</strong> / <strong>SMTP_PASS</strong> — nothing
+                is stored in the browser.
               </>
             ) : (
-              <>Add SMTP_USER and SMTP_PASS to your backend .env</>
+              <>
+                {smtpStatus.error ||
+                  'SMTP not found on the API server. Local backend/.env only applies when you run the API locally; on Render, add the same keys in the Render Environment tab.'}
+              </>
             )}
           </Alert>
         )}
