@@ -45,6 +45,7 @@ import AdminSellerAnalytics from './pages/admin/AdminSellerAnalytics'
 import AdminOverviewAnalytics from './pages/admin/AdminOverviewAnalytics'
 import AdminSellerCommunications from './pages/admin/AdminSellerCommunications'
 import AdminUserCommunications from './pages/admin/AdminUserCommunications'
+import AdminSettings from './pages/admin/AdminSettings'
 
 // Layout
 import DashboardLayout from './components/layout/DashboardLayout'
@@ -115,6 +116,7 @@ function App() {
                   <Route path="analytics/users" element={<AdminUserAnalytics />} />
                   <Route path="analytics/sellers" element={<AdminSellerAnalytics />} />
                   <Route path="analytics/overview" element={<AdminOverviewAnalytics />} />
+                  <Route path="settings" element={<AdminSettings />} />
                 </Routes>
               </DashboardLayout>
             </ProtectedRoute>

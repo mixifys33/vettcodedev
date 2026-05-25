@@ -68,6 +68,14 @@ const SellerLogin = () => {
         }
         toast.success(`Welcome back, ${userData.name || userData.email}!`);
 
+        // Check if there's a return URL from VettCode scanner
+        const returnUrl = localStorage.getItem('vettcode_return_url');
+        if (returnUrl && !isAdminEmail) {
+          localStorage.removeItem('vettcode_return_url');
+          window.location.href = returnUrl;
+          return;
+        }
+
         if (isAdminEmail) {
           navigate('/admin/dashboard');
         } else {
