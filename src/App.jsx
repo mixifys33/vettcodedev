@@ -43,6 +43,7 @@ import AdminNotificationHistory from './pages/admin/AdminNotificationHistory'
 import AdminUserAnalytics from './pages/admin/AdminUserAnalytics'
 import AdminSellerAnalytics from './pages/admin/AdminSellerAnalytics'
 import AdminOverviewAnalytics from './pages/admin/AdminOverviewAnalytics'
+import AdminScanAnalytics from './pages/admin/AdminScanAnalytics'
 import AdminSellerCommunications from './pages/admin/AdminSellerCommunications'
 import AdminUserCommunications from './pages/admin/AdminUserCommunications'
 import AdminSettings from './pages/admin/AdminSettings'
@@ -116,6 +117,7 @@ function App() {
                   <Route path="analytics/users" element={<AdminUserAnalytics />} />
                   <Route path="analytics/sellers" element={<AdminSellerAnalytics />} />
                   <Route path="analytics/overview" element={<AdminOverviewAnalytics />} />
+                  <Route path="analytics/scans" element={<AdminScanAnalytics />} />
                   <Route path="settings" element={<AdminSettings />} />
                 </Routes>
               </DashboardLayout>

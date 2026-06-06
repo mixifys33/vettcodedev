@@ -101,6 +101,7 @@ const adminMenuGroups = [
       { text: 'User Analytics',    icon: <PersonSearch />, path: '/admin/analytics/users',    roles: ['admin'] },
       { text: 'Seller Analytics',  icon: <Storefront />,   path: '/admin/analytics/sellers',  roles: ['admin'] },
       { text: 'Platform Overview', icon: <BarChart />,     path: '/admin/analytics/overview', roles: ['admin'] },
+      { text: 'Scan Analytics',    icon: <Code />,         path: '/admin/analytics/scans',    roles: ['admin'] },
     ],
   },
   {
