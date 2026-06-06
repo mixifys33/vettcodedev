@@ -71,14 +71,18 @@ const AdminScanAnalytics = () => {
   const fetchSummary = async () => {
     try {
       const response = await api.get('/scan-analytics/summary', {
-        params: { period, authenticated: filters.authenticated }
+        params: { period, authenticated: filters.authenticated },
+        silentError: false // Allow normal error handling
       })
       if (response.data.success) {
         setSummary(response.data.data)
       }
     } catch (error) {
       console.error('Error fetching summary:', error)
-      toast.error('Failed to load analytics summary')
+      // Don't show toast if we're being redirected
+      if (error.response?.status !== 401 && error.response?.status !== 403) {
+        toast.error('Failed to load analytics summary')
+      }
     }
   }
 
@@ -91,7 +95,8 @@ const AdminScanAnalytics = () => {
           page: page + 1,
           limit: rowsPerPage,
           ...filters,
-        }
+        },
+        silentError: false
       })
       if (response.data.success) {
         setScans(response.data.data.scans)
@@ -99,7 +104,10 @@ const AdminScanAnalytics = () => {
       }
     } catch (error) {
       console.error('Error fetching scans:', error)
-      toast.error('Failed to load scans')
+      // Don't show toast if we're being redirected
+      if (error.response?.status !== 401 && error.response?.status !== 403) {
+        toast.error('Failed to load scans')
+      }
     } finally {
       setLoading(false)
     }
