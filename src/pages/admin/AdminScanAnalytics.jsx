@@ -239,7 +239,7 @@ const AdminScanAnalytics = () => {
 
   return (
     <DashboardLayout userType="admin">
-      <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh' }}>
+      <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh', width: '100%' }}>
         {/* Page Header */}
         <Box
           sx={{
