@@ -47,7 +47,6 @@ import {
   Security,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
-import DashboardLayout from '../../components/layout/DashboardLayout'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 import { colors } from '../../theme/tokens'
@@ -229,17 +228,14 @@ const AdminScanAnalytics = () => {
 
   if (!summary && loading) {
     return (
-      <DashboardLayout userType="admin">
-        <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <CircularProgress sx={{ color: colors.primary }} />
-        </Box>
-      </DashboardLayout>
+      <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <CircularProgress sx={{ color: colors.primary }} />
+      </Box>
     )
   }
 
   return (
-    <DashboardLayout userType="admin">
-      <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh', width: '100%' }}>
+    <Box sx={{ bgcolor: colors.pageBackground, minHeight: '100vh', width: '100%' }}>
         {/* Page Header */}
         <Box
           sx={{
@@ -896,7 +892,7 @@ const AdminScanAnalytics = () => {
           </Card>
         </Box>
       </Box>
-    </DashboardLayout>
+    </Box>
   )
 }
 
