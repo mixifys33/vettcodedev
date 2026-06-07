@@ -125,6 +125,7 @@ const AdminScanAnalytics = () => {
     search: '',
   })
   const [period, setPeriod] = useState('all')
+  const [refreshing, setRefreshing] = useState(false)
 
   // Fetch summary data
   const fetchSummary = async () => {
@@ -196,9 +197,16 @@ const AdminScanAnalytics = () => {
     setPage(0)
   }
 
-  const handleRefresh = () => {
-    fetchSummary()
-    fetchScans()
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    try {
+      await Promise.all([fetchSummary(), fetchScans()])
+      toast.success('Data refreshed successfully')
+    } catch (error) {
+      console.error('Error refreshing data:', error)
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   // Format functions
@@ -286,15 +294,20 @@ const AdminScanAnalytics = () => {
               </FormControl>
               <Button
                 variant="outlined"
-                startIcon={<Refresh />}
+                startIcon={refreshing ? <CircularProgress size={16} /> : <Refresh />}
                 onClick={handleRefresh}
+                disabled={refreshing}
                 sx={{
                   textTransform: 'none',
                   borderColor: colors.border,
                   color: colors.textSecondary,
+                  '&:hover': {
+                    borderColor: colors.primary,
+                    color: colors.primary,
+                  },
                 }}
               >
-                Refresh
+                {refreshing ? 'Refreshing...' : 'Refresh'}
               </Button>
             </Box>
           </Box>
