@@ -892,7 +892,6 @@ const AdminScanAnalytics = () => {
           </Card>
         </Box>
       </Box>
-    </Box>
   )
 }
 
